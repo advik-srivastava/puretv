@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/banner.png?v=2.1" alt="PureTV: a calm, beautiful Home screen for Android TV and Google TV" width="100%"></p>
+<p align="center"><img src="assets/hero.png" alt="PureTV: a calm, beautiful Home screen for Android TV and Google TV" width="100%"></p>
 
 <p align="center">
   <a href="https://github.com/advik-srivastava/puretv/releases/latest"><b>Download</b></a> ·
@@ -14,9 +14,9 @@ Your apps, accounts and sign-ins are never touched. Nothing is uninstalled.
 
 | | |
 |:---:|:---:|
-| ![Control Center: power, Wi-Fi, audio, sleep timer, memory and weather](assets/shots/cc.png?v=2.1) | ![All your apps in a grid under the top row](assets/shots/grid.png?v=2.1) |
+| ![Control Center: power, Wi-Fi, audio, sleep timer, memory and weather](assets/shots/control-center.png) | ![All your apps in a grid under the top row](assets/shots/all-apps.png) |
 | **Control Center** | **All your apps** |
-| ![Settings with a sidebar and the Appearance page](assets/shots/settings.png?v=2.1) | ![Choose a wallpaper during setup](assets/shots/wallpapers.png?v=2.1) |
+| ![Settings with a sidebar and the Appearance page](assets/shots/settings-appearance.png) | ![Choose a wallpaper during setup](assets/shots/choose-wallpaper.png) |
 | **Settings** | **Wallpapers** |
 
 ## What you get
