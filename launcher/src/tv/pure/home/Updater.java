@@ -33,16 +33,27 @@ import java.util.Arrays;
  * Asks https://api.github.com/repos/OWNER/REPO/releases/latest (the repo is R.string.update_repo),
  * compares the release tag with the installed version, downloads the release's .apk, refuses it
  * unless it is signed with the same key as the installed launcher, and hands it to Android's own
- * PackageInstaller. The first update shows Android's confirmation on the TV; PureTV never installs
- * anything silently on its own. With automatic updates on, it checks at most once a day, when Home
- * is shown.
+ * PackageInstaller. Nothing is installed without the owner: the Home screen asks first ("Install
+ * now?"), and Android then shows its own confirmation. With automatic updates on, PureTV looks for a
+ * new release whenever the TV is switched on or Home comes back, at most every three hours.
+ *
+ * Status goes to the page as JSON: {"state": "checking" | "latest" | "available" | "downloading" |
+ * "installing" | "failed" | "off", "version", "notes", "pct", "error"}.
  */
 public final class Updater {
     static final String PREFS = "updates", AUTO = "auto", LAST = "last_check";
-    static final long DAY = 24L * 60 * 60 * 1000;
+    static final long EVERY = 3L * 60 * 60 * 1000;
     private static boolean busy;
 
-    public interface Listener { void onStatus(String message); }
+    public interface Listener { void onStatus(String json); }
+
+    static String status(String state, String... kv) {
+        try {
+            JSONObject o = new JSONObject().put("state", state);
+            for (int i = 0; i + 1 < kv.length; i += 2) o.put(kv[i], kv[i + 1]);
+            return o.toString();
+        } catch (Exception e) { return "{\"state\":\"" + state + "\"}"; }
+    }
 
     private Updater() { }
 
@@ -71,12 +82,10 @@ public final class Updater {
     }
     private static int num(String s) { try { return Integer.parseInt(s.replaceAll("\\D.*", "")); } catch (NumberFormatException e) { return 0; } }
 
-    /** Called when Home is shown: a check at most once a day, and only with automatic updates on. */
-    static void maybeAutoCheck(Context c) {
-        if (!auto(c) || TextUtils.isEmpty(repo(c))) return;
-        long last = prefs(c).getLong(LAST, 0);
-        if (System.currentTimeMillis() - last < DAY) return;
-        check(c, true, null);
+    /** Time for an automatic look? (automatic updates on, and none in the last three hours) */
+    static boolean due(Context c) {
+        if (!auto(c) || TextUtils.isEmpty(repo(c))) return false;
+        return Math.abs(System.currentTimeMillis() - prefs(c).getLong(LAST, 0)) >= EVERY;
     }
 
     /** Looks for a newer release; with install, downloads and installs it too. */
@@ -87,34 +96,36 @@ public final class Updater {
             if (listener != null) ui.post(new Runnable() { @Override public void run() { listener.onStatus(m); } });
         } };
         final String repo = repo(c);
-        if (repo.isEmpty()) { say.onStatus(c.getString(R.string.update_no_repo)); return; }
-        if (busy) { say.onStatus(c.getString(R.string.update_busy)); return; }
+        if (repo.isEmpty()) { say.onStatus(status("off")); return; }
+        if (busy) return;
         busy = true;
         new Thread(new Runnable() { @Override public void run() {
             try {
-                say.onStatus(c.getString(R.string.update_checking));
+                say.onStatus(status("checking"));
                 JSONObject rel = new JSONObject(get("https://api.github.com/repos/" + repo + "/releases/latest"));
                 prefs(c).edit().putLong(LAST, System.currentTimeMillis()).apply();
                 String tag = rel.optString("tag_name", ""), mine = installedVersion(c);
+                String ver = tag.replaceFirst("^[vV]", ""), notes = rel.optString("body", "");
+                if (notes.length() > 600) notes = notes.substring(0, 600) + "…";
                 String apk = null;
                 JSONArray assets = rel.optJSONArray("assets");
                 for (int i = 0; assets != null && i < assets.length(); i++) {
                     JSONObject a = assets.getJSONObject(i);
                     if (a.optString("name").endsWith(".apk")) { apk = a.optString("browser_download_url"); break; }
                 }
-                if (tag.isEmpty() || compare(tag, mine) <= 0) { say.onStatus(c.getString(R.string.update_latest, mine)); return; }
+                if (tag.isEmpty() || compare(tag, mine) <= 0) { say.onStatus(status("latest", "version", mine)); return; }
                 if (apk == null || !apk.startsWith("https://github.com/" + repo + "/releases/download/")) {
-                    say.onStatus(c.getString(R.string.update_no_apk, tag)); return;
+                    say.onStatus(status("latest", "version", mine)); return;   // a release without an APK is not an update
                 }
-                if (!install) { say.onStatus(c.getString(R.string.update_available, tag)); return; }
-                say.onStatus(c.getString(R.string.update_downloading, tag));
+                if (!install) { say.onStatus(status("available", "version", ver, "notes", notes)); return; }
+                say.onStatus(status("downloading", "version", ver, "pct", "0"));
                 File f = new File(c.getCacheDir(), "update.apk");
-                download(apk, f);
-                if (!sameSigner(c, f)) { f.delete(); say.onStatus(c.getString(R.string.update_bad_signature)); return; }
-                say.onStatus(c.getString(R.string.update_installing, tag));
+                download(apk, f, ver, say);
+                if (!sameSigner(c, f)) { f.delete(); say.onStatus(status("failed", "error", "signature")); return; }
+                say.onStatus(status("installing", "version", ver));
                 installApk(c, f);
             } catch (Exception e) {
-                say.onStatus(c.getString(R.string.update_failed, e.getClass().getSimpleName()));
+                say.onStatus(status("failed", "error", e.getClass().getSimpleName()));
             } finally {
                 busy = false;
             }
@@ -136,7 +147,7 @@ public final class Updater {
         } finally { h.disconnect(); }
     }
 
-    private static void download(String url, File to) throws Exception {
+    private static void download(String url, File to, String ver, Listener say) throws Exception {
         HttpURLConnection h = (HttpURLConnection) new URL(url).openConnection();   // GitHub redirects to its file host over https
         h.setConnectTimeout(15000); h.setReadTimeout(60000);
         h.setRequestProperty("User-Agent", "PureTV-Home-Updater");
@@ -144,9 +155,14 @@ public final class Updater {
             if (h.getResponseCode() != 200) throw new Exception("HTTP " + h.getResponseCode());
             InputStream in = h.getInputStream();
             OutputStream out = new FileOutputStream(to);
-            byte[] b = new byte[16384]; int n; long total = 0;
+            byte[] b = new byte[16384]; int n; long total = 0, size = Math.max(1, h.getContentLength()); int shown = 0;
             try {
-                while ((n = in.read(b)) > 0) { out.write(b, 0, n); total += n; if (total > 64L * 1024 * 1024) throw new Exception("file too large"); }
+                while ((n = in.read(b)) > 0) {
+                    out.write(b, 0, n); total += n;
+                    if (total > 64L * 1024 * 1024) throw new Exception("file too large");
+                    int pct = (int) Math.min(99, total * 100 / size);
+                    if (pct >= shown + 5) { shown = pct; say.onStatus(status("downloading", "version", ver, "pct", String.valueOf(pct))); }
+                }
             } finally { out.close(); }
         } finally { h.disconnect(); }
     }

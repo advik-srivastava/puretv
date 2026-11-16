@@ -8,3 +8,5 @@ app/ui/tv-v*.html
 app/ui/demo/logos-dark/
 tools/make_dark_icons.py
 release/
+app/ui/tvtest/
+launcher/assets/

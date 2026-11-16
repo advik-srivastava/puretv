@@ -490,6 +490,134 @@ body.bare #tv { left: 0; top: 0; margin: 0; padding: 0; border-radius: 0; box-sh
 body.bare #tv::after { display: none; }
 body.bare #stage { border-radius: 0; }
 body.bare #hint { display: none; }
+/* ============ new wallpapers ============ */
+.s-flatirons .gclock { left: 6rem; right: auto; top: 11.5rem; text-align: left; }
+#date.d-flatirons { left: 6.5rem; text-align: left; top: 7.4rem; }
+.s-kathleen .gclock { top: 12rem; }
+#date.d-kathleen { top: 8.2rem; }
+.s-sils .gclock, .s-louise .gclock, .s-tummel .gclock { filter: drop-shadow(0 8px 34px rgba(0,0,0,.32)); }
+.s-tummel .gclock .fill { filter: brightness(1.25) saturate(1.1); }
+.avatar.emo { line-height: 1; }
+#bProf .avatar.emo { font-size: 30px; } #ccAvatar { font-size: 42px; color: initial; } .ccl .avatar.emo { font-size: 34px; } .gi .avatar.emo { font-size: 30px; }
+
+/* daytime photos: a brighter rim and a soft shadow keep the glass digits readable against a bright sky */
+.s-ossau .gclock, .s-flatirons .gclock, .s-kathleen .gclock, .s-sils .gclock, .s-tummel .gclock, .s-louise .gclock { filter: drop-shadow(0 4px 24px rgba(0,25,50,.35)) drop-shadow(0 0 2px rgba(0,0,0,.18)); }
+.s-ossau .gclock .rim, .s-flatirons .gclock .rim, .s-kathleen .gclock .rim, .s-sils .gclock .rim, .s-tummel .gclock .rim, .s-louise .gclock .rim { color: rgba(255,255,255,.34); -webkit-text-stroke: 2.5px rgba(255,255,255,.9); }
+.s-ossau .gclock .fill, .s-sils .gclock .fill, .s-louise .gclock .fill { filter: brightness(1.18) saturate(1.15); }
+.s-ossau .shade, .s-sils .shade, .s-louise .shade, .s-kathleen .shade { background: linear-gradient(180deg, rgba(0,20,40,.28) 0%, transparent 30%, transparent 55%, rgba(0,0,0,.45) 100%); }
+/* ============ glass styles (Appearance › Glass Style) ============ */
+#stage.g-frosted { --glass: linear-gradient(160deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,.18) 100%), rgba(70,72,84,.38); --blur: blur(64px) saturate(150%); }
+#stage.g-frosted .lg { background: linear-gradient(170deg, rgba(255,255,255,.3), rgba(255,255,255,.14)), rgba(70,70,80,.4); -webkit-backdrop-filter: blur(64px) saturate(140%); backdrop-filter: blur(64px) saturate(140%); }
+#stage.g-dark { --glass: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02)), rgba(14,14,18,.8); --blur: blur(30px) saturate(120%); }
+#stage.g-dark .lg { background: rgba(18,18,22,.84); }
+#stage.g-dark #band { background: rgba(14,14,18,.7); }
+#stage.calm *, #stage.calm *::before, #stage.calm *::after { transition-duration: .12s !important; animation-duration: .12s !important; }
+
+/* ============ first-run setup, as list rows ============ */
+#setup .stack { width: 820px; display: grid; gap: 14px; margin-top: 4px; }
+.opt { display: flex; align-items: center; min-height: 96px; padding: 18px 30px; border-radius: 28px; text-align: left; transition: background .3s var(--ease), color .25s, transform .5s var(--lift), box-shadow .35s; }
+.opt .ot { flex: 1; font-size: 28px; font-weight: 600; letter-spacing: -.3px; }
+.opt .ot small { display: block; font-size: 19px; font-weight: 400; color: rgba(255,255,255,.62); margin-top: 3px; letter-spacing: 0; }
+.opt .ck { width: 32px; height: 32px; color: #30d158; opacity: 0; transform: scale(.5); transition: opacity .25s, transform .45s var(--lift); }
+.opt.on .ck { opacity: 1; transform: none; }
+.opt.focus { background: #fff; color: #111; transform: scale(1.035); box-shadow: 0 18px 44px rgba(0,0,0,.3); }
+.opt.focus .ot small { color: rgba(0,0,0,.55); }
+.opt.focus .ck { color: #1f9d4a; }
+#nameIn { display: none; font: inherit; font-size: 21px; margin-top: 4px; width: 100%; border: 0; outline: 0; background: none; color: inherit; caret-color: #0a84ff; }
+.opt.editing #nameV { display: none; } .opt.editing #nameIn { display: block; }
+#emojis { display: flex; justify-content: center; gap: 16px; padding: 14px 0 10px; }
+.emo { width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; line-height: 1; background: rgba(255,255,255,.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); transition: transform .45s var(--lift), box-shadow .3s, background .3s; }
+.emo.on { background: var(--bg); box-shadow: 0 0 0 4px #30d158; }
+.emo.focus { transform: scale(1.22); box-shadow: 0 0 0 4px #fff, 0 16px 34px rgba(0,0,0,.4); }
+.done svg { width: 130px; height: 130px; filter: drop-shadow(0 16px 40px rgba(48,209,88,.45)); }
+#s6.on .done svg { animation: iconIn .8s var(--spring) .1s backwards; }
+#s6 .madeby { position: absolute; left: 0; right: 0; bottom: 64px; }
+#dots { top: auto; bottom: 54px; }
+
+/* ============ Settings rows with icons, and the page icon on the left ============ */
+.sr .sic { width: 48px; height: 48px; border-radius: 13px; display: grid; place-items: center; flex: none; margin-right: 22px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(0,0,0,.25); }
+.sr .sic svg { width: 30px; height: 30px; }
+.sr .sic.emo { font-size: 30px; line-height: 1; }
+.sr .sic.img { background-size: cover; background-position: center; }
+.sr .t { flex: 1; min-width: 0; }
+.sr .t small { display: block; font-size: 18px; font-weight: 400; color: rgba(255,255,255,.55); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr.two { height: 92px; }
+.sr .v { margin-left: 16px; white-space: nowrap; }
+.sr .ck { width: 30px; height: 30px; color: #0a84ff; margin-left: 14px; }
+#tvset.on .sr.focus .t small { color: rgba(0,0,0,.5); }
+#tvset .left b { display: block; font-size: 44px; font-weight: 650; letter-spacing: -.8px; margin-top: 36px; }
+#tvset .left small { font-size: 22px; color: rgba(255,255,255,.55); margin-top: 6px; min-height: 26px; }
+#tvset .bigicon.col svg { width: 210px; height: 210px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.2)); }
+#tvset .left.pop .bigicon { animation: iconIn .7s var(--spring) backwards; }
+#tvset .left.pop b, #tvset .left.pop small { animation: riseIn .55s var(--ease) .05s backwards; }
+
+/* ============ v12: wallpapers with the clock behind the scenery ============ */
+.s-luna .gclock { top: 15.5rem; font-size: 22rem; } #date.d-luna { top: 12.4rem; }
+.s-titicaca .gclock { top: 16.5rem; font-size: 22rem; } #date.d-titicaca { top: 13.4rem; }
+.s-louise .gclock { top: 5rem; font-size: 22rem; } #date.d-louise { top: 2.2rem; }
+.s-luna .gclock, .s-titicaca .gclock { filter: drop-shadow(0 4px 24px rgba(0,25,50,.35)) drop-shadow(0 0 2px rgba(0,0,0,.18)); }
+.s-luna .gclock .rim, .s-titicaca .gclock .rim { color: rgba(255,255,255,.3); -webkit-text-stroke: 2.5px rgba(255,255,255,.88); }
+.s-luna .gclock .fill { filter: brightness(1.18) saturate(1.15); }
+
+/* ============ setup: dark, everything centred ============ */
+#setup .bgimg { filter: blur(44px) brightness(.26) saturate(1.15); }
+#setup .stack { justify-items: stretch; }
+#setup .opt { width: 100%; min-height: 92px; justify-content: center; text-align: center; position: relative; padding: 16px 70px; }
+#setup .opt.glass { background: rgba(44,44,48,.82); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 12px 30px rgba(0,0,0,.25); -webkit-backdrop-filter: none; backdrop-filter: none; }
+#setup .opt.focus { background: #fff; color: #111; }
+#setup .opt .ot { flex: none; }
+#setup .opt .ck { position: absolute; right: 28px; top: 50%; margin-top: -16px; }
+#setup #nameIn { text-align: center; }
+#s0 .stack, #s6 .stack { width: 540px; }
+#s0 .stack .opt, #s6 .stack .opt { min-height: 86px; }
+
+/* ============ Settings: sidebar and page ============ */
+#tvset .wash { background: rgba(14,14,18,.62); -webkit-backdrop-filter: blur(70px) saturate(150%); backdrop-filter: blur(70px) saturate(150%); }
+#setSide { position: absolute; left: 0; top: 0; bottom: 0; width: 640px; padding: 50px 44px 40px 56px; overflow: hidden;
+  border-right: 1px solid rgba(255,255,255,.1); transform: translateX(-40px); opacity: 0; transition: transform .8s var(--ease), opacity .45s var(--ease); }
+#tvset.on #setSide { transform: none; opacity: 1; }
+.sbsearch { display: flex; align-items: center; gap: 14px; height: 62px; padding: 0 22px; border-radius: 18px; font-size: 24px; color: rgba(255,255,255,.6);
+  background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: background .25s, color .25s, transform .45s var(--lift); }
+.sbsearch svg { width: 24px; height: 24px; }
+.sbcard { display: flex; align-items: center; gap: 22px; margin: 22px 0 8px; padding: 14px 16px; border-radius: 22px; transition: background .25s, color .25s, transform .45s var(--lift); }
+.sbcard .avatar { width: 82px; height: 82px; font-size: 46px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.sbcard b { display: block; font-size: 29px; font-weight: 650; letter-spacing: -.3px; }
+.sbcard small { display: block; font-size: 19px; color: rgba(255,255,255,.55); margin-top: 3px; }
+.sb { display: flex; align-items: center; gap: 18px; height: 58px; padding: 0 14px; border-radius: 16px; font-size: 25px; font-weight: 500;
+  transition: background .25s, color .25s, transform .45s var(--lift); }
+.sb .sic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+.sb .sic svg { width: 25px; height: 25px; }
+.sbgap { display: block; height: 16px; }
+#setSide .cur { background: rgba(255,255,255,.12); }
+#setSide .focus { background: #fff; color: #111; transform: scale(1.03); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+#setSide .focus small, #setSide .sbsearch.focus { color: rgba(0,0,0,.55); }
+#tvset .list { left: 640px; right: 0; top: 0; bottom: 0; padding: 56px 80px 80px 70px; overflow: hidden; }
+#tvset h2 { font-size: 46px; font-weight: 700; letter-spacing: -.8px; margin: 0 0 26px 6px; }
+#tvset h5 { margin: 26px 0 10px 12px; }
+.sr { height: 76px; border-radius: 20px; background: rgba(255,255,255,.08); margin-bottom: 10px; padding: 0 28px; }
+.sr.two { height: 92px; }
+#tvset.on .sr.focus { background: #fff; transform: scale(1.025); box-shadow: 0 14px 34px rgba(0,0,0,.32); }
+#setList .sic { width: 54px; height: 34px; border-radius: 8px; margin-right: 20px; }
+#setList .sic.emo { width: 44px; height: 44px; border-radius: 50%; font-size: 26px; }
+.sr.danger .t { color: #ff6961; } #tvset.on .sr.danger.focus .t { color: #d70015; }
+#tvset .foot { margin: 20px 12px 0; }
+
+/* ============ Low-End TV Mode: no live blur, no tilt, shorter fades ============ */
+#stage.lite .glass, #stage.lite .lg, #stage.lite #band, #stage.lite .wash, #stage.lite #toast, #stage.lite #menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+#stage.lite .glass, #stage.lite #menu, #stage.lite #toast { background: rgba(34,34,40,.9) !important; }
+#stage.lite .lg { background: rgba(40,40,46,.92) !important; }
+#stage.lite #band { background: rgba(28,28,34,.72) !important; }
+#stage.lite .wash { background: rgba(10,10,14,.93) !important; }
+#stage.lite.deep #scenes, #stage.lite.wxon #scenes, #stage.lite.recon #scenes, #stage.lite.seton #scenes { filter: brightness(.4) !important; transform: none !important; }
+#stage.lite #home.wxon, #stage.lite.seton #home, #stage.lite.wxon #home, #stage.lite.recon #home { filter: none !important; }
+#stage.lite .gclock { filter: none !important; }
+#stage.lite .tile .gloss { display: none; }
+#stage.lite .tile.focus .face { transform: scale(1.12) !important; }
+#stage.lite .tile.focus .art { transform: none; }
+#stage.lite .scene { transition-duration: .6s; }
+
 /* greeting and weather over the date */
 #date .g { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 4px; font-size: 24px; font-weight: 500; opacity: .85; }
 #date .wx { font-weight: 400; opacity: .85; }
@@ -559,6 +687,74 @@ body.bare #hint { display: none; }
 .ccwide .tm { margin-left: auto; text-align: right; }
 #ccLabel { top: 0; padding: 8px 18px; border-radius: 99px; background: rgba(20,20,26,.6); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); z-index: 3; width: auto !important; }
 #ccBt.on .gl { color: #3a9bff; }
+
+/* the hint shows briefly, then gets out of the clock's way */
+#home.top #hint { animation: hintOut 6s var(--ease) forwards; }
+@keyframes hintOut { 0%, 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ============ v13: smooth, no see-through glass during any transition ============
+   A blurred glass panel only blurs what is inside its nearest faded (opacity < 1) or filtered ancestor.
+   So containers never fade: Home stays opaque under the overlays, and only the items themselves fade. */
+#home.hidden { opacity: 1; }
+#stage.seton #home, #stage.wxon #home, #stage.recon #home { opacity: 1 !important; filter: none !important; transform: scale(.97); }
+#stage.ccon #home { filter: none; }
+#bar { opacity: 1 !important; }
+#bar > * { opacity: 0; transition: opacity .45s var(--ease), transform .5s var(--lift), background .25s, color .25s, box-shadow .3s; }
+#home.bar #bar > * { opacity: 1; }
+#cw, #cw.swap, #cw.none, #home.deep #cw { opacity: 1 !important; }
+#cw h3 { transition: opacity .3s var(--ease); }
+#cw.swap .cw, #cw.swap h3, #cw.none .cw, #cw.none h3, #home.deep #cw .cw, #home.deep #cw h3, #home.full #cw .cw, #home.full #cw h3 { opacity: 0; pointer-events: none; }
+#home.full #hint { opacity: 0 !important; }
+#wxDays, #rtrack, #wx .now { opacity: 1 !important; }
+#wx:not(.on) .wd, #recents:not(.on) .rcard, #wx:not(.on) .now { opacity: 0; transform: translateY(30px) scale(.97); transition: opacity .3s var(--ease), transform .45s var(--ease); }
+.step { opacity: 1 !important; }
+.step :is(h1, p, #hello, .opt, .emo, .look, .done, .madeby) { transition: opacity .5s var(--ease), transform .5s var(--lift), background .3s var(--ease), color .25s, box-shadow .35s; }
+.step:not(.on) :is(h1, p, #hello, .opt, .emo, .look, .done, .madeby) { opacity: 0; }
+#setup { opacity: 1 !important; }
+#setup .bgimg, #dots { transition: opacity .8s var(--ease); }
+#setup:not(.on) :is(.bgimg, #dots, h1, p, #hello, .opt, .emo, .look, .done, .madeby) { opacity: 0 !important; }
+
+/* ============ clock: always centred, placement per wallpaper ============ */
+.scene .gclock { left: 0 !important; right: 0 !important; text-align: center !important; }
+#date { left: 0 !important; text-align: center !important; top: 98px; }
+.scene .gclock .rim { color: rgba(255,255,255,.34); -webkit-text-stroke: 2.5px rgba(255,255,255,.9); }
+.scene .gclock { filter: drop-shadow(0 4px 26px rgba(0,20,45,.38)) drop-shadow(0 0 2px rgba(0,0,0,.2)); }
+
+/* ============ wallpapers change with a long, quiet crossfade and a gentle settle ============ */
+.scene { transform: scale(1.035); transition: opacity 2.8s cubic-bezier(.45,0,.2,1), transform 10s cubic-bezier(.2,.7,.2,1); }
+.scene.on { transform: scale(1); }
+#stage.lite .scene { transform: none; transition: opacity 1s ease; }
+
+/* ============ setup rows use the chosen glass ============ */
+#stage.g-liquid { --sopt: linear-gradient(160deg, rgba(255,255,255,.2), rgba(255,255,255,.06)); }
+#stage.g-frosted { --sopt: linear-gradient(160deg, rgba(255,255,255,.36), rgba(255,255,255,.2)); }
+#stage.g-dark { --sopt: rgba(26,26,30,.92); }
+#setup .bgimg { filter: blur(44px) brightness(.34) saturate(1.2); }
+#setup .opt.glass { background: var(--sopt) !important; -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), inset 0 1.5px 0 rgba(255,255,255,.35), 0 14px 34px rgba(0,0,0,.28); }
+#setup .opt.glass.focus { background: #fff !important; box-shadow: 0 18px 44px rgba(0,0,0,.3); }
+#stage.lite #setup .opt.glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ============ kids ============ */
+.tile .kb { position: absolute; right: 10px; bottom: 9px; padding: 3px 11px; border-radius: 99px; background: #ffd60a; color: #1a1400; font: 700 15px "Inter", sans-serif; letter-spacing: .3px; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+#menu.pinbox { width: 440px; text-align: center; padding: 26px 24px 18px; }
+#menu .pinh { justify-content: center; font-size: 28px; }
+.pindots { display: flex; justify-content: center; gap: 18px; margin: 8px 0 20px; }
+.pindots i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); transition: background .2s, transform .3s var(--lift); }
+.pindots i.on { background: #fff; transform: scale(1.1); }
+.pindots.shake { animation: shake .4s ease; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+.pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pk { height: 72px; border-radius: 22px; display: grid; place-items: center; font-size: 30px; font-weight: 500; background: rgba(255,255,255,.12); transition: background .2s, color .2s, transform .35s var(--lift); }
+.pk.focus { background: #fff; color: #111; transform: scale(1.08); }
+.pinhint { margin: 14px 0 0; font-size: 17px; color: rgba(255,255,255,.5); }
+
+/* wallpaper picker: all six fit on screen, each thumbnail's clock placed like its wallpaper */
+#looks { gap: 26px; justify-content: center; }
+.look { width: 272px; height: 153px; }
+.look .clip { border-radius: 26px; }
+.look .mini { font-size: var(--ms, 56px); top: var(--mt, 22px); color: rgba(255,255,255,.92); }
+.look span { font-size: 20px; }
 
 /* ============ app launch, screen saver, power off, toast ============ */
 #launch { position: absolute; z-index: 20; border-radius: 24px; overflow: hidden; opacity: 0; pointer-events: none; background: var(--bg); }
@@ -641,7 +837,7 @@ body.bare #hint { display: none; }
   </div>
 
   <div id="tvset"><div class="wash"></div>
-    <div class="left"><div class="bigicon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.9a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.5 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.9a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div><b>Settings</b></div>
+    <div id="setSide"></div>
     <div class="list" id="setList"></div>
   </div>
 
@@ -656,31 +852,29 @@ body.bare #hint { display: none; }
   <div id="wx"><div class="wash"></div><div class="now"></div><div id="wxDays"></div></div>
 
   <div id="setup" class="on">
-    <img class="bgimg" src="demo/scenes/scene-golden.jpg" alt="">
+    <img class="bgimg" src="demo/wallpapers/ossau.jpg" alt="">
+    <div class="step on" id="s0"><div id="hello"></div><p>Welcome to PureTV for your TV.</p>
+      <div class="stack"><div class="opt glass" data-f data-next><div class="ot">Get Started<small>Set up your Home screen</small></div></div></div>
+      <div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div></div>
+    <div class="step" id="s1"><h1>Create Your Profile</h1><p>Your name and avatar appear on the Home screen and in Control Center.</p>
+      <div class="stack">
+        <div class="opt glass" data-f data-name><div class="ot">Name<small id="nameV"></small><input id="nameIn" maxlength="24" autocomplete="off" spellcheck="false"></div></div>
+        <div id="emojis"></div>
+        <div class="opt glass" data-f data-next><div class="ot">Continue</div></div>
+      </div></div>
+    <div class="step" id="s2"><h1>Look &amp; Style</h1><p>Choose the glass for menus, panels and Control Center.</p>
+      <div class="stack" id="styles"></div></div>
+    <div class="step" id="s3"><h1>Weather</h1><p>A small weather reading on the Home screen, with a five-day forecast.</p>
+      <div class="stack" id="wxopts"></div></div>
+    <div class="step" id="s4"><h1>Choose a Wallpaper</h1><p>Your clock sits behind the scenery. Wallpapers change every 20 seconds.</p><div id="looks"></div></div>
+    <div class="step" id="s5"><h1>Home Screen &amp; Remote</h1><p>Make PureTV what the Home button opens. Google TV stays on your TV, so you can go back any time. Your apps, sign-ins and data are not touched.</p>
+      <div class="stack" id="homeopts"></div></div>
+    <div class="step" id="s6"><div class="done"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#30d158"/><path d="M6.5 12.5l3.5 3.5 7.5-8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>You're All Set</h1><p>Change any of this in Settings, or run setup again from there.</p>
+      <div class="stack"><div class="opt glass" data-f data-next><div class="ot">Go to Home Screen</div></div></div>
+      <div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div></div>
     <div id="dots"></div>
-    <div class="step on" id="s0"><div id="hello"></div><p>Let's make this TV quiet, fast and yours.<br>Nothing changes until the last step, and everything can be undone.</p><div class="btn glass" data-f data-next>Get Started</div><div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div></div>
-    <div class="step" id="s1">
-      <div class="tvcard glass"><div class="tvicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8"/></svg></div>
-        <div><small>Connected</small><b>Acer AR32HDIGU2841AT</b><i>Google TV 14 · Realtek RTD2841A · 1.5 GB RAM · build UKR1.260612</i></div></div>
-      <div class="facts">
-        <div class="fact glass"><b>24 packages</b><span>on the tested list for this exact model</span></div>
-        <div class="fact glass"><b>Backup first</b><span>every app's state, Home and settings are saved before any change</span></div>
-        <div class="fact glass"><b>Nothing deleted</b><span>apps are switched off, never uninstalled, and Restore puts them back</span></div>
-      </div>
-      <p class="src">List: cleanyourtv · examples/acer-ar32hdigu2841at, tested by its owner on this model</p>
-      <div class="btn glass" data-f data-next>Continue</div></div>
-    <div class="step" id="s2"><h1>Which of These Do You Use?</h1><p>Keep what you use. What you switch off is disabled, not deleted.</p><div id="uses" class="glass"></div><div class="btn glass" data-f data-next>Continue</div></div>
-    <div class="step" id="s3"><h1>Switched Off for You</h1><p>Turn one off to keep it on your TV. The locked ones are never touched.</p><div id="groups"></div><div class="btn glass" data-f data-next>Continue</div></div>
-    <div class="step" id="s4"><h1>Your Top Row</h1><p>How many apps, and in which order. Pick them in the order you want them.</p><div id="sizes" class="glass"></div><div id="pick"></div><div class="btn glass" data-f data-next>Continue</div></div>
-    <div class="step" id="s5"><h1>Block Ads Inside Apps?</h1><p>Optional. Uses Android's own Private DNS setting.</p><div id="dns"></div><div class="btn glass" data-f data-next>Continue</div></div>
-    <div class="step" id="s6"><h1>Choose a Look</h1><p>Your clock sits behind the scenery. Scenes change every 20 seconds.</p><div id="looks"></div></div>
-    <div class="step" id="s7">
-      <svg id="ring" viewBox="0 0 210 210"><circle cx="105" cy="105" r="92" stroke="rgba(255,255,255,.15)"/><circle id="prog" cx="105" cy="105" r="92" stroke="#fff" stroke-dasharray="578" stroke-dashoffset="578"/>
-        <g id="ringDone"><circle cx="105" cy="105" r="72"/><path d="M74 107l21 21 43-46" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g></svg>
-      <h1 id="cleanTitle">Cleaning Your TV</h1><div id="tasks"></div><div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div>
-    </div>
   </div>
-
 
   <div id="launch"><img alt=""><div class="bar"><i></i></div><div class="note">Demo · press Back to return Home</div></div>
   <div id="off"><span>Press any key to turn the TV on</span></div>
@@ -696,20 +890,22 @@ addEventListener("resize", fit); fit();
 
 /* ---------- top shelf scenes (couch-tv: photo, cut-out foreground, blurred glass copy for the clock) ---------- */
 const SCENES = [
-  { id: "night", name: "Night", fg: true }, { id: "golden", name: "Golden Hour", fg: true }, { id: "water", name: "Waterline", fg: false },
-  { id: "fog", name: "Fog", fg: true }, { id: "dawn", name: "Dawn", fg: true },
+  { id: "ossau", name: "Ossau", fg: true, top: 154, size: 400 }, { id: "flatirons", name: "Flatirons", fg: true, top: 150, size: 352 },
+  { id: "luna", name: "Valle de la Luna", fg: true, top: 246, size: 400 }, { id: "kathleen", name: "Kathleen Lake", fg: true, top: 174, size: 400 },
+  { id: "titicaca", name: "Titicaca Sunrise", fg: true, top: 246, size: 400 }, { id: "louise", name: "Lake Louise", fg: true, top: 114, size: 400 },
 ];
-const P = (id, k = "") => `demo/scenes/scene-${id}${k}`;
+const P = (id, k = "") => `demo/wallpapers/${id}${k}`;
+let rotate = true, cwOn = true, reduceMotion = false;
 $("#scenes").innerHTML = SCENES.map((s) => `<div class="scene s-${s.id}"><img class="sbg" src="${P(s.id, ".jpg")}" alt="">
-  <div class="gclock"><span class="fill" style="background-image:url(${P(s.id, "-glass.jpg")})"></span><span class="rim"></span><span class="sheen"></span></div>
-  ${s.fg ? `<img class="fg" src="${P(s.id, "-fg.webp")}" alt="">` : ""}<div class="shade"></div></div>`).join("");
+  <div class="gclock" style="top:${s.top}px;font-size:${s.size}px"><span class="fill" style="background-image:url(${P(s.id, "-glass.jpg")})"></span><span class="rim"></span><span class="sheen"></span></div>
+  ${s.fg ? `<img class="fg" src="${P(s.id, "-fg.png")}" alt="">` : ""}<div class="shade"></div></div>`).join("");
 let scene = 0, sceneTimer, saver = false, launched = false, full = false, poweredOff = false;
 function showScene(i) {
   scene = (i + SCENES.length) % SCENES.length;
   $$(".scene").forEach((e, k) => e.classList.toggle("on", k === scene));
   const d = $("#date"); d.classList.add("swap");
-  setTimeout(() => { d.className = "d-" + SCENES[scene].id; }, 500);
-  clearInterval(sceneTimer); sceneTimer = setInterval(() => showScene(scene + 1), saver ? 9000 : 20000);
+  setTimeout(() => { d.className = "d-" + SCENES[scene].id; d.style.top = Math.max(SCENES[scene].top - 56, 96) + "px"; }, 900);
+  clearInterval(sceneTimer); if (rotate || saver) sceneTimer = setInterval(() => showScene(scene + 1), saver ? 9000 : 20000);
   if ($("#tvset").classList.contains("on")) renderSettings();
 }
 function alignGlass() { $$(".gclock").forEach((g) => { const f = $(".fill", g); f.style.backgroundPosition = `${-(g.offsetLeft + f.offsetLeft)}px ${-(g.offsetTop + f.offsetTop)}px`; }); }
@@ -717,23 +913,22 @@ function tick() {
   const n = new Date(), t = `${n.getHours() % 12 || 12}:${String(n.getMinutes()).padStart(2, "0")}`;
   $$(".gclock").forEach((g) => { if (g.dataset.t !== t) { g.dataset.t = t; $$("span", g).forEach((s) => s.textContent = t); } });
   const h = n.getHours(), greet = h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 22 ? "Good evening" : "Good night";
-  $("#date").innerHTML = `<div class="g">${greet}, ${PROFILES[prof].name}</div>${n.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}<span class="wx">${wxIcon(WX.now[1])}${WX.now[0]}° ${WX.now[2]}</span>`;
+  $("#date").innerHTML = `<div class="g">${greet}, ${PROFILES[prof].name}</div>${n.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}${wxMode === "off" ? "" : `<span class="wx">${wxIcon(WX.now[1])}${WX.now[0]}° ${WX.now[2]}</span>`}`;
+  $("#bWx").style.display = wxMode === "off" ? "none" : "";
   $("#ccWxT").textContent = WX.now[0] + "°"; $("#ccWxC").textContent = `${WX.now[2]} · H ${WX.days[0][1]}° L ${WX.days[0][2]}°`; $("#ccWxTm").textContent = WX.days[1][1] + "°";
   $("#ccTime").textContent = n.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   $$(".look .mini").forEach((m) => m.textContent = t);
   alignGlass();
 }
 
-/* ---------- Google TV profiles: Google TV's own (Android users); PureTV shows them and asks Google TV to switch ---------- */
+/* ---------- profiles: PureTV's own. Each has its own top row, hidden apps and Continue Watching ---------- */
 const PROFILES = [
-  { name: "Profile 1", init: "P1", bg: "linear-gradient(140deg,#ffd3a5,#fd6585)", mail: "you@example.com" },
-  { name: "Profile 2", init: "P2", bg: "linear-gradient(140deg,#a1c4fd,#c2e9fb)", mail: "family@example.com" },
-  { name: "Kids", init: "K", bg: "linear-gradient(140deg,#d4fc79,#96e6a1)", mail: "Supervised by Profile 1" },
+  { name: "Alex", emoji: "🦊", bg: "#ff9f0a" }, { name: "Family", emoji: "🐼", bg: "#d1d1d6" }, { name: "Kids", emoji: "🐯", bg: "#ff9500", kids: true },
 ];
 let prof = 0;
-const avatar = (p, cls = "") => `<div class="avatar ${cls}" style="background:${p.bg}">${p.init}</div>`;
+const avatar = (p, cls = "") => `<div class="avatar emo ${cls}" style="background:${p.bg}">${p.emoji}</div>`;
 function renderAvatar() {
-  const a = $("#ccAvatar"); a.style.background = PROFILES[prof].bg; a.textContent = PROFILES[prof].init;
+  const a = $("#ccAvatar"); a.style.background = PROFILES[prof].bg; a.textContent = PROFILES[prof].emoji;
   $("#bProf").innerHTML = avatar(PROFILES[prof]) + PROFILES[prof].name;
   if (typeof WX !== "undefined") $("#bWx").innerHTML = wxIcon(WX.now[1]) + WX.now[0] + "°";
 }
@@ -761,10 +956,20 @@ function gearSVG(kind) {   // "metal": the tvOS Settings icon's grey gear; "mono
   return `<svg viewBox="0 0 100 100"><defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#868c98"/><stop offset="1" stop-color="#3b4049"/></linearGradient></defs>`
     + `<path fill="url(#gm)" fill-rule="evenodd" d="${d}"/><circle cx="50" cy="50" r="26" fill="none" stroke="#5a606b" stroke-width="3"/><circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1" transform="translate(0 1)"/></svg>`;
 }
-const GEAR = gearSVG("metal");
+function gearIOS() {
+  const teeth = gearPath(36, 45, 40.5, 0).replace(/ZM[\s\S]*$/, "Z"), sp = (a) => { const r = a * Math.PI / 180; return `M50,50L${(50 + 25 * Math.cos(r)).toFixed(2)},${(50 + 25 * Math.sin(r)).toFixed(2)}`; };
+  return `<svg viewBox="0 0 100 100"><defs><linearGradient id="gio" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70747c"/><stop offset="1" stop-color="#33363c"/></linearGradient>`
+    + `<linearGradient id="gif" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9ebee"/><stop offset="1" stop-color="#b9bdc4"/></linearGradient></defs>`
+    + `<path fill="url(#gio)" d="${teeth}"/><circle cx="50" cy="50" r="33.5" fill="url(#gif)"/>`
+    + `<circle cx="50" cy="50" r="26" fill="none" stroke="url(#gio)" stroke-width="4.2"/>`
+    + `<path d="${sp(-90)}${sp(30)}${sp(150)}" stroke="url(#gio)" stroke-width="5.2" stroke-linecap="round"/>`
+    + `<circle cx="50" cy="50" r="8" fill="url(#gio)"/><circle cx="50" cy="50" r="3" fill="#d6d9de"/></svg>`;
+}
+const GEAR = gearIOS();
 const SYS = {
-  settings: ["Settings", "linear-gradient(180deg,#f5f6f8 0%,#dfe2e7 50%,#bcc1ca 100%)", GEAR],
+  settings: ["Settings", "linear-gradient(180deg,#e4e6ea 0%,#a9adb5 100%)", GEAR],
   inputs: ["Inputs", "linear-gradient(160deg,#4b5563,#1f2937)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 10.5h6M12.5 8l2.5 2.5-2.5 2.5"/></svg>'],
+  parents: ["Parents", "linear-gradient(180deg,#ffd36a,#f0a020)", '<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 10V7.5a5 5 0 0 1 10 0V10h.8c.7 0 1.2.5 1.2 1.2v8.6c0 .7-.5 1.2-1.2 1.2H6.2C5.5 21 5 20.5 5 19.8v-8.6c0-.7.5-1.2 1.2-1.2zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0z"/></svg>'],
   search: ["Search", "linear-gradient(180deg,#9aa0ab,#5f6571)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>'],
 };
 let dockSize = 5, topRow = APPS.slice(0, 5).map((a) => a.pkg);
@@ -773,7 +978,7 @@ const artHTML = (a) => `<img class="art" src="demo/icons-tv/${a.pkg}.jpg" alt=""
 function tileEl(a, i, extra = "") {
   const t = document.createElement("div"); t.className = "tile"; t.dataset.f = ""; t.style.setProperty("--i", i);
   if (a.sys) { const [n, bg, ic] = SYS[a.sys]; t.dataset.act = a.sys; t.innerHTML = `<div class="face" style="--bg:${bg}"><div class="sys${a.sys === "settings" ? " sysgear" : ""}">${ic}</div><div class="gloss"></div></div><div class="name">${n}</div>`; }
-  else { t.dataset.app = a.pkg; t.innerHTML = `<div class="face" style="--bg:${a.bg}">${artHTML(a)}<div class="gloss"></div></div><div class="name">${a.name}</div>${extra}`; }
+  else { t.dataset.app = a.pkg; t.innerHTML = `<div class="face" style="--bg:${a.bg}">${artHTML(a)}<div class="gloss"></div>${extra}</div><div class="name">${isKids() && KIDS[a.pkg] ? KIDS[a.pkg] : a.name}</div>`; }
   return t;
 }
 /* geometry follows the top row's size, like tvOS: wide 5:3 icons, the next row peeking under the glass */
@@ -787,10 +992,11 @@ function buildHome() {
   $("#cw").style.top = bandTop - 212 + "px"; $("#hint").style.top = bandTop - 290 + "px";
   renderCW();
   const r1 = $("#row1"), g = $("#grid"); r1.replaceChildren(); g.replaceChildren();
-  const first = topRow.filter((p) => !hidden.has(p)).slice(0, dockSize).map(app);
-  first.forEach((a, i) => r1.append(tileEl(a, i)));
-  r1.append(tileEl({ sys: "settings" }, first.length));
-  const rest = APPS.filter((a) => !first.includes(a) && !hidden.has(a.pkg));
+  const kids = isKids();
+  const first = kids ? Object.keys(KIDS).map(app) : topRow.filter((p) => !hidden.has(p)).slice(0, dockSize).map(app);
+  first.forEach((a, i) => r1.append(tileEl(a, i, kids ? '<span class="kb">Kids</span>' : "")));
+  r1.append(tileEl({ sys: kids ? "parents" : "settings" }, first.length));
+  const rest = kids ? [] : APPS.filter((a) => !first.includes(a) && !hidden.has(a.pkg));
   rest.forEach((a, i) => g.append(tileEl(a, i + cols)));
   g.append(tileEl({ sys: "search" }, rest.length + cols), tileEl({ sys: "inputs" }, rest.length + cols + 1));
 }
@@ -804,6 +1010,7 @@ function focus(el) {
   if (!el) return;
   if (cur && cur !== el) { cur.classList.remove("focus"); ["--rx", "--ry", "--gx", "--gy", "--px", "--py"].forEach((p) => cur.style.removeProperty(p)); }
   cur = el; el.classList.add("focus");
+  if (el.dataset.sb && el.dataset.sb !== "search" && inScope("#tvset")) showPage(el.dataset.sb);
   if (inScope("#home")) {
     const deep = !!el.closest("#grid"), h = $("#home");
     const onBar = !!el.closest("#bar");
@@ -817,7 +1024,7 @@ function focus(el) {
     lab.style.cssText = `left:${row.offsetLeft + el.offsetLeft + el.offsetWidth / 2}px;right:auto;top:${row.offsetTop + el.offsetHeight + 10}px;transform:translateX(-50%);white-space:nowrap`; lab.classList.add("on"); }
   else lab.classList.remove("on");
   if (el.closest("#setList") && el === $("#setList .sr")) $("#setList").scrollTo({ top: 0, behavior: "smooth" });   // first row: the title comes back too
-  else if (el.closest("#setList, #groups .grp")) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  else if (el.closest("#setList, #setSide, #groups .grp")) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   if (el.classList.contains("rcard")) centerCard(el);
 }
 function nudge(dx, dy) {  // the focused tile leans toward the press; at an edge it leans and springs back
@@ -876,8 +1083,8 @@ function openCC() {
 function closeCC() { $("#cc").classList.remove("on"); stage.classList.remove("ccon"); closeCCPage(true); pop(); }
 function openCCPage(kind, from) {
   ccPage = { kind, from }; const pg = $("#ccPage");
-  if (kind === "profiles") pg.innerHTML = `<h3>Who's watching?</h3>` + PROFILES.map((p, i) => `<div class="ccl${i === prof ? " cur" : ""}" data-f data-pick="${i}">${avatar(p)}<div>${p.name}<small>${p.mail}</small></div>${TICK}</div>`).join("")
-    + `<div class="ccl" data-f data-pick="accounts"><div class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-7 8-7s8 2.5 8 7z"/></svg></div><div>Profiles &amp; Accounts<small>Google TV's own screen</small></div></div>`;
+  if (kind === "profiles") pg.innerHTML = `<h3>Who's watching?</h3>` + PROFILES.map((p, i) => `<div class="ccl${i === prof ? " cur" : ""}" data-f data-pick="${i}">${avatar(p)}<div>${p.name}<small>Own top row, apps and Continue Watching</small></div>${TICK}</div>`).join("")
+    + `<div class="ccl" data-f data-pick="accounts"><div class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-7 8-7s8 2.5 8 7z"/></svg></div><div>Manage Profiles<small>Names, avatars, add a profile</small></div></div>`;
   if (kind === "audio") pg.innerHTML = `<h3>Audio Output</h3>` + AUDIO.map(([t, s], i) => `<div class="ccl${i === audioIx ? " cur" : ""}" data-f data-pick="${i}"><div class="ic">${ICON_TV}</div><div>${t}<small>${s}</small></div>${TICK}</div>`).join("");
   if (kind === "inputs") pg.innerHTML = `<h3>Inputs</h3>` + INPUTS.map(([t, s], i) => `<div class="ccl" data-f data-pick="${i}"><div class="ic">${ICON_TV}</div><div>${t}<small>${s}</small></div></div>`).join("");
   $("#ccGrid").classList.add("away"); pg.classList.add("on");
@@ -893,9 +1100,9 @@ function ccSelect(e) {
   if (e.dataset.pick !== undefined) {
     const k = ccPage.kind, v = e.dataset.pick;
     if (k === "profiles") {
-      if (v === "accounts") { closeCC(); return openGtv("accounts"); }
-      const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; renderCW(); closeCCPage();
-      if (prof !== was) toast(`Google TV switches to ${PROFILES[prof].name}: its own accounts, apps and recommendations`);
+      if (v === "accounts") { closeCC(); return openSettingsAt("profile"); }
+      const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; rebuildForProfile(); closeCCPage();
+      if (prof !== was) toast(`Switched to ${PROFILES[prof].name}: own top row, apps and Continue Watching`);
       return;
     }
     if (k === "audio") { audioIx = +v; $("#ccAudioV").textContent = AUDIO[audioIx][0]; return closeCCPage(); }
@@ -911,59 +1118,205 @@ function ccSelect(e) {
   if (c === "sounds") { sounds = !sounds; e.classList.toggle("on", sounds); e.dataset.tip = "UI Sounds: " + (sounds ? "On" : "Off"); focus(e); if (sounds) snd("ok"); return; }
   if (c === "weather") { closeCC(); return openWx(); }
   if (c === "access") { closeCC(); return openGtv("access"); }
-  if (c === "search") { closeCC(); return toast("Opens Google TV's own search, the same as the mic button"); }
+  if (c === "search") { closeCC(); return toast("Opens the TV's voice search, the same as the mic button"); }
   if (c === "saver") { closeCC(); return startSaver(); }
   if (c === "power") { closeCC(); poweredOff = true; return $("#off").classList.add("on"); }
 }
 
 /* ---------- Settings (tvOS layout) ---------- */
+const IC = {
+  appearance: '<circle cx="12" cy="12" r="8.2" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 3.8a8.2 8.2 0 0 1 0 16.4z" fill="#fff"/>',
+  wallpaper: '<rect x="3" y="5" width="18" height="14" rx="2.6" fill="none" stroke="#fff" stroke-width="2"/><path d="M5.2 17.2l4.4-5.4 3.3 3.8 2.4-2.8 3.5 4.4z" fill="#fff"/><circle cx="16" cy="9.2" r="1.6" fill="#fff"/>',
+  dock: '<rect x="3" y="14.5" width="18" height="5.5" rx="2" fill="#fff"/><rect x="4" y="4" width="7" height="7.5" rx="1.8" fill="#fff" opacity=".75"/><rect x="13" y="4" width="7" height="7.5" rx="1.8" fill="#fff" opacity=".75"/>',
+  home: '<path d="M3.8 11.2 12 4l8.2 7.2v8.3c0 .3-.2.5-.5.5H15v-5.8H9V20H4.3a.5.5 0 0 1-.5-.5z" fill="#fff"/>',
+  weather: '<circle cx="8.8" cy="8.8" r="3.3" fill="#fff"/><path d="M8.2 19h9a3.4 3.4 0 0 0 .3-6.8 4.7 4.7 0 0 0-9 1.4A2.7 2.7 0 0 0 8.2 19z" fill="#fff"/>',
+  setup: '<path d="M11 3.5l1.8 5 5 1.8-5 1.8-1.8 5-1.8-5-5-1.8 5-1.8z" fill="#fff"/><path d="M18 14.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" fill="#fff"/>',
+  display: '<rect x="3" y="4.5" width="18" height="12" rx="2.2" fill="none" stroke="#fff" stroke-width="2"/><path d="M8.5 20h7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>',
+  sound: '<path d="M4 9.4h3.4L12 5.6v12.8l-4.6-3.8H4z" fill="#fff"/><path d="M15.4 9.2a4 4 0 0 1 0 5.6M17.9 6.7a7.5 7.5 0 0 1 0 10.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>',
+  network: '<path d="M12 19.6l2.6-3.1a4 4 0 0 0-5.2 0z" fill="#fff"/><path d="M6.4 13.4l1.6 1.9a6.1 6.1 0 0 1 8 0l1.6-1.9a8.6 8.6 0 0 0-11.2 0zM3 9.4l1.6 1.9a11.2 11.2 0 0 1 14.8 0L21 9.4a13.7 13.7 0 0 0-18 0z" fill="#fff"/>',
+  apps: '<rect x="4" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="13" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="4" y="13" width="7" height="7" rx="2" fill="#fff"/><rect x="13" y="13" width="7" height="7" rx="2" fill="#fff"/>',
+  remote: '<rect x="7.5" y="2.5" width="9" height="19" rx="4.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="8" r="2.2" fill="#fff"/><path d="M10.5 13.5h3M10.5 16.5h3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
+  clean: '<path d="M12 3l7 3v5.4c0 4.3-3 7.9-7 9.6-4-1.7-7-5.3-7-9.6V6z" fill="#fff"/><path d="M8.6 12.2l2.4 2.4 4.4-4.8" fill="none" stroke="#1f9d4a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  recheck: '<path d="M19 12a7 7 0 1 1-2.1-5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M19.4 4.2v4.6h-4.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  restore: '<path d="M9 8H15a5 5 0 0 1 0 10h-4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M12 4.6 8.4 8 12 11.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  hidden: '<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="2.6" fill="#fff"/><path d="M4 20 20 4" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>',
+  sounds: '<path d="M12 3.5a5.3 5.3 0 0 0-5.3 5.3v3.4L5 15.4V16.5h14v-1.1l-1.7-3.2V8.8A5.3 5.3 0 0 0 12 3.5z" fill="#fff"/><path d="M10 18.5a2 2 0 0 0 4 0" fill="#fff"/>',
+  updates: '<path d="M12 4v10.5M7.5 10l4.5 4.5 4.5-4.5" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19.5h14" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/>',
+  about: '<circle cx="12" cy="12" r="8.6" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 11v5.6" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.3" fill="#fff"/>',
+  saver: '<path d="M19.6 14.4A8 8 0 0 1 9.6 4.4a8 8 0 1 0 10 10z" fill="#fff"/>',
+  glass: '<path d="M12 3.2s6 6.6 6 10.8a6 6 0 0 1-12 0c0-4.2 6-10.8 6-10.8z" fill="#fff"/><path d="M9.4 14.4a2.8 2.8 0 0 0 2.4 2.7" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.6" stroke-linecap="round"/>',
+  motion: '<circle cx="12" cy="12" r="3" fill="#fff"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 3.4"/>',
+  profile: '<circle cx="12" cy="8.4" r="4" fill="#fff"/><path d="M4.5 20c.6-4.2 3.6-6.4 7.5-6.4s6.9 2.2 7.5 6.4z" fill="#fff"/>',
+  cw: '<rect x="3" y="5" width="18" height="12.5" rx="2.4" fill="none" stroke="#fff" stroke-width="2"/><path d="M10.2 8.7v5.4l4.6-2.7z" fill="#fff"/><path d="M5 20.5h9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>',
+};
+const G2 = (a, b) => `linear-gradient(180deg, ${a}, ${b})`;
+const ICBG = {
+  appearance: G2("#6aa9ff", "#2f63e0"), wallpaper: G2("#5ad4c4", "#14908a"), dock: G2("#5aa2ff", "#1e6be6"), home: G2("#9aa5b8", "#59647a"),
+  weather: G2("#6fd0ff", "#2a8ae6"), setup: G2("#b892ff", "#7447e0"), display: G2("#57a8ff", "#1c64d6"), sound: G2("#ff7474", "#e0303f"),
+  network: G2("#57a8ff", "#1c64d6"), apps: G2("#ae92ff", "#6c47e0"), remote: G2("#767c88", "#3c414b"), clean: G2("#6ae087", "#27a446"),
+  recheck: G2("#6ae087", "#27a446"), restore: G2("#ff8576", "#e0402f"), hidden: G2("#9aa0ab", "#5f6571"), sounds: G2("#ff76a6", "#e0306a"),
+  updates: G2("#9aa0ab", "#5f6571"), about: G2("#9aa0ab", "#5f6571"), saver: G2("#7d86ff", "#4b4fe0"), glass: G2("#7fd8ff", "#2aa4e6"),
+  motion: G2("#9aa0ab", "#5f6571"), profile: G2("#ffb35c", "#f07d14"), cw: G2("#ff7a6b", "#e0402f"),
+};
 const CHEV = '<svg class="chev" viewBox="0 0 10 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 7-6 7"/></svg>';
-function renderSettings() {
-  const rows = [
-    [null, "Top Row", `${dockSize} apps`, "dock"], [null, "Scene", SCENES[scene].name, "scene"], [null, "Screen Saver", "Start", "saver"],
-    ["Clean Up", "What's Switched Off", String(offList().length), "review"], [null, "Apps You Use", "", "uses"], [null, "Check After an Update", "", "recheck"], [null, "Restore Original TV", "", "restore", "danger"],
-    ["Apps", "Hidden Apps", hidden.size ? `${hidden.size} hidden` : "None", "hidden"], [null, "UI Sounds", sounds ? "On" : "Off", "sounds"],
-    ["Google TV", "Profiles & Accounts", `${PROFILES.length} profiles`, "accounts"], [null, "Google TV Settings", "", "gtv"],
-    ["System", "Software Updates", upd.state === "available" ? "Update available" : `Version ${VERSION}`, "updates"], [null, "About", `PureTV ${VERSION}`, "about"],
-  ];
-  if (setLevel === "updates") return renderUpdates();
-  if (setLevel === "about") return renderAbout();
-  const had = cur && cur.dataset.set; let d = 0;
-  $("#setList").innerHTML = `<h2>Settings</h2>` + rows.map(([h, t, v, act, cls]) => `${h ? `<h5>${h}</h5>` : ""}<div class="sr ${cls || ""}" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("");
-  if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
+const CK = '<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+IC.bluetooth = '<path d="M7.5 7.5l9 9-4.5 4V3.5l4.5 4-9 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+ICBG.bluetooth = G2("#57a8ff", "#1c64d6");
+IC.googletv = '<rect x="3.5" y="5" width="17" height="11.5" rx="2.2" fill="none" stroke="#fff" stroke-width="2"/><path d="M8.5 20h7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M10 13.5l-2-2.5 2-2.5M8 11h6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
+ICBG.googletv = G2("#8e98ab", "#4f5869");
+const onOff = (b) => b ? "On" : "Off";
+const styleName = () => (STYLES.find((x) => x[0] === glassMode) || STYLES[0])[1];
+const wxLabel = () => wxMode === "off" ? "Off" : wxMode === "city" ? CITIES[city] : "My Location";
+const possessive = (n) => /s$/i.test(n) ? `${n}'` : `${n}'s`;
+let liteMode = "auto", lastBackup = "Today, 9:41", armed = null;
+const autoLite = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 2;
+const liteOn = () => liteMode === "on" || (liteMode === "auto" && autoLite);
+const liteLabel = () => liteMode === "auto" ? `Auto (${onOff(autoLite)})` : onOff(liteMode === "on");
+function applyLite() { stage.classList.toggle("lite", liteOn()); }
+const SIDE = [
+  null, { k: "network", t: "Wi-Fi", icon: "network" }, { k: "bluetooth", t: "Bluetooth", icon: "bluetooth" }, { k: "display", t: "Display & Sound", icon: "display" },
+  null, { k: "homescreen", t: "Home Screen", icon: "dock" }, { k: "appearance", t: "Appearance", icon: "appearance" }, { k: "wallpaper", t: "Wallpaper", icon: "wallpaper" },
+  { k: "weather", t: "Weather", icon: "weather" }, { k: "saverpg", t: "Screen Saver", icon: "saver" },
+  null, { k: "switched", t: "Clean Up", icon: "clean" }, { k: "googletv", t: "Google TV", icon: "googletv" }, { k: "updates", t: "Software Updates", icon: "updates" }, { k: "about", t: "About", icon: "about" },
+];
+const PAGES = {
+  profile: { title: "Profile & Backup", groups: () => [
+    ["Who's Watching", PROFILES.map((p, i) => ({ k: "p" + i, emoji: p, t: p.name, check: i === prof, act: "prof", arg: i }))],
+    ["This Profile", [{ k: "pname", t: "Name", v: PROFILES[prof].name, act: "pname" }, { k: "pemoji", emoji: PROFILES[prof], t: "Avatar", v: "Change", act: "pemoji" }, { k: "padd", t: "Add Profile", act: "padd" }]],
+    ["Backup", [{ k: "bnow", t: "Back Up Now", v: lastBackup, act: "backup" }, { k: "brestore", t: "Restore from Backup", act: "brestore" }]]],
+    foot: "Backups hold your profiles, top row, hidden apps and settings. They are kept on the TV and on your computer." },
+  network: { title: "Wi-Fi", groups: () => [[null, [{ k: "wifion", t: "Wi-Fi", v: "On", act: "tv", arg: "network" }, { k: "ssid", t: "Home WiFi", sub: "Connected", check: true, act: "tv", arg: "network" }, { k: "other", t: "Other Networks…", go: null, act: "tv", arg: "network" }]]] },
+  bluetooth: { title: "Bluetooth", groups: () => [[null, [{ k: "remote", t: "Remote", sub: "Connected", v: "86%", act: "tv", arg: "settings" }, { k: "pair", t: "Pair a Remote or Accessory", act: "tv", arg: "settings" }]]] },
+  display: { title: "Display & Sound", groups: () => [[null, [{ k: "pic", t: "Picture", v: "Standard", act: "tv", arg: "display" }, { k: "snd", t: "Sound", v: "TV Speakers", act: "tv", arg: "sound" }, { k: "tvapps", t: "Apps", act: "tv", arg: "apps" }]]] },
+  homescreen: { title: "Home Screen", groups: () => [
+    ["Shelf", [{ k: "shelf-cw", t: "Continue Watching", sub: "From the app you are on, above the top row", check: cwOn, act: "shelf", arg: true }, { k: "shelf-off", t: "Off", check: !cwOn, act: "shelf", arg: false }]],
+    ["Apps", [{ k: "dock", t: "Apps in the Top Row", v: `${dockSize}`, go: "dock" }, { k: "arrange", t: "Move or Hide Apps", v: "Hold OK on an app", act: "arrange" }, { k: "hidden", t: "Hidden Apps", v: hidden.size ? `${hidden.size}` : "None", act: "hidden" }]],
+    ["Home Button", [{ k: "hm", t: "PureTV Is the Home Screen", v: onOff(homeOn), act: "homeOn" }, { k: "hh", t: "Remote Helper", sub: "Catches the Home and app buttons", v: onOff(helperOn), act: "helper" }]],
+    ["Setup", [{ k: "setup", t: "Run Setup Again", act: "setup" }]]] },
+  dock: { title: "Apps in the Top Row", groups: () => [[null, [4, 5, 6, 7].map((n) => ({ k: "d" + n, t: `${n} Apps`, check: dockSize === n, act: "dock", arg: n }))]] },
+  appearance: { title: "Appearance", groups: () => [
+    ["Glass", STYLES.map(([id, t, sub]) => ({ k: "g-" + id, t, sub, check: glassMode === id, act: "glass", arg: id }))],
+    ["Performance", [{ k: "lite", t: "Low-End TV Mode", sub: "Lighter effects so motion stays smooth on slower TVs", v: liteLabel(), act: "lite" }, { k: "motion", t: "Reduce Motion", v: onOff(reduceMotion), act: "motion" }, { k: "sounds", t: "UI Sounds", v: onOff(sounds), act: "sounds" }]]] },
+  wallpaper: { title: "Wallpaper", groups: () => [
+    [null, SCENES.map((x, i) => ({ k: "w" + i, img: P(x.id, ".jpg"), t: x.name, check: i === scene, act: "wall", arg: i }))],
+    ["Options", [{ k: "rotate", t: "Change Every 20 Seconds", v: onOff(rotate), act: "rotate" }]]] },
+  weather: { title: "Weather", groups: () => [[null, [
+    { k: "wa", t: "Use My Location", sub: "Detected from your Wi-Fi network", check: wxMode === "auto", act: "wx", arg: "auto" },
+    { k: "wc", t: "Choose a City", sub: wxMode === "city" ? CITIES[city] : "Press OK to pick", check: wxMode === "city", act: "wx", arg: "city" },
+    { k: "wo", t: "Don't Show Weather", check: wxMode === "off", act: "wx", arg: "off" }]]] },
+  saverpg: { title: "Screen Saver", groups: () => [[null, [{ k: "saver", t: "Start Screen Saver", act: "saver" }, { k: "after", t: "Start After", v: "90 seconds", act: "after" }]]] },
+  switched: { title: "Clean Up", groups: () => [
+    ["This TV", [{ k: "h-off", t: "Apps switched off", v: String(offList().length), act: "info" }, { k: "h-mem", t: "Memory in use", v: "1.1 GB → 0.7 GB", act: "info" },
+      { k: "h-bg", t: "Running in the background", v: "38 → 14", act: "info" }, { k: "recheck", t: "Check After an Update", act: "recheck" }]],
+    ...GROUPS.map(([h, rows]) => [h, rows.map(([p, n]) => ({ k: "x-" + p, t: n, sub: p, v: "Off", act: "offinfo" }))])],
+    foot: "Measured by the PureTV agent before and after cleaning. Nothing was uninstalled." },
+  googletv: { title: "Google TV", groups: () => [
+    [null, [{ k: "gtvhome", t: "Use Google TV's Home Again", sub: armed === "gtvhome" ? "Press OK again to switch" : "PureTV stays installed. Switch back here any time", act: "confirm" },
+      { k: "gtvrestore", t: "Restore Original TV", sub: armed === "gtvrestore" ? "Press OK again to restore" : "Everything switched off comes back on, with Google TV's home", act: "confirm", danger: true }]],
+    ["Always Kept", [{ k: "kp1", t: "Apps, accounts and sign-ins", v: "Kept", act: "info" }, { k: "kp2", t: "Watch history and Continue Watching", v: "Kept", act: "info" },
+      { k: "kp3", t: "PureTV backup and settings", v: "Kept", act: "info" }]]],
+    foot: "Nothing is deleted. The backup stays on the TV and on your computer, so PureTV comes back in one step." },
+  updates: { title: "Software Updates" }, about: { title: "About" },
+};
+let setStack = [], ROWS = {}, sideKey = "homescreen";
+const SEARCH_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
+function renderSide() {
+  const me = PROFILES[prof];
+  $("#setSide").innerHTML = `<div class="sbsearch" data-f data-sb="search">${SEARCH_IC}Search</div>`
+    + `<div class="sbcard" data-f data-sb="profile"><div class="avatar emo" style="background:${me.bg}">${me.emoji}</div><div><b>${possessive(me.name)} PureTV</b><small>Profile &amp; Backup</small></div></div>`
+    + SIDE.map((x) => x ? `<div class="sb" data-f data-sb="${x.k}"><span class="sic" style="background:${ICBG[x.icon]}"><svg viewBox="0 0 24 24">${IC[x.icon]}</svg></span>${x.t}</div>` : `<i class="sbgap"></i>`).join("");
+  $$("#setSide [data-sb]").forEach((x) => x.classList.toggle("cur", x.dataset.sb === sideKey));
 }
-function openSettings() { setLevel = "root"; renderSettings(); $("#tvset").classList.add("on"); stage.classList.add("seton"); push($("#tvset"), $("#setList .sr")); }
+function rowHTML(r, d) {
+  const ico = r.emoji ? `<span class="sic emo" style="background:${r.emoji.bg}">${r.emoji.emoji}</span>` : r.img ? `<span class="sic img" style="background-image:url(${r.img})"></span>` : "";
+  const tail = r.check !== undefined ? (r.check ? CK : "") : `${r.v !== undefined ? `<span class="v">${r.v}</span>` : ""}${r.go ? CHEV : ""}`;
+  return `<div class="sr${r.danger ? " danger" : ""}${r.sub ? " two" : ""}" data-f data-set="${r.k}" style="--d:${d}">${ico}<span class="t">${r.t}${r.sub ? `<small>${r.sub}</small>` : ""}</span>${tail}</div>`;
+}
+function renderSettings() {
+  const p = PAGES[setLevel] || PAGES.homescreen, had = cur && cur.closest && cur.closest("#setList") && cur.dataset.set;
+  if (setLevel === "updates") renderUpdates();
+  else if (setLevel === "about") renderAbout();
+  else {
+    let d = 0; ROWS = {};
+    $("#setList").innerHTML = p.groups().map(([h, rows]) => (h ? `<h5>${h}</h5>` : "") + rows.map((r) => { ROWS[r.k] = r; return rowHTML(r, d++); }).join("")).join("") + (p.foot ? `<p class="foot">${p.foot}</p>` : "");
+  }
+  $("#setList").insertAdjacentHTML("afterbegin", `<h2>${p.title}</h2>`);
+  if (had && inScope("#tvset")) { const el = $$("#setList [data-set]").find((x) => x.dataset.set === had); cur = null; focus(el || $("#setList .sr")); }
+}
+function showPage(pg) {
+  if (pg === sideKey && setLevel === pg && !setStack.length) return;
+  sideKey = pg; setStack = []; setLevel = pg; armed = null;
+  $$("#setSide [data-sb]").forEach((x) => x.classList.toggle("cur", x.dataset.sb === pg));
+  swapLevel(); renderSettings(); $("#setList").scrollTop = 0;
+}
+function goPage(pg, fromKey) { setStack.push({ pg: setLevel, k: fromKey }); setLevel = pg; swapLevel(); cur = null; renderSettings(); focus($("#setList .sr")); }
+function pageBack() {
+  const b = setStack.pop(); setLevel = b ? b.pg : sideKey; swapLevel(); cur = null; renderSettings();
+  focus((b && $$("#setList [data-set]").find((x) => x.dataset.set === b.k)) || $("#setList .sr"));
+}
+function openSettings(pg = "homescreen") {
+  sideKey = ""; renderSide(); showPage(pg);
+  $("#tvset").classList.add("on"); stage.classList.add("seton"); push($("#tvset"), $(`#setSide [data-sb="${pg}"]`));
+}
+function openSettingsAt(pg) { openSettings(pg); focus($("#setList .sr")); }
 function closeSettings() { $("#tvset").classList.remove("on"); stage.classList.remove("seton"); pop(); }
 function setSelect(e) {
-  const a = e.dataset.set;
-  if (a === "scene") return showScene(scene + 1);
-  if (a === "icons") { iconMode = iconMode === "dark" ? "default" : "dark"; stage.classList.toggle("darkicons", iconMode === "dark"); $("#home").classList.add("noanim"); buildHome(); return renderSettings(); }
-  if (a === "saver") { closeSettings(); return startSaver(); }
-  if (a === "dock") { closeSettings(); return runSetup(4, true); }
-  if (a === "review") { closeSettings(); return runSetup(3, true); }
-  if (a === "uses") { closeSettings(); return runSetup(2, true); }
-  if (a === "recheck") return toast(`Checked: all ${offList().length} still off. After a firmware update this switches them off again`);
-  if (a === "restore") return toast("Restore turns every one back on and gives Home back to Google TV, from the backup");
-  if (a === "accounts") return openGtv("accounts");
-  if (a === "gtv") return openGtv("settings");
-  if (a === "hidden") { if (!hidden.size) return toast("Hold OK on an app to hide it from Home"); const n = hidden.size; hidden.clear(); buildHome(); renderSettings(); return toast(`${n} hidden app${n > 1 ? "s are" : " is"} back on Home`); }
-  if (a === "sounds") { sounds = !sounds; $("#ccSnd").classList.toggle("on", sounds); return renderSettings(); }
-  if (a === "updates") { setLevel = "updates"; swapLevel(); cur = null; renderSettings(); return focus($("#setList .sr")); }
-  if (a === "upd") return runUpdate();
-  if (a === "auto") { autoUpdate = !autoUpdate; return renderSettings(); }
-  if (a === "src") return toast("Updates come only from PureTV's own GitHub releases");
-  if (a === "about") { setLevel = "about"; swapLevel(); cur = null; renderSettings(); return focus($("#setList .sr")); }
-  if (a === "web") return toast("crazifiedstudios.com");
-  if (a === "help") return toast("Write to crazifiedstudios@gmail.com — we read every message");
-  if (a === "design") return toast("Inspired by Apple tvOS. Not affiliated with Apple");
+  if (e.dataset.sb) { if (e.dataset.sb === "search") return toast("Type or say what you are looking for, like \"wallpaper\" or \"Wi-Fi\""); showPage(e.dataset.sb); return focus($("#setList .sr")); }
+  const k = e.dataset.set;
+  if (k === "upd") return runUpdate();
+  if (k === "auto") { autoUpdate = !autoUpdate; return renderSettings(); }
+  if (k === "src") return toast("Updates come only from PureTV's own GitHub releases");
+  if (k === "web") return toast("crazifiedstudios.com");
+  if (k === "help") return toast("Write to crazifiedstudios@gmail.com — we read every message");
+  if (k === "design") return toast("Inspired by Apple tvOS. Not affiliated with Apple");
+  if (k === "ver") return toast(`PureTV ${VERSION}`);
+  const r = ROWS[k]; if (!r) return;
+  if (r.go) return goPage(r.go, k);
+  const v = r.arg;
+  switch (r.act) {
+    case "setup": closeSettings(); return runSetup(0, true);
+    case "tv": return openGtv(v || "settings");
+    case "info": return toast(`${r.t}: ${r.v}`);
+    case "recheck": return toast(`Checked: all ${offList().length} are still off. After a firmware update the PureTV agent switches them off again`);
+    case "sounds": sounds = !sounds; $("#ccSnd").classList.toggle("on", sounds); return renderSettings();
+    case "hidden": { if (!hidden.size) return toast("Hold OK on an app to hide it from Home"); const n = hidden.size; hidden.clear(); buildHome(); renderSettings(); return toast(`${n} hidden app${n > 1 ? "s are" : " is"} back on Home`); }
+    case "glass": setGlass(v); return renderSettings();
+    case "lite": liteMode = { auto: "on", on: "off", off: "auto" }[liteMode]; applyLite(); return renderSettings();
+    case "motion": reduceMotion = !reduceMotion; stage.classList.toggle("calm", reduceMotion); return renderSettings();
+    case "saver": closeSettings(); return startSaver();
+    case "after": return toast("The screen saver starts after 90 seconds on the Home screen");
+    case "wall": showScene(v); return renderSettings();
+    case "rotate": rotate = !rotate; showScene(scene); return renderSettings();
+    case "prof": { const was = prof; prof = v; renderAvatar(); renderSide(); tick(); cwFilter = null; rebuildForProfile(); renderSettings(); if (prof !== was) toast(`Switched to ${PROFILES[prof].name}`); return; }
+    case "pname": if (prof !== 0) return toast("On the TV, this opens the keyboard to rename the profile"); closeSettings(); return runSetup(1, true);
+    case "pemoji": { const p = PROFILES[prof], i = (EMOJIS.indexOf(p.emoji) + 1) % EMOJIS.length; p.emoji = EMOJIS[i]; p.bg = EMO_BG[i]; renderAvatar(); renderSide(); return renderSettings(); }
+    case "padd": { if (PROFILES.length >= 5) return toast("Up to five profiles"); const n = PROFILES.length, i = (n * 3) % EMOJIS.length; PROFILES.push({ name: `Profile ${n + 1}`, emoji: EMOJIS[i], bg: EMO_BG[i] }); CW[n] = []; renderSettings(); return toast(`Profile ${n + 1} added`); }
+    case "backup": lastBackup = "Just now"; renderSettings(); return toast("Backed up: profiles, top row, hidden apps and settings");
+    case "brestore": return toast(`Restored from the backup made ${lastBackup.toLowerCase()}`);
+    case "dock": dockSize = v; $("#home").classList.add("noanim"); buildHome(); return renderSettings();
+    case "arrange": return toast("On the Home screen, hold OK on any app to move or hide it");
+    case "shelf": cwOn = v; renderCW(); return renderSettings();
+    case "wx": if (v === "city" && wxMode === "city") city = (city + 1) % CITIES.length; wxMode = v; tick(); return renderSettings();
+    case "homeOn": homeOn = !homeOn; return renderSettings();
+    case "helper": helperOn = !helperOn; return renderSettings();
+    case "confirm":
+      if (armed !== k) { armed = k; clearTimeout(setSelect.t); setSelect.t = setTimeout(() => { armed = null; if (setLevel === "googletv") renderSettings(); }, 5000); return renderSettings(); }
+      armed = null; renderSettings();
+      if (k === "gtvhome") { homeOn = false; return toast("Google TV's home is the Home screen again. Apps, accounts and the PureTV backup are kept"); }
+      return toast("The PureTV agent turns everything back on and returns Google TV's home. Nothing is deleted");
+    case "offinfo": return toast("Switched off by the PureTV agent. Google TV › Restore Original TV, or the agent, turns it back on");
+  }
 }
 
-/* ---------- Google TV's own screens ---------- */
+/* ---------- the TV's own settings screens (Android TV Settings, unchanged; PureTV only opens them) ---------- */
 function openGtv(page) {
-  const G = $("#gtv"), head = (t) => `<h2>${t}</h2><p>Google TV · its own screen, unchanged</p>`, row = (t, s) => `<div class="gi" data-f><div>${t}${s ? `<small>${s}</small>` : ""}</div></div>`;
-  G.innerHTML = page === "accounts" ? head("Accounts &amp; Sign In") + PROFILES.map((p) => `<div class="gi" data-f>${avatar(p)}<div>${p.name}<small>${p.mail}</small></div></div>`).join("") + row("Add a profile")
+  const G = $("#gtv"), head = (t) => `<h2>${t}</h2><p>Android TV Settings · the TV's own screen</p>`, row = (t, s) => `<div class="gi" data-f><div>${t}${s ? `<small>${s}</small>` : ""}</div></div>`;
+  G.innerHTML = page === "accounts" ? head("Accounts &amp; Sign In") + PROFILES.map((p) => `<div class="gi" data-f>${avatar(p)}<div>${p.name}<small>PureTV profile</small></div></div>`).join("") + row("Add a profile")
     : page === "network" ? head("Network &amp; Internet") + row("Wi-Fi", "On") + row("Home WiFi", "Connected") + row("Home WiFi 5G", "Saved") + row("Ethernet", "Not connected") + row("Private DNS", "Automatic")
     : page === "appinfo" ? head(app(appInfoPkg).name) + row("Open") + row("Force stop") + row("Clear cache", "28 MB") + row("Notifications", "On") + row("Permissions") + row("Disable")
+    : page === "display" ? head("Display &amp; Sound") + row("Picture", "Standard") + row("Screen", "Auto") + row("Resolution", "Auto (1080p 60Hz)") + row("HDR format", "Auto")
+    : page === "sound" ? head("Sound") + row("Audio output", "TV speakers") + row("Sound mode", "Standard") + row("System sounds", "On")
+    : page === "apps" ? head("Apps") + row("See all apps") + row("App permissions") + row("Special app access") + row("Security &amp; restrictions")
     : page === "access" ? head("Accessibility") + row("Captions") + row("High contrast text", "Off") + row("TalkBack", "Off") + row("Text to speech")
     : head("Settings") + [["Accounts &amp; Sign In", PROFILES.length + " profiles"], ["Network &amp; Internet", "Home WiFi"], ["Apps", ""], ["Display &amp; Sound", "Picture, audio output"], ["Remotes &amp; Accessories", ""], ["Privacy", ""], ["System", "About, storage, developer options"]].map(([t, s]) => row(t, s)).join("");
   G.classList.add("on"); push(G);
@@ -978,7 +1331,7 @@ function closeOverlays() {
 function launch(el) {
   const a = app(el.dataset.app), L = $("#launch"), face = $(".face, .art", el) || el, k = stage.getBoundingClientRect().width / 1920;
   const item = el.dataset.cw && cwList().find((c) => c.id === el.dataset.cw);
-  $(".note", L).textContent = item ? `Resuming ${item.title} · ${item.ep} at ${item.at} — on the TV, ${a.name} opens straight to it` : "Demo · press Back to return Home";
+  $(".note", L).textContent = isKids() && KIDS[a.pkg] ? `${KIDS[a.pkg]} · on the TV it opens straight into its kids profile` : item ? `Resuming ${item.title} · ${item.ep} at ${item.at} — on the TV, ${a.name} opens straight to it` : "Demo · press Back to return Home";
   const s = stage.getBoundingClientRect(), r = face.getBoundingClientRect();
   L.className = ""; L.style.cssText = `--bg:${a.bg};color:${a.dark ? "#fff" : "#111"};left:${(r.left - s.left) / k}px;top:${(r.top - s.top) / k}px;width:${r.width / k}px;height:${r.height / k}px;opacity:1`;
   $("img", L).src = a.logo; void L.offsetWidth; L.classList.add("go"); launched = true;
@@ -993,20 +1346,21 @@ function select() {
   if (e.closest("#setup")) return setupSelect(e);
   if (e.closest("#cc")) return ccSelect(e);
   if (e.closest("#tvset")) return setSelect(e);
-  if (e.closest("#gtv")) return toast("This is Google TV's own screen. PureTV doesn't change it");
+  if (e.closest("#gtv")) return toast("This is the TV's own settings screen. PureTV doesn't change it");
   if (e.closest("#menu")) return menuSelect(e);
   if (e.closest("#recents")) return recentSelect(e);
   if (e.closest("#wx")) return closeWx();
   if (e.dataset.app) return launch(e);
   const act = e.dataset.act;
-  if (act === "settings") return openSettings();
+  if (act === "settings") return isKids() ? openPin() : openSettings();
+  if (act === "parents") return openPin();
   if (act === "profile") return openProfileMenu(e);
   if (act === "cc") return openCC();
   if (act === "weather") return openWx();
   if (act === "tab-home") return focus($("#row1 .tile"));
   if (act === "tab-apps") return focus($("#grid .tile"));
   if (act === "tab-live") return toast("Live TV opens the TV's own tuner and HDMI inputs (com.apps.passthrough)");
-  if (act === "search") return toast("Opens Google TV's own search, the same as the mic button");
+  if (act === "search") return toast("Opens the TV's voice search, the same as the mic button");
   if (act === "inputs") { openCC(); return openCCPage("inputs", $('[data-cc="inputs"]')); }
 }
 function back() {
@@ -1019,7 +1373,7 @@ function back() {
   if (inScope("#recents")) return closeRecents();
   if (inScope("#wx")) return closeWx();
   if (inScope("#cc")) return ccPage ? closeCCPage() : closeCC();
-  if (inScope("#tvset") && setLevel !== "root") { const was = setLevel; setLevel = "root"; swapLevel(); cur = null; renderSettings(); return focus($(`[data-set="${was}"]`)); }
+  if (inScope("#tvset")) { if (cur && cur.closest("#setList")) return setStack.length ? pageBack() : focus($(`#setSide [data-sb="${sideKey}"]`)); return closeSettings(); }
   if (inScope("#tvset")) return closeSettings();
   if (inScope("#setup")) return setupBack();
   if ($("#home").classList.contains("deep")) return focus($("#row1 .tile"));
@@ -1104,6 +1458,7 @@ const MI = {
 };
 let held = null;
 function longPress() {
+  if (isKids() && cur && cur.dataset.app && inScope("#home")) return toast("Ask a parent to change the apps");
   if (cur && cur.dataset.cw && inScope("#home")) return openCWMenu(cur);
   if (!cur || !cur.dataset.app || !inScope("#home") || !cur.classList.contains("tile")) return select();
   held = cur; held.classList.add("held"); snd("ok");
@@ -1122,19 +1477,20 @@ function longPress() {
 function closeMenu(keep) { $("#menu").classList.remove("on"); stage.classList.remove("menuon"); pop(); if (held && !keep) held.classList.remove("held"); }
 function openProfileMenu(anchor) {
   held = null; const m = $("#menu"), k = 1920 / stage.getBoundingClientRect().width, s = stage.getBoundingClientRect(), r = anchor.getBoundingClientRect();
-  m.innerHTML = `<div class="mh">Who's watching?</div>` + PROFILES.map((p, i) => `<div class="mi" data-f data-prof="${i}"><div class="avatar" style="width:44px;height:44px;font-size:16px;background:${p.bg}">${p.init}</div>${p.name}${i === prof ? '<span style="margin-left:auto;opacity:.6">Current</span>' : ""}</div>`).join("")
+  m.innerHTML = `<div class="mh">Who's watching?</div>` + PROFILES.map((p, i) => `<div class="mi" data-f data-prof="${i}"><div class="avatar emo" style="width:44px;height:44px;font-size:26px;background:${p.bg}">${p.emoji}</div>${p.name}${i === prof ? '<span style="margin-left:auto;opacity:.6">Current</span>' : ""}</div>`).join("")
     + `<div class="mi" data-f data-prof="accounts">${MI.info}Profiles &amp; Accounts</div>`;
   m.style.left = (r.left - s.left) * k + "px"; m.style.top = (r.bottom - s.top) * k + 18 + "px"; m.style.bottom = "auto";
   m.style.setProperty("--ox", "60px"); m.style.setProperty("--oy", "0%");
   m.classList.add("on"); push(m, $(`.mi[data-prof="${prof}"]`, m));
 }
 function menuSelect(e) {
+  if (e.dataset.pin !== undefined) return pinKey(e.dataset.pin);
   if (e.dataset.cwm) return cwAction(e.dataset.cwm);
   if (e.dataset.prof !== undefined) {
     const v = e.dataset.prof; closeMenu();
-    if (v === "accounts") return openGtv("accounts");
-    const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; renderCW(); if (inScope("#home")) focus($("#bProf"));
-    if (prof !== was) toast(`Google TV switches to ${PROFILES[prof].name}: its own accounts, apps and recommendations`);
+    if (v === "accounts") return openSettingsAt("profile");
+    const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; rebuildForProfile(); if (inScope("#home")) focus($("#bProf"));
+    if (prof !== was) toast(`Switched to ${PROFILES[prof].name}: own top row, apps and Continue Watching`);
     return;
   }
   const p = held.dataset.app, act = e.dataset.m; closeMenu(true); held.classList.remove("held");
@@ -1190,16 +1546,16 @@ function editMove(dx, dy) {
    which the streaming apps fill with the show, the episode, the progress and a link straight to it.
    The shows below are made-up samples for the demo. ---------- */
 const CW = [
-  [{ id: "a1", pkg: "com.netflix.ninja", title: "Northern Lights", ep: "S2 · E4", at: "31:12", left: "23 min left", pct: 58, art: "night" },
-   { id: "a2", pkg: "com.amazon.amazonvideo.livingroom", title: "The Long Road", ep: "S1 · E7", at: "12:40", left: "41 min left", pct: 24, art: "golden" },
-   { id: "a3", pkg: "com.google.android.youtube.tv", title: "Pasta Night, Slowly", ep: "Video", at: "8:05", left: "11 min left", pct: 42, art: "dawn" },
-   { id: "a4", pkg: "com.disney.disneyplus", title: "Starfall", ep: "Movie", at: "1:21:30", left: "18 min left", pct: 82, art: "water" },
-   { id: "a5", pkg: "com.netflix.ninja", title: "The Quiet Valley", ep: "S1 · E2", at: "5:48", left: "44 min left", pct: 12, art: "fog" }],
-  [{ id: "b1", pkg: "com.apple.atve.androidtv.appletv", title: "Quiet Harbour", ep: "S3 · E2", at: "20:15", left: "30 min left", pct: 40, art: "water" },
-   { id: "b2", pkg: "com.wbd.stream", title: "Glass City", ep: "S1 · E1", at: "44:02", left: "9 min left", pct: 84, art: "night" },
-   { id: "b3", pkg: "com.crunchyroll.webapp", title: "Sky Blade", ep: "E12", at: "3:30", left: "20 min left", pct: 15, art: "golden" }],
-  [{ id: "c1", pkg: "com.google.android.youtube.tv", title: "Counting Songs", ep: "Video", at: "2:10", left: "6 min left", pct: 30, art: "dawn" },
-   { id: "c2", pkg: "com.disney.disneyplus", title: "Little Explorers", ep: "S1 · E3", at: "9:00", left: "13 min left", pct: 45, art: "fog" }],
+  [{ id: "a1", pkg: "com.netflix.ninja", title: "Northern Lights", ep: "S2 · E4", at: "31:12", left: "23 min left", pct: 58, art: "ossau" },
+   { id: "a2", pkg: "com.amazon.amazonvideo.livingroom", title: "The Long Road", ep: "S1 · E7", at: "12:40", left: "41 min left", pct: 24, art: "flatirons" },
+   { id: "a3", pkg: "com.google.android.youtube.tv", title: "Pasta Night, Slowly", ep: "Video", at: "8:05", left: "11 min left", pct: 42, art: "kathleen" },
+   { id: "a4", pkg: "com.disney.disneyplus", title: "Starfall", ep: "Movie", at: "1:21:30", left: "18 min left", pct: 82, art: "louise" },
+   { id: "a5", pkg: "com.netflix.ninja", title: "The Quiet Valley", ep: "S1 · E2", at: "5:48", left: "44 min left", pct: 12, art: "tummel" }],
+  [{ id: "b1", pkg: "com.apple.atve.androidtv.appletv", title: "Quiet Harbour", ep: "S3 · E2", at: "20:15", left: "30 min left", pct: 40, art: "louise" },
+   { id: "b2", pkg: "com.wbd.stream", title: "Glass City", ep: "S1 · E1", at: "44:02", left: "9 min left", pct: 84, art: "ossau" },
+   { id: "b3", pkg: "com.crunchyroll.webapp", title: "Sky Blade", ep: "E12", at: "3:30", left: "20 min left", pct: 15, art: "flatirons" }],
+  [{ id: "c1", pkg: "com.google.android.youtube.tv", title: "Counting Songs", ep: "Video", at: "2:10", left: "6 min left", pct: 30, art: "kathleen" },
+   { id: "c2", pkg: "com.disney.disneyplus", title: "Little Explorers", ep: "S1 · E3", at: "9:00", left: "13 min left", pct: 45, art: "tummel" }],
 ];
 const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
 let cwFilter = null;
@@ -1210,7 +1566,7 @@ function renderCW() {
   $("#cwRow").innerHTML = list.map((c, i) => { const ap = app(c.pkg);
     return `<div class="cw glass" data-f data-app="${c.pkg}" data-cw="${c.id}" style="animation-delay:${i * 50}ms"><div class="art"><img src="${P(c.art, ".jpg")}" alt="" style="object-position:${30 + i * 20}% 60%"><span>${c.title}</span><div class="play">${PLAY}</div></div>`
       + `<div class="tx"><small><img src="${ap.logo}" alt="">${ap.name}</small><b>${c.title}</b><i>${c.ep} · ${c.left}</i><div class="pb"><u style="width:${c.pct}%"></u></div></div></div>`; }).join("");
-  $("#cw").classList.toggle("none", !list.length);
+  $("#cw").classList.toggle("none", !list.length || !cwOn);
 }
 function setCWFilter(f) {
   if (f === cwFilter) return;
@@ -1249,7 +1605,7 @@ function renderUpdates() {
   const title = s === "available" ? `PureTV ${upd.next} is available` : s === "latest" ? `PureTV ${VERSION} is up to date` : "Check for Updates";
   const rows = [["Update Software", title, val, "upd"], ["Automatically Update", "Automatically Update", autoUpdate ? "On" : "Off", "auto"], ["Source", "Update Source", "GitHub Releases", "src"]];
   const had = cur && cur.dataset.set; let d = 0;
-  $("#setList").innerHTML = `<h2>Software Updates</h2>` + rows.map(([, t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v" style="display:flex;align-items:center">${v}</span>${CHEV}</div>`).join("")
+  $("#setList").innerHTML = rows.map(([, t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v" style="display:flex;align-items:center">${v}</span>${CHEV}</div>`).join("")
     + `<p class="foot">PureTV looks for a new release on its GitHub page${autoUpdate ? " once a day and installs it while the TV is idle" : " only when you ask"}. Updates install through Android's own installer: the first time, the TV asks you to allow PureTV to install updates. Your settings, top row and profiles stay as they are.</p>`;
   if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
 }
@@ -1274,118 +1630,112 @@ function runUpdate() {
 function renderAbout() {
   const rows = [["Version", `PureTV ${VERSION}`, "ver"], ["Website", "crazifiedstudios.com", "web"], ["Help", "crazifiedstudios@gmail.com", "help"], ["Design", "Inspired by Apple tvOS", "design"]];
   const had = cur && cur.dataset.set; let d = 0;
-  $("#setList").innerHTML = `<h2>About</h2><div class="about madeby"><div class="big">PureTV</div>Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div><h5>&nbsp;</h5>`
+  $("#setList").innerHTML = `<div class="about madeby"><div class="big">PureTV</div>Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div><h5>&nbsp;</h5>`
     + rows.map(([t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("")
     + `<p class="legal">Apple and tvOS are trademarks of Apple Inc. PureTV is an independent project, not affiliated with or endorsed by Apple.</p>`;
   if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
 }
 function swapLevel() { const l = $("#setList"); l.classList.remove("swap"); void l.offsetWidth; l.classList.add("swap"); clearTimeout(swapLevel.t); swapLevel.t = setTimeout(() => l.classList.remove("swap"), 900); }
-/* ---------- setup: cleanyourtv's own checklist, applied to the tested list for this model ----------
-   Source: cleanyourtv PROMPT.md (Back up first, Debloat, Launcher) and examples/acer-ar32hdigu2841at/debloat.txt */
-const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-// "Before touching streaming apps, voice assistant, Chromecast, Miracast or the update service, ask me which ones I use"
-const USES = [
-  ["#30d158", I('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'), "Google Assistant", "The mic button on your remote", ["com.google.android.katniss"], true],
-  ["#0a84ff", I('<path d="M3 18a3 3 0 0 1 3 3M3 14a7 7 0 0 1 7 7M3 10a11 11 0 0 1 11 11"/><path d="M3 7V5h18v14h-5"/>'), "Chromecast built-in", "Cast from your phone", ["com.google.android.apps.mediashell"], true],
-  ["#5e5ce6", I('<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>'), "Screen mirroring", "FastCast (Miracast) and SCast receivers", ["com.creative.fastscreen.tv", "com.apps.scast"], false],
-  ["#64d2ff", I('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), "Firmware updates", "TV, remote and accessory updates", ["com.apps.ota", "com.apps.authota", "com.realsil.ota", "com.google.android.tv.dfuservice"], true],
-  ["#ff375f", I('<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M16 12h.01M18 14h.01"/>'), "Play Games", "Google Play Games app and sync", ["com.google.android.play.games"], false],
-  ["#ff2d55", I('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>'), "YouTube Music", "The preloaded stub app", ["com.google.android.youtube.tvmusic"], false],
-  ["#ff9f0a", I('<path d="M6 4l13 8-13 8z"/>'), "MX Player", "Preloaded video player", ["com.mxtech.videoplayer.television"], false],
-  ["#8e8e93", I('<rect x="7" y="2" width="10" height="9" rx="1"/><path d="M5 11h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/>'), "USB media player", "Plays files from a USB drive", ["com.apps.usbmediaplayer"], false],
-];
-// The rest of the tested list: switched off unless you keep one
+
+/* ---------- Kids: approved apps only, each opening in its kids profile, Settings behind a parent PIN ---------- */
+const KIDS = { "com.google.android.youtube.tv": "YouTube Kids", "com.netflix.ninja": "Netflix Kids", "com.disney.disneyplus": "Disney+ Kids", "com.amazon.amazonvideo.livingroom": "Prime Video Kids" };
+const isKids = () => !!(PROFILES[prof] && PROFILES[prof].kids);
+function rebuildForProfile() {
+  $("#home").classList.add("noanim"); buildHome(); renderCW();
+  if (isKids()) toast("Kids: approved apps only, each in its kids profile. Settings need the parent PIN");
+}
+let pin = "";
+function openPin() {
+  pin = ""; held = null; const m = $("#menu");
+  m.innerHTML = `<div class="mh pinh">Parent PIN</div><div class="pindots">${"<i></i>".repeat(4)}</div><div class="pinpad">`
+    + [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"].map((k) => k === "" ? "<span></span>" : `<div class="pk" data-f data-pin="${k}">${k}</div>`).join("") + `</div><p class="pinhint">Demo PIN: 1234</p>`;
+  m.style.left = "740px"; m.style.top = "250px"; m.style.bottom = "auto"; m.style.setProperty("--ox", "50%"); m.style.setProperty("--oy", "50%");
+  stage.classList.add("menuon"); m.classList.add("on", "pinbox"); push(m, $('.pk[data-pin="5"]', m));
+}
+function pinKey(k) {
+  pin = k === "⌫" ? pin.slice(0, -1) : (pin + k).slice(0, 4);
+  $$("#menu .pindots i").forEach((d, i) => d.classList.toggle("on", i < pin.length));
+  if (pin.length < 4) return;
+  if (pin === "1234") { $("#menu").classList.remove("pinbox"); closeMenu(); return openSettings(); }
+  const dots = $("#menu .pindots"); dots.classList.remove("shake"); void dots.offsetWidth; dots.classList.add("shake"); snd("edge");
+  setTimeout(() => { pin = ""; $$("#menu .pindots i").forEach((d) => d.classList.remove("on")); }, 450);
+}
+/* ---------- first-run setup: the launcher's own personalisation. The cleaning itself is done by the
+   PureTV agent on the computer (PROMPT.md); this only asks how the Home screen should look. ---------- */
+// what the agent switched off on this TV (the demo shows a tested list; the TV reads its own record)
 const GROUPS = [
-  ["Telemetry and feedback", [["com.apps.function.gdpr", "SCBC data consent agent"], ["com.google.android.feedback", "Google feedback bug reporter"], ["com.android.tv.feedbackconsent", "TV feedback consent dialog"]]],
-  ["Ads, partner rows and auto-installs", [["com.apps.mk.wd", "Boot receiver that opens ads, apps and channels"], ["android.autoinstalls.config.scbc.device", "Installs partner apps through Play"], ["com.realtek.leanbacklauncher.partnercustomizer", "Injects partner rows and apps into Home"], ["com.google.android.partnersetup", "Google partner setup client"]]],
-  ["Demo, signage and background bloat", [["com.apps.esticker", "Demo sticker overlay"], ["com.apps.esticker3", "In-store feature animation"], ["com.apps.biz.mt", "MOKA background telemetry"], ["com.apps.biz.ds", "MOKA digital signage"], ["com.apps.tvmanager", "Memory 'cleaner' and auto-start manager"], ["com.mk.tv.meeting.service", "Enterprise meeting service"], ["com.apps.wifihotspot", "Wi-Fi hotspot toggle"], ["com.apps.function.audiolink", "Bluetooth audio receiver"], ["com.mk.tv.timeclock", "On-screen clock overlay"], ["com.google.android.apps.tv.dreamx", "Ambient mode screensaver"]]],
+  ["Telemetry and feedback", [["com.apps.function.gdpr", "Data consent agent"], ["com.google.android.feedback", "Feedback bug reporter"], ["com.android.tv.feedbackconsent", "Feedback consent dialog"]]],
+  ["Ads, partner rows and auto-installs", [["com.apps.mk.wd", "Opens ads, apps and channels at boot"], ["android.autoinstalls.config.scbc.device", "Installs partner apps in the background"], ["com.realtek.leanbacklauncher.partnercustomizer", "Injects partner rows into Home"], ["com.google.android.partnersetup", "Partner setup client"]]],
+  ["Demo, signage and background bloat", [["com.apps.esticker", "Demo sticker overlay"], ["com.apps.esticker3", "In-store feature animation"], ["com.apps.biz.mt", "Background telemetry"], ["com.apps.biz.ds", "Digital signage"], ["com.apps.tvmanager", "Memory 'cleaner'"], ["com.mk.tv.meeting.service", "Meeting service"], ["com.apps.wifihotspot", "Wi-Fi hotspot toggle"], ["com.mk.tv.timeclock", "On-screen clock overlay"], ["com.google.android.apps.tv.dreamx", "Ambient mode screensaver"]]],
+  ["Unused extras", [["com.google.android.play.games", "Play Games"], ["com.google.android.youtube.tvmusic", "YouTube Music stub"], ["com.mxtech.videoplayer.television", "Preloaded MX Player"], ["com.google.android.apps.tv.launcherx", "Google TV home (kept installed)"]]],
 ];
-// "Never disable what the TV needs to work", and this model's "Kept on purpose"
-const KEPT = [
-  ["Google TV home", "Keeps your profiles; PureTV gets Home by redirect"], ["Setup wizard", "Owns your saved Wi-Fi network"], ["HDMI and inputs", "com.apps.passthrough"],
-  ["Remote buttons", "Key handlers and Bluetooth remote"], ["Play Store and Services", "App updates and sign-in"], ["Keyboard, TV middleware, core Android", "The TV needs these to start"],
-];
-const LOCK = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
-const HELLOS = ["Hello", "नमस्ते", "Hola", "Bonjour", "こんにちは", "Ciao", "Hallo"];
-let cs = 0, again = false, enteredAt = 0, helloTimer, dns = false, picks = topRow.slice(), keepUse = USES.map((u) => u[5]), offRows = null;
-function offList() {
-  const list = [];
-  USES.forEach((u, i) => { if (!keepUse[i]) list.push(...u[4]); });
-  GROUPS.forEach(([, rows]) => rows.forEach(([p]) => { if (!offRows || offRows.has(p)) list.push(p); }));
-  return list;
+const offList = () => GROUPS.flatMap(([, rows]) => rows.map(([p]) => p));
+const HELLOS = ["Welcome", "नमस्ते", "Hola", "Bonjour", "こんにちは", "Ciao", "Hallo"];
+const EMOJIS = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐨", "🐙", "🦄", "🐶", "🐱"];
+const EMO_BG = ["#ff9f0a", "#d1d1d6", "#ff9500", "#ffcc00", "#34c759", "#8e8e93", "#ff2d55", "#bf5af2", "#a2845e", "#ffd60a"];
+const STYLES = [["liquid", "Liquid Glass", "Clear, refractive glass that shows the wallpaper through"], ["frosted", "Frosted Glass", "Soft, blurred panels with more contrast"], ["dark", "Dark Mode", "Deep, dark surfaces for a darker room"]];
+const CITIES = ["New Delhi", "Mumbai", "London", "New York", "Tokyo", "Sydney"];
+let cs = 0, again = false, helloTimer, glassMode = "liquid", wxMode = "auto", city = 0, homeOn = true, helperOn = true;
+const CHECKMARK = '<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const opt = (attrs, title, sub, on) => `<div class="opt glass${on ? " on" : ""}" data-f ${attrs}><div class="ot">${title}${sub ? `<small>${sub}</small>` : ""}</div>${CHECKMARK}</div>`;
+const NEXT = `<div class="opt glass" data-f data-next><div class="ot">Continue</div></div>`;
+function setGlass(m) { glassMode = m; stage.classList.remove("g-liquid", "g-frosted", "g-dark"); stage.classList.add("g-" + m); }
+function renderSetupLists() {
+  const me = PROFILES[0];
+  $("#nameV").textContent = me.name; $("#nameIn").value = me.name;
+  $("#emojis").innerHTML = EMOJIS.map((e, i) => `<div class="emo${me.emoji === e ? " on" : ""}" data-f data-emo="${i}" style="--bg:${EMO_BG[i]}">${e}</div>`).join("");
+  $("#styles").innerHTML = STYLES.map(([id, t, s]) => opt(`data-style="${id}"`, t, s, glassMode === id)).join("") + NEXT;
+  $("#wxopts").innerHTML = opt('data-wx="auto"', "Use My Location", "Detected from your Wi-Fi network", wxMode === "auto")
+    + opt('data-wx="city"', "Choose a City…", wxMode === "city" ? CITIES[city] : "Pick from a list", wxMode === "city")
+    + opt('data-wx="off"', "Don't Show Weather", "Hide the weather on the Home screen", wxMode === "off") + NEXT;
+  $("#homeopts").innerHTML = opt("data-home", "Make PureTV the Home Screen", "The Home button opens PureTV", homeOn)
+    + opt("data-helper", "Turn On the Remote Helper", "An accessibility helper that catches the Home and app buttons", helperOn) + NEXT;
+  $("#looks").innerHTML = SCENES.map((s, i) => `<div class="look" data-f data-i="${i}"><div class="clip"><img src="${P(s.id, ".jpg")}" alt=""><div class="mini" style="--mt:${Math.round(s.top*.1417)}px;--ms:${Math.round(s.size*.1417)}px"></div>${s.fg ? `<img src="${P(s.id, "-fg.png")}" alt="">` : ""}</div><span>${s.name}</span></div>`).join("");
+  tick();
 }
 function runSetup(at = 0, isAgain = false) {
-  again = isAgain; enteredAt = at; picks = topRow.slice();
+  again = isAgain;
   $("#home").classList.add("hidden"); $("#setup").classList.add("on"); stage.classList.remove("deep", "sideon");
   closeOverlays();
   $("#setup .bgimg").src = P(SCENES[scene].id, ".jpg");
-  $("#dots").innerHTML = "<i></i>".repeat(8); $("#dots").style.opacity = isAgain ? 0 : 1;
-  $("#uses").innerHTML = USES.map(([c, ic, t, d, pk], i) => `<div class="row${keepUse[i] ? " on" : ""}" data-f data-use="${i}"><div class="ic" style="background:${c}">${ic}</div><div class="tx">${t}<small>${d}</small></div><div class="state">${keepUse[i] ? "Keep" : "Switch off"}</div><div class="sw"></div></div>`).join("");
-  $("#groups").innerHTML = GROUPS.map(([t, rows]) => `<div class="grp glass"><h3>${t}<span class="n">${rows.length}</span></h3>${rows.map(([p, n]) => `<div class="row${!offRows || offRows.has(p) ? " on" : ""}" data-f data-pkg="${p}"><div class="tx">${n}<code>${p}</code></div><div class="sw"></div></div>`).join("")}</div>`).join("")
-    + `<div class="grp glass kept" style="grid-column:3;margin-top:-6px"><h3>Always kept${LOCK}</h3>${KEPT.map(([t, d]) => `<div class="row"><div class="tx">${t}<code>${d}</code></div></div>`).join("")}</div>`;
-  // the third column holds the long group; put "always kept" under the short ones
-  const g = $("#groups"), cards = $$(".grp", g); cards[3].style.gridColumn = "1 / span 2"; cards[2].style.gridRow = "1 / span 2"; cards[2].style.gridColumn = "3";
-  cards[3].style.display = "grid"; cards[3].style.gridTemplateColumns = "1fr 1fr"; cards[3].querySelector("h3").style.gridColumn = "1 / span 2";
-  $("#sizes").innerHTML = [4, 5, 6, 7].map((n) => `<div class="size${n === dockSize ? " cur" : ""}" data-f data-size="${n}">${n} apps</div>`).join("");
-  renderPick();
-  $("#dns").innerHTML = [[false, "Off", "Leave DNS as it is. Choose this if your router already filters (Pi-hole, AdGuard Home, a VPN): Private DNS would go around it."],
-    [true, "AdGuard DNS", "Ad and tracker domains stop loading in every app. It does not block YouTube ads, and AdGuard sees which sites the TV looks up."]]
-    .map(([v, t, d]) => `<div class="opt glass${dns === v ? " cur" : ""}" data-f data-dns="${v ? 1 : 0}"><b>${t}</b><span>${d}</span><div class="radio"></div></div>`).join("");
-  $("#looks").innerHTML = SCENES.map((s, i) => `<div class="look" data-f data-i="${i}"><div class="clip"><img src="${P(s.id, ".jpg")}" alt=""><div class="mini"></div>${s.fg ? `<img src="${P(s.id, "-fg.webp")}" alt="">` : ""}</div><span>${s.name}</span></div>`).join("");
-  tick(); layers = [{ root: $("#setup") }]; cur = null; step(at);
+  $("#dots").innerHTML = "<i></i>".repeat(7);
+  renderSetupLists();
+  layers = [{ root: $("#setup") }]; cur = null; step(at);
   const h = $("#hello"); h.innerHTML = HELLOS.map((w) => `<span>${w}</span>`).join(""); let hi = 0; h.children[0].classList.add("on");
-  clearInterval(helloTimer); helloTimer = setInterval(() => { h.children[hi].classList.remove("on"); hi = (hi + 1) % HELLOS.length; h.children[hi].classList.add("on"); }, 2200);
-}
-function renderPick() {
-  const p = $("#pick"), had = cur && cur.closest("#pick") ? cur.dataset.app : null; p.replaceChildren();
-  APPS.forEach((a, i) => { const k = picks.indexOf(a.pkg); const t = tileEl(a, i, `<div class="num">${k + 1}</div>`);
-    t.classList.toggle("sel", k >= 0 && k < dockSize); t.classList.toggle("extra", k >= dockSize); p.append(t); });
-  if (had) { cur = null; focus($(`#pick [data-app="${had}"]`)); }
+  clearInterval(helloTimer); helloTimer = setInterval(() => { h.children[hi].classList.remove("on"); hi = (hi + 1) % HELLOS.length; h.children[hi].classList.add("on"); }, 2400);
 }
 function step(n) {
   cs = n; $$(".step").forEach((s, i) => { s.classList.toggle("on", i === n); s.classList.toggle("past", i < n); });
   $$("#dots i").forEach((d, i) => d.classList.toggle("on", i === n));
+  $("#dots").style.opacity = n === 0 || n === 6 ? 0 : 1;
   if (cur) cur.classList.remove("focus"); cur = null;
-  if (n === 7) return applyRun();
-  const first = { 2: "#uses .row", 3: "#groups .row[data-f]", 4: "#sizes .size.cur", 5: "#dns .opt.cur" }[n];
-  setTimeout(() => focus(n === 6 ? $$(".look")[scene] : $(first || `#s${n} [data-f]`)), 80);
+  const first = { 1: "#s1 [data-name]", 2: "#styles .opt.on", 3: "#wxopts .opt.on", 5: "#homeopts .opt" }[n];
+  setTimeout(() => focus(n === 4 ? $$(".look")[scene] : $(first || `#s${n} [data-f]`)), 80);
+}
+function editName() {
+  const r = $("#s1 [data-name]"), i = $("#nameIn"); r.classList.add("editing"); i.focus(); i.select();
+}
+function commitName() {
+  const i = $("#nameIn"), v = i.value.trim().slice(0, 24) || PROFILES[0].name;
+  PROFILES[0].name = v; $("#nameV").textContent = v; $("#s1 [data-name]").classList.remove("editing"); i.blur(); renderAvatar(); tick();
 }
 function setupSelect(e) {
-  if (e.dataset.use) { const i = +e.dataset.use; keepUse[i] = !keepUse[i]; e.classList.toggle("on", keepUse[i]); $(".state", e).textContent = keepUse[i] ? "Keep" : "Switch off"; return; }
-  if (e.dataset.pkg) { e.classList.toggle("on"); return; }
-  if (e.dataset.size) { dockSize = +e.dataset.size; $$(".size").forEach((s) => s.classList.toggle("cur", s === e)); renderPick(); return; }
-  if (e.dataset.app) { const k = picks.indexOf(e.dataset.app); if (k >= 0) picks.splice(k, 1); else picks.push(e.dataset.app); renderPick(); return; }
-  if (e.dataset.dns) { dns = e.dataset.dns === "1"; $$(".opt").forEach((o) => o.classList.toggle("cur", o === e)); return; }
-  if (e.classList.contains("look")) { showScene(+e.dataset.i); $("#setup .bgimg").src = P(SCENES[scene].id, ".jpg"); return step(7); }
-  if ("next" in e.dataset) {
-    if (cs === 3) offRows = new Set($$("#groups .row.on[data-pkg]").map((r) => r.dataset.pkg));
-    if (cs === 4) { topRow = picks.length ? picks.slice() : [APPS[0].pkg]; if (again) return endSetup(); }
-    if (again && cs === 3) return step(7);
-    return step(cs + 1);
+  if ("name" in e.dataset) return editName();
+  if (e.dataset.emo) { const i = +e.dataset.emo; PROFILES[0].emoji = EMOJIS[i]; PROFILES[0].bg = EMO_BG[i]; $$("#emojis .emo").forEach((x) => x.classList.toggle("on", x === e)); return renderAvatar(); }
+  if (e.dataset.style) { setGlass(e.dataset.style); $$("#styles .opt").forEach((x) => x.classList.toggle("on", x === e)); return; }
+  if (e.dataset.wx) {
+    if (e.dataset.wx === "city") { city = wxMode === "city" ? (city + 1) % CITIES.length : city; }
+    wxMode = e.dataset.wx; renderSetupLists(); return focus($(`#wxopts [data-wx="${wxMode}"]`));
   }
+  if ("home" in e.dataset) { homeOn = !homeOn; e.classList.toggle("on", homeOn); return; }
+  if ("helper" in e.dataset) { helperOn = !helperOn; e.classList.toggle("on", helperOn); return; }
+  if (e.classList.contains("look")) { showScene(+e.dataset.i); $("#setup .bgimg").src = P(SCENES[scene].id, ".jpg"); return step(5); }
+  if ("next" in e.dataset) return cs >= 6 || (again && cs === 1) ? endSetup() : step(cs + 1);
 }
 function setupBack() {
-  if (cs === 7) return;
-  if (again && cs === enteredAt) return endSetup();
+  if ($("#s1 [data-name]").classList.contains("editing")) return commitName();
+  if (again) return endSetup();
   if (cs > 0) step(cs - 1);
-}
-/* What happens, in cleanyourtv's order: back up, disable in small batches with a pause, read the TV back, then Home */
-function applyRun() {
-  const off = offList(), T = $("#tasks"), ring = $("#ring"), prog = $("#prog"), batches = [];
-  for (let i = 0; i < off.length; i += 4) batches.push(off.slice(i, i + 4));
-  ring.classList.remove("done"); prog.style.strokeDashoffset = 578; $("#cleanTitle").textContent = "Cleaning Your TV";
-  const jobs = [["Backing up your TV", "app states, Home, settings"], ...batches.map((b, i) => [`Switching off, batch ${i + 1} of ${batches.length}`, b.join(", ")]),
-    ["Reading the TV back", `${off.length} confirmed off`], ["PureTV takes the Home button", "Google TV home stays on for profiles"]];
-  if (dns) jobs.splice(jobs.length - 1, 0, ["Ad-blocking DNS", "private_dns_specifier dns.adguard-dns.com"]);
-  T.innerHTML = jobs.map(([t, s]) => `<div class="task"><i></i>${t}<small>${s}</small></div>`).join("");
-  const rows = $$(".task", T); let i = 0;
-  const next = () => {
-    if (i > 0) rows[i - 1].className = "task ok";
-    prog.style.strokeDashoffset = 578 * (1 - i / rows.length);
-    if (i === rows.length) { ring.classList.add("done"); $("#cleanTitle").textContent = `${off.length} Apps Switched Off`; return setTimeout(endSetup, 1900); }
-    rows[i].className = "task run"; i++; setTimeout(next, i === 1 ? 1000 : 650);
-  };
-  next();
 }
 function endSetup() {
   clearInterval(helloTimer); $("#setup").classList.remove("on"); buildHome();
@@ -1393,11 +1743,14 @@ function endSetup() {
   layers = [{ root: h }]; cur = null; setTimeout(() => focus($("#row1 .tile")), 120); tick();
 }
 
-
 /* ---------- input: remote keys (with hold OK and calm key repeat), plus the mouse ---------- */
 let okTimer = null, okLong = false, lastMove = 0;
 addEventListener("keydown", (e) => {
   const k = e.key;
+  if (document.activeElement && document.activeElement.id === "nameIn") {   // typing the profile name
+    if (["Enter", "Escape", "ArrowDown", "ArrowUp"].includes(k)) { e.preventDefault(); commitName(); if (k === "ArrowDown") move(0, 1); }
+    return;
+  }
   if (e.ctrlKey || e.metaKey || e.altKey || /^F\d+$/.test(k)) return;
   e.preventDefault();
   if (poweredOff) { poweredOff = false; return $("#off").classList.remove("on"); }
@@ -1459,7 +1812,7 @@ let idle, idleA; const wake = () => {
 ["keydown", "mousemove", "click"].forEach((ev) => addEventListener(ev, wake));
 
 document.fonts.ready.then(tick);
-$("#tvset .bigicon").innerHTML = gearSVG("metal"); $$('#bar [data-act="settings"]').forEach((b) => b.innerHTML = gearSVG("mono")); renderAvatar(); showScene(0); buildHome(); tick(); setInterval(tick, 5000); runSetup(0); wake();
+setGlass("liquid"); applyLite(); $$('#bar [data-act="settings"]').forEach((b) => b.innerHTML = gearSVG("mono")); renderAvatar(); showScene(0); buildHome(); tick(); setInterval(tick, 5000); runSetup(0); wake();
 (function shot() {
   const q = new URLSearchParams(location.search), s = q.get("shot");
   if (q.has("bare")) { document.body.classList.add("bare"); removeEventListener("resize", fit); tv.style.transform = "none"; }

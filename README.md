@@ -15,6 +15,8 @@ Nothing is uninstalled, nothing is rooted, and one button puts everything back.
 
 ## Install
 
+**Just the Home screen, no computer needed:** download `PureTV-Home-2.0.apk` from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest) and follow [INSTALL-TV.md](INSTALL-TV.md). It updates itself from GitHub, asking you first.
+
 PureTV works on any **Android TV or Google TV** (TCL, Sony, Xiaomi, Hisense, Philips, Acer, OnePlus, Chromecast
 with Google TV, Google TV Streamer, Nvidia Shield and more). Samsung, LG, Roku and other non-Android TVs have no
 debugging port, so nothing can be installed on them (see cleanyour.tv/not-android for their privacy switches).

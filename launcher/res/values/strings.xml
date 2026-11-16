@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">PureTV Home</string>
     <string name="dream_name">PureTV Clock</string>
+    <string name="helper_name">PureTV Remote Helper</string>
+    <string name="helper_desc">Makes the Home button open PureTV, and shows PureTV when Google TV\'s home comes up by itself. It only notices which app is on screen. It never reads text, passwords or anything inside your apps.</string>
     <string name="morning">Good morning</string>
     <string name="afternoon">Good afternoon</string>
     <string name="evening">Good evening</string>
@@ -23,7 +25,7 @@
     <string name="hint">Hold OK on an app to move or hide it</string>
     <string name="made_by">Made with ❤️ by Crazified Studios · crazifiedstudios.com</string>
     <string name="about">About PureTV</string>
-    <string name="about_text">PureTV Home %1$s\n\nMade with ❤️ by Crazified Studios\ncrazifiedstudios.com\n\nHelp: crazifiedstudios@gmail.com\n\nBuilt on cleanyourtv, couch-tv and tvOS Launcher (see NOTICE.md on GitHub).</string>
+    <string name="about_text">PureTV Home %1$s\n\nMade with ❤️ by Crazified Studios\ncrazifiedstudios.com\n\nHelp: crazifiedstudios@gmail.com\n\nInspired by Apple tvOS. Not affiliated with Apple.</string>
     <!-- Software updates. Set update_repo to your GitHub repository, e.g. yourname/puretv. Empty = updates off. -->
     <string name="update_repo" translatable="false">advik-srivastava/puretv</string>
     <string name="update_check">Check for updates (version %s)</string>

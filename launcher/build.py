@@ -1,5 +1,6 @@
 """Build launcher/dist/purehome.apk without Gradle: aapt2 -> javac -> d8 -> zipalign -> apksigner.
 
+    python tools/build_tv_ui.py     (the Home screen page, into launcher/assets/ui)
     python launcher/build.py
 
 Needs a JDK 17 and the Android SDK (platform 34, build-tools 34.x). Looks in ~/.puretv/toolchain
@@ -18,7 +19,7 @@ BUILD, DIST = HERE / "build", HERE / "dist"
 MIN_SDK, TARGET_SDK = "23", "34"
 # A release must carry a higher version than the one on the TV, or Android refuses the update:
 #   PURETV_VERSION=1.1 python launcher/build.py   ->  versionName 1.1, versionCode 10100
-VERSION_NAME = os.environ.get("PURETV_VERSION", "1.0")
+VERSION_NAME = os.environ.get("PURETV_VERSION", "2.0")
 _v = [int(x) for x in (VERSION_NAME.split(".") + ["0", "0"])[:3]]
 VERSION_CODE = str(_v[0] * 10000 + _v[1] * 100 + _v[2])
 
@@ -61,7 +62,8 @@ def main():
     run(bt / f"aapt2{exe}", "compile", "--dir", HERE / "res", "-o", BUILD / "res.zip")
     run(bt / f"aapt2{exe}", "link", "-o", BUILD / "base.apk", "-I", jar, "--manifest", HERE / "AndroidManifest.xml",
         "--java", BUILD / "gen", "--min-sdk-version", MIN_SDK, "--target-sdk-version", TARGET_SDK,
-        "--version-code", VERSION_CODE, "--version-name", VERSION_NAME, BUILD / "res.zip")
+        "--version-code", VERSION_CODE, "--version-name", VERSION_NAME,
+        *(["-A", HERE / "assets"] if (HERE / "assets").exists() else []), BUILD / "res.zip")
     sources = [*HERE.glob("src/**/*.java"), *BUILD.glob("gen/**/*.java")]
     run(jdk / "bin" / f"javac{exe}", "-source", "8", "-target", "8", "-Xlint:-options", "-bootclasspath", jar,
         "-d", BUILD / "classes", *sources)
