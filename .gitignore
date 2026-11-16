@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+launcher/build/
+launcher/dist/
+*.keystore
+*.jks
+app/ui/tv-v*.html
+app/ui/demo/logos-dark/
+tools/make_dark_icons.py

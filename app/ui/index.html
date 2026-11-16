@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PureTV</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dot"></span>PureTV</div>
+  <div class="spacer"></div>
+  <div id="chip" class="chip" hidden></div>
+  <button id="restoreTop" class="ghost" hidden>Restore TV</button>
+</header>
+
+<main>
+  <nav id="steps">
+    <button data-step="connect"><i>1</i><span>Connect</span></button>
+    <button data-step="backup"><i>2</i><span>Back up</span></button>
+    <button data-step="clean"><i>3</i><span>Clean</span></button>
+    <button data-step="launcher"><i>4</i><span>Launcher</span></button>
+    <button data-step="done"><i>5</i><span>Finish</span></button>
+  </nav>
+
+  <section id="connect" class="panel">
+    <h1>Connect to your TV</h1>
+    <p class="lead">PureTV talks to Android TV and Google TV over your Wi-Fi. Nothing is uninstalled, and everything can be undone.</p>
+    <ol class="how">
+      <li><b>On the TV</b> open Settings → System → About and press OK on <b>Android TV OS build</b> seven times.</li>
+      <li>Go back to System → <b>Developer options</b> and turn on <b>USB debugging</b> (and Network debugging, if shown).</li>
+      <li>Find the TV's <b>IP address</b> in Settings → Network &amp; Internet → your Wi-Fi, and type it below.</li>
+    </ol>
+    <form id="connectForm" class="row">
+      <input id="host" placeholder="192.168.1.50" autocomplete="off" spellcheck="false" inputmode="decimal">
+      <button class="primary" id="connectBtn">Connect</button>
+      <button type="button" class="ghost" id="findBtn">Find my TV automatically</button>
+    </form>
+    <div id="found" class="found" hidden></div>
+    <p class="hint">The TV will ask <b>“Allow USB debugging?”</b> — tick <i>Always allow</i> and press Allow.</p>
+    <p id="connectErr" class="error" hidden></p>
+    <button id="demoBtn" class="link">No TV nearby? Try it with a demo TV</button>
+  </section>
+
+  <section id="backup" class="panel" hidden>
+    <h1>Back up first</h1>
+    <p class="lead">Before anything changes, PureTV writes down every app's on/off state, your Home screen and the TV's settings. Restore replays it exactly.</p>
+    <div class="card device" id="deviceCard"></div>
+    <div id="backupState" class="note" hidden></div>
+    <div class="row">
+      <button class="primary" id="backupBtn">Back up my TV</button>
+      <button class="ghost" id="backupNext" hidden>Continue</button>
+    </div>
+  </section>
+
+  <section id="clean" class="panel" hidden>
+    <h1>Clean</h1>
+    <p class="lead">Chosen from <span id="listCount"></span> community-tested TV lists. Apps are switched off, never deleted. Core system parts are locked.</p>
+    <div class="toolbar">
+      <input id="filter" placeholder="Search apps" autocomplete="off">
+      <label class="switch"><input type="checkbox" id="anim" checked><span></span>Faster animations</label>
+      <label class="switch"><input type="checkbox" id="dns"><span></span>Block ads inside apps</label>
+    </div>
+    <p class="hint" id="dnsNote" hidden>Uses Android's Private DNS with AdGuard DNS: ad and tracker domains stop loading in every app. It does <b>not</b> block YouTube ads, and AdGuard sees which sites the TV looks up. Leave it off if your router already filters (Pi-hole, AdGuard Home, a VPN). Restore turns it off again.</p>
+    <div id="groups"></div>
+    <div class="sticky">
+      <div id="pickCount" class="muted"></div>
+      <div class="spacer"></div>
+      <button class="ghost" id="cacheBtn">Clear app caches</button>
+      <button class="ghost" id="cleanSkip">Skip</button>
+      <button class="primary" id="cleanBtn">Switch off</button>
+    </div>
+  </section>
+
+  <section id="launcher" class="panel" hidden>
+    <h1>A calmer Home screen</h1>
+    <p class="lead">PureTV Home replaces the ad-filled stock home with a clock, your apps and nothing else. No ads, no recommendations, no network access.</p>
+    <div class="tvpreview" aria-hidden="true">
+      <div class="tvtop"><div><div class="tvclock">8:42</div><div class="tvdate">Good evening · Monday 16 November</div></div><div class="tvpills"><span>Wi-Fi</span><span>Settings</span></div></div>
+      <div class="tvrow"><b></b><b class="focus"></b><b></b><b></b><b></b></div>
+      <div class="tvrow small"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+    <div id="launcherState" class="note" hidden></div>
+    <label class="check" id="keepOpt" hidden><input type="checkbox" id="keepStock" checked>
+      <span>Keep Google TV's home installed and on <small>Keeps your Google TV profiles, Apps-only mode and boot safety, as cleanyourtv's Google TV lists do. Nothing is switched off for this step.</small></span></label>
+    <label class="check" id="setupOpt" hidden><input type="checkbox" id="disableSetup">
+      <span>Also switch off the Google setup wizard <small>Only if Home keeps going back to Google's. On Chromecast devices this can stop phone casting. Undone by Restore.</small></span></label>
+    <div class="row">
+      <button class="primary" id="launcherBtn">Install and make it Home</button>
+      <button class="ghost" id="launcherSkip">Skip</button>
+    </div>
+  </section>
+
+  <section id="done" class="panel" hidden>
+    <h1>All done</h1>
+    <p class="lead" id="doneLead">Your TV is cleaner. Press Home on the remote and enjoy the quiet.</p>
+    <div class="card" id="summary"></div>
+    <div class="card warn">
+      <b>One last thing on the TV</b>
+      <p>Turn <b>USB debugging</b>, Network debugging and Wireless debugging off in Developer options, then reboot the TV and press <b>Check debugging is off</b>. PureTV Home keeps working without it; you only need it back to clean again or restore.</p>
+      <div class="row" style="margin-top:12px"><button class="ghost" id="adbBtn">Check debugging is off</button></div>
+      <p id="adbState" class="note" hidden></p>
+    </div>
+    <div class="card">
+      <b>After a firmware update</b>
+      <p class="muted" style="margin:6px 0 12px">An update can switch some apps back on and give Home back to the stock launcher. This finds them and switches them off again.</p>
+      <button class="ghost" id="checkBtn">Check after an update</button>
+    </div>
+    <div class="row">
+      <button class="ghost" id="restoreBtn">Restore TV to how it was</button>
+      <button class="ghost" id="againBtn">Clean more</button>
+    </div>
+  </section>
+</main>
+
+<div id="overlay" hidden>
+  <div class="sheet">
+    <div class="spin" id="spin"></div>
+    <h2 id="jobTitle"></h2>
+    <pre id="jobLog"></pre>
+    <p id="jobErr" class="error" hidden></p>
+    <button class="primary" id="jobOk" hidden>OK</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

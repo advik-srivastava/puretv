@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PureTV Home — TV demo</title>
+<style>
+@font-face { font-family: "Antonio"; font-weight: 300; font-display: block; src: url(demo/fonts/antonio-latin-300.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 100 900; font-display: block; src: url(demo/fonts/inter-latin-wght-normal.woff2) format("woff2"); }
+:root {
+  --ease: cubic-bezier(.2, .8, .2, 1);          /* settle, like UIKit's default spring with no bounce */
+  --lift: cubic-bezier(.25, 1.35, .4, 1);       /* focus: a small overshoot */
+  --spring: cubic-bezier(.32, 1.5, .5, 1);      /* Control Center tiles popping in */
+  --glass: linear-gradient(160deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 45%, rgba(255,255,255,.1) 100%), rgba(24,24,32,.22);
+  --edge: inset 0 0 0 1.5px rgba(255,255,255,.22), inset 0 2px 1px -1px rgba(255,255,255,.6), 0 30px 70px rgba(0,0,0,.28);
+  --blur: blur(40px) saturate(185%) brightness(1.04);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; color: #fff;
+  font-family: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+#room { position: fixed; inset: 0; background: radial-gradient(1200px 500px at 50% 100%, #1d1f27 0%, #0b0b0e 70%); }
+#tv { position: absolute; left: 50%; top: 50%; width: 1948px; height: 1108px; margin: -554px 0 0 -974px; padding: 14px; border-radius: 22px;
+  background: #050506; box-shadow: 0 0 0 1px #24252b, 0 60px 120px rgba(0,0,0,.6); transform-origin: center; }
+#tv::after { content: ""; position: absolute; left: 50%; bottom: -46px; width: 520px; height: 46px; margin-left: -260px;
+  background: linear-gradient(#17181c, #0c0c0f); clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%); border-radius: 0 0 10px 10px; }
+#stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; border-radius: 8px; background: #000; font-size: 16px; }
+#help { position: fixed; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 13px; color: #ffffff66; pointer-events: none; }
+#help b { color: #ffffffaa; font-weight: 600; }
+
+/* ============ top shelf: photo, glass clock, the scenery cut out in front of it ============ */
+#scenes { position: absolute; inset: 0; transition: transform 1.1s var(--ease), filter .9s var(--ease); }
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity 1.6s ease-in-out; }
+.scene.on { opacity: 1; }
+.scene .sbg, .scene .fg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scene .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 28%, transparent 55%, rgba(0,0,0,.42) 100%); }
+.gclock { position: absolute; left: 0; right: 0; top: 9.375rem; text-align: center; white-space: nowrap;
+  font-family: "Antonio", "Arial Narrow", sans-serif; font-weight: 300; font-size: 25rem; line-height: .82; letter-spacing: -.02em;
+  filter: drop-shadow(0 6px 28px rgba(0,0,0,.16)); }
+.gclock .fill { display: block; padding: .2em 0; margin: -.2em 0; color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-size: 1920px 1080px; background-repeat: no-repeat; }
+.gclock .rim { position: absolute; inset: 0; color: rgba(255,255,255,.1); -webkit-text-stroke: 1.5px rgba(255,255,255,.55); }
+.gclock .sheen { position: absolute; inset: 0; color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(160deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.25) 100%); }
+.s-night .sbg, .s-night .fg { filter: brightness(.86); }
+.s-night .gclock .fill { filter: brightness(1.15) saturate(1.2); opacity: .9; }
+.s-night .gclock .rim { -webkit-text-stroke-color: rgba(255,215,225,.5); }
+.s-golden .gclock { top: 9.5rem; font-size: 24.375rem; }
+.s-water .gclock { top: 16.75rem; font-size: 26.25rem; filter: drop-shadow(0 8px 30px rgba(0,20,40,.35)); }
+.s-water .shade { background: linear-gradient(180deg, rgba(0,12,24,.42) 0%, rgba(0,12,24,.12) 40%, transparent 52%, rgba(0,20,40,.5) 100%); }
+.s-fog .gclock { left: 6rem; right: auto; top: 10.75rem; font-size: 29.375rem; text-align: left; filter: none; }
+.s-fog .gclock .fill { filter: brightness(.46) saturate(.8) contrast(1.1); opacity: .8; }
+.s-fog .gclock .rim { color: transparent; -webkit-text-stroke-color: rgba(255,255,255,.6); }
+.s-fog .gclock .sheen { display: none; }
+.s-dawn .shade { background: linear-gradient(180deg, rgba(50,28,12,.42) 0%, transparent 50%, rgba(0,0,0,.45) 100%); }
+.s-dawn .gclock { top: 14.375rem; filter: drop-shadow(0 8px 34px rgba(60,30,10,.3)); }
+#date { position: absolute; left: 0; right: 0; top: 6rem; text-align: center; font-size: 34px; font-weight: 500; letter-spacing: -.2px;
+  text-shadow: 0 2px 18px rgba(0,0,0,.25); transition: opacity .6s, top .9s var(--ease), left .9s var(--ease), color .9s; }
+#date.swap { opacity: 0; }
+#date.d-golden { top: 6.625rem; } #date.d-water { top: 13.5rem; } #date.d-dawn { top: 11rem; }
+#date.d-night { color: rgba(255,232,238,.95); }
+#date.d-fog { left: 6.5rem; top: 7.25rem; text-align: left; color: #16201d; text-shadow: none; }
+
+.glass { background: var(--glass); box-shadow: var(--edge); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+[data-f] { cursor: pointer; }
+
+/* ============ home: the Apple TV 4K layout ============ */
+#home { position: absolute; inset: 0; transition: opacity .7s var(--ease), transform .9s var(--ease), filter .7s var(--ease); }
+#home.hidden { opacity: 0; pointer-events: none; transform: scale(1.03); }
+#rows { position: absolute; inset: 0; transition: transform .85s var(--ease); }
+/* the top row sits on one wide sheet of glass, nearly edge to edge */
+#band { position: absolute; left: 30px; width: 1860px; border-radius: 58px; transition: background .6s var(--ease);
+  background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.08)); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.2), inset 0 2px 1px -1px rgba(255,255,255,.55), 0 30px 80px rgba(0,0,0,.25);
+  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
+#row1, #grid { position: absolute; left: 64px; display: grid; grid-template-columns: repeat(var(--cols, 6), var(--tw)); column-gap: 36px; }
+#grid { row-gap: 80px; }
+.tile { width: var(--tw, 268px); height: var(--th, 161px); position: relative; perspective: 900px; }
+.tile .face { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; background: var(--bg, #222);
+  transform: translateZ(0); transition: transform .55s var(--lift), box-shadow .45s var(--ease), filter .4s;
+  box-shadow: 0 8px 20px rgba(0,0,0,.25); will-change: transform; }
+.tile .logo { position: absolute; left: 50%; top: 0; height: 100%; transform: translateX(-50%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.tile .gloss { position: absolute; inset: 0; border-radius: 24px; pointer-events: none; opacity: 0; transition: opacity .4s;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255,255,255,.6), rgba(255,255,255,0) 55%); mix-blend-mode: soft-light; }
+.tile .sys { position: absolute; inset: 0; display: grid; place-items: center; }
+.tile .sys svg { width: 40%; height: 54%; }
+.tile .name { position: absolute; left: 0; right: 0; top: calc(100% + 24px); text-align: center; font-size: 23px; font-weight: 500; color: #fff;
+  opacity: 0; transform: translateY(-8px); transition: opacity .35s var(--ease), transform .45s var(--ease); text-shadow: 0 2px 12px rgba(0,0,0,.45); white-space: nowrap; }
+.tile.focus { z-index: 3; }
+.tile.focus .face { transform: scale(1.14) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); box-shadow: 0 34px 56px rgba(0,0,0,.45); }
+.tile.focus .gloss { opacity: 1; }
+#grid .tile.focus .name { opacity: 1; transform: translateY(8px); }
+#home .tile { animation: rise .9s var(--lift) both; animation-delay: calc(var(--i) * 40ms + 150ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(70px) scale(.92); } }
+/* "Press Up for full screen", as Apple TV says over the top shelf */
+#hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 22px; font-weight: 500; color: rgba(255,255,255,.85);
+  text-shadow: 0 2px 14px rgba(0,0,0,.5); opacity: 0; transform: translateY(10px); transition: opacity .5s var(--ease), transform .6s var(--ease); pointer-events: none; }
+#hint svg { display: block; margin: 0 auto 4px; width: 40px; height: 16px; }
+#home.top #hint { opacity: 1; transform: none; transition-delay: .5s; }
+/* Down into the grid: the top shelf blurs into a soft wash and the grid rises */
+#home.deep #rows { transform: translateY(var(--deep)); }
+#home.deep #hint { opacity: 0; transition-delay: 0s; }
+#stage.deep #scenes { filter: blur(40px) brightness(.7) saturate(1.3); transform: scale(1.1); }
+#stage.deep #date { opacity: 0; }
+/* Up from the top row: full screen, just the scene and the clock */
+#home.full #rows { transform: translateY(var(--full)); }
+#home.full #rows .tile .face { filter: brightness(.8); }
+
+/* ============ Control Center (tvOS 26 style) ============ */
+#cc { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+#cc::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .5s var(--ease);
+  background: linear-gradient(270deg, rgba(0,0,0,.5) 0%, rgba(0,0,0,.25) 45%, rgba(0,0,0,0) 75%); }
+#cc.on { pointer-events: auto; }
+#cc.on::before { opacity: 1; }
+#ccPanel { position: absolute; right: 80px; top: 60px; width: 640px; }
+.cct { opacity: 0; transform: translateY(-24px) scale(.9); transform-origin: 90% 0;
+  transition: opacity .35s var(--ease), transform .5s var(--ease); }
+#cc.on .cct { opacity: 1; transform: none; transition: opacity .4s var(--ease) calc(var(--d) * 32ms), transform .65s var(--spring) calc(var(--d) * 32ms); }
+#ccHead { display: flex; align-items: center; gap: 22px; margin-bottom: 30px; }
+#ccTime { font-size: 32px; font-weight: 500; letter-spacing: -.3px; margin-right: auto; text-shadow: 0 2px 10px rgba(0,0,0,.3); }
+.ccswitch { width: 74px; height: 74px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+.ccswitch svg { width: 36px; height: 36px; }
+#ccAvatar { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; font-weight: 700; color: rgba(0,0,0,.72);
+  transition: transform .5s var(--lift), box-shadow .35s; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+#ccAvatar.focus { transform: scale(1.18); box-shadow: 0 0 0 4px #fff, 0 16px 40px rgba(0,0,0,.4); }
+/* Liquid Glass tiles: clear, warm, a bright rim, and a light that follows focus */
+.lg { position: relative; border-radius: 999px; color: #fff; overflow: hidden;
+  background: linear-gradient(170deg, rgba(255,255,255,.2) 0%, rgba(255,255,255,.05) 50%, rgba(255,255,255,.12) 100%), rgba(40,34,30,.3);
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.05); backdrop-filter: blur(28px) saturate(190%) brightness(1.05);
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.2), inset 0 2px 1px -1px rgba(255,255,255,.7), inset 0 -10px 24px rgba(255,255,255,.04), 0 18px 40px rgba(0,0,0,.22);
+  transition: transform .55s var(--lift), background .35s var(--ease), box-shadow .35s var(--ease); }
+.lg::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s;
+  background: radial-gradient(120% 90% at 30% 0%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%); }
+.lg.focus { transform: scale(1.07); background: linear-gradient(170deg, rgba(255,255,255,.42) 0%, rgba(255,255,255,.2) 55%, rgba(255,255,255,.3) 100%), rgba(80,64,52,.25);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), inset 0 2px 2px -1px #fff, 0 0 0 1px rgba(255,190,120,.35), 0 26px 60px rgba(0,0,0,.35); z-index: 2; }
+.lg.focus::after { opacity: 1; }
+#ccGrid { display: grid; grid-template-columns: 300px 300px; grid-template-rows: 140px 140px 128px 128px; gap: 22px 40px; position: relative; transition: opacity .35s var(--ease), transform .5s var(--ease); }
+#ccGrid.away { opacity: 0; transform: translateX(-40px); pointer-events: none; }
+.ccbig { grid-row: span 2; border-radius: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; font-size: 27px; font-weight: 500; }
+.ccbig svg { width: 120px; height: 120px; }
+.ccpill { display: flex; align-items: center; gap: 18px; padding: 0 28px 0 22px; font-size: 25px; font-weight: 500; line-height: 1.2; }
+.ccpill small { display: block; font-size: 22px; opacity: .72; font-weight: 400; }
+.ccpill .gl { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; flex: none; transition: background .35s, color .35s; }
+.ccpill .gl svg { width: 38px; height: 38px; }
+.ccpill .gl.plain { background: none; }
+#ccWifi .gl { color: #3a9bff; }
+#ccDnd .gl { background: rgba(255,255,255,.18); }
+#ccDnd.on .gl { background: #fff; color: #5e5ce6; }
+#ccDnd.on { background: linear-gradient(170deg, rgba(150,140,255,.5), rgba(94,92,230,.4)); }
+#ccSleep.on .gl { color: #ff9f0a; }
+.ccrow { grid-column: 1 / span 2; display: flex; justify-content: space-between; }
+.ccround { width: 128px; height: 128px; display: grid; place-items: center; }
+.ccround svg { width: 54px; height: 54px; }
+.ccround .tip { position: absolute; }
+#ccLabel { position: absolute; left: 0; right: 0; top: calc(100% + 18px); text-align: center; font-size: 23px; font-weight: 500; opacity: 0; transition: opacity .3s; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+#ccLabel.on { opacity: 1; }
+/* a page inside Control Center: profiles, audio, inputs */
+#ccPage { position: absolute; left: 0; right: 0; top: 104px; border-radius: 48px; padding: 22px; opacity: 0; transform: translateX(60px); pointer-events: none;
+  transition: opacity .35s var(--ease), transform .55s var(--ease); }
+#ccPage.on { opacity: 1; transform: none; pointer-events: auto; }
+#ccPage h3 { margin: 6px 14px 14px; font-size: 22px; font-weight: 600; color: rgba(255,255,255,.65); }
+.ccl { display: flex; align-items: center; gap: 20px; padding: 16px 20px; border-radius: 30px; font-size: 26px; font-weight: 500; transition: background .25s, color .25s, transform .45s var(--lift); }
+.ccl .avatar { width: 60px; height: 60px; font-size: 22px; }
+.ccl .ic { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.16); display: grid; place-items: center; flex: none; }
+.ccl .ic svg { width: 30px; height: 30px; }
+.ccl small { display: block; font-size: 19px; opacity: .65; font-weight: 400; }
+.ccl .tick { margin-left: auto; width: 34px; height: 34px; opacity: 0; }
+.ccl.cur .tick { opacity: 1; }
+.ccl.focus { background: rgba(255,255,255,.94); color: #111; transform: scale(1.03); }
+.avatar { border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: rgba(0,0,0,.72); flex: none; }
+#stage.ccon #home { filter: brightness(.92); }
+
+/* ============ Settings (tvOS layout: the big icon on the left, the list on the right) ============ */
+#tvset { position: absolute; inset: 0; z-index: 8; opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .5s var(--ease), visibility 0s linear .5s; }
+#tvset.on { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+#tvset .wash { position: absolute; inset: 0; background: rgba(10,10,14,.5); -webkit-backdrop-filter: blur(60px) saturate(160%); backdrop-filter: blur(60px) saturate(160%); }
+#tvset .left { position: absolute; left: 0; top: 0; bottom: 0; width: 820px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
+  transform: translateX(-60px); opacity: 0; transition: transform .8s var(--ease), opacity .5s; }
+#tvset.on .left { transform: none; opacity: 1; }
+#tvset .bigicon { width: 360px; height: 360px; border-radius: 80px; display: grid; place-items: center;
+  background: linear-gradient(160deg, #9aa3b5, #5d6577); box-shadow: inset 0 2px 2px rgba(255,255,255,.5), 0 40px 80px rgba(0,0,0,.4); }
+#tvset .bigicon svg { width: 210px; height: 210px; color: #eef1f7; filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); }
+#tvset .left b { font-size: 46px; font-weight: 600; letter-spacing: -.8px; }
+#tvset .list { position: absolute; left: 860px; right: 120px; top: 120px; bottom: 60px; overflow: hidden; }
+#tvset h2 { font-size: 30px; margin: 0 0 30px 8px; font-weight: 600; opacity: .9; }
+#tvset h5 { margin: 28px 0 10px 28px; font-size: 20px; font-weight: 600; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 1.2px; }
+.sr { display: flex; align-items: center; height: 84px; padding: 0 30px; border-radius: 24px; font-size: 29px; font-weight: 500; margin-bottom: 6px;
+  background: rgba(255,255,255,.07); transition: background .25s, color .25s, transform .45s var(--lift), box-shadow .3s;
+  opacity: 0; transform: translateX(40px); }
+#tvset.on .sr { opacity: 1; transform: none; transition: background .25s, color .25s, opacity .5s var(--ease) calc(var(--d) * 30ms + 120ms), transform .7s var(--ease) calc(var(--d) * 30ms + 120ms), box-shadow .3s; }
+.sr .v { margin-left: auto; color: rgba(255,255,255,.55); font-size: 27px; }
+.sr .chev { width: 18px; height: 30px; margin-left: 18px; opacity: .45; }
+#tvset.on .sr.focus { background: #fff; color: #111; transform: scale(1.04); box-shadow: 0 20px 50px rgba(0,0,0,.35); transition-delay: 0s; }
+.sr.focus .v { color: rgba(0,0,0,.55); }
+.sr.focus .chev { opacity: .6; }
+.sr.danger .t { color: #ff6961; }
+.sr.danger.focus .t { color: #d70015; }
+#stage.seton #home { opacity: 0; }
+
+/* ============ Google TV's own screens (unchanged; PureTV only opens them) ============ */
+#gtv { position: absolute; top: 0; right: 0; bottom: 0; width: 680px; background: #202124; padding: 60px 40px; font-family: Roboto, "Segoe UI", sans-serif; z-index: 12;
+  transform: translateX(700px); transition: transform .45s cubic-bezier(.4,0,.2,1); box-shadow: -20px 0 60px rgba(0,0,0,.4); }
+#gtv.on { transform: none; }
+#gtv h2 { font-weight: 400; font-size: 42px; margin: 0 0 6px 20px; }
+#gtv p { margin: 0 0 26px 20px; color: #9aa0a6; font-size: 20px; }
+.gi { display: flex; align-items: center; gap: 22px; padding: 16px 22px; border-radius: 99px; font-size: 25px; color: #e8eaed; }
+.gi small { display: block; color: #9aa0a6; font-size: 18px; margin-top: 2px; }
+.gi .avatar { width: 52px; height: 52px; font-size: 19px; }
+.gi.focus { background: #e8eaed; color: #202124; }
+.gi.focus small { color: #5f6368; }
+
+/* ============ first-run setup ============ */
+#setup { position: absolute; inset: 0; opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .8s var(--ease), visibility 0s linear .8s; }
+#setup.on { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+#setup .bgimg { position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px); object-fit: cover; filter: blur(30px) brightness(.55) saturate(1.25); }
+.step { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  opacity: 0; transform: translateX(90px); pointer-events: none; visibility: hidden;
+  transition: opacity .55s var(--ease), transform .8s var(--ease), visibility 0s linear .8s; }
+.step.on { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+.step.past { transform: translateX(-90px); }
+.step h1 { font-size: 62px; font-weight: 700; letter-spacing: -2px; margin: 0 0 12px; }
+.step p { font-size: 26px; color: rgba(255,255,255,.75); margin: 0 0 34px; line-height: 1.45; }
+.step .src { font-size: 19px; color: rgba(255,255,255,.5); margin: 26px 0 0; }
+#dots { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; transition: opacity .5s; }
+#dots i { width: 10px; height: 10px; border-radius: 9px; background: rgba(255,255,255,.3); transition: width .5s var(--ease), background .3s; }
+#dots i.on { width: 34px; background: #fff; }
+#hello { position: relative; height: 230px; width: 1400px; }
+#hello span { position: absolute; inset: 0; font-size: 190px; font-weight: 700; letter-spacing: -7px; line-height: 230px;
+  background: linear-gradient(100deg, #fff 0%, #dfe6ff 45%, #ffd6ea 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  opacity: 0; transform: translateY(30px) scale(.96); transition: opacity 1s var(--ease), transform 1.2s var(--ease); }
+#hello span.on { opacity: 1; transform: none; }
+.btn { padding: 22px 64px; border-radius: 99px; font-size: 28px; font-weight: 650; margin-top: 40px; transition: transform .45s var(--lift), background .25s, color .25s, box-shadow .3s; }
+.btn.focus { background: #fff; color: #0c0e14; transform: scale(1.1); box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+
+.tvcard { display: flex; align-items: center; gap: 30px; padding: 30px 44px 30px 30px; border-radius: 40px; text-align: left; }
+.tvcard .tvicon { width: 120px; height: 120px; border-radius: 30px; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+.tvcard .tvicon svg { width: 64px; height: 64px; }
+.tvcard small { font-size: 18px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #6dfdb0; }
+.tvcard b { display: block; font-size: 40px; margin: 6px 0; letter-spacing: -.6px; }
+.tvcard i { font-style: normal; font-size: 22px; color: rgba(255,255,255,.65); }
+.facts { display: flex; gap: 22px; margin-top: 26px; }
+.fact { width: 360px; padding: 26px 30px; border-radius: 32px; text-align: left; }
+.fact b { display: block; font-size: 40px; letter-spacing: -.8px; }
+.fact span { font-size: 21px; color: rgba(255,255,255,.72); line-height: 1.35; }
+
+.row { display: flex; align-items: center; gap: 18px; padding: 13px 18px; border-radius: 22px; text-align: left; transition: background .25s, transform .4s var(--lift); }
+.row .ic { width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.row .ic svg { width: 27px; height: 27px; }
+.row .tx { flex: 1; min-width: 0; font-size: 24px; font-weight: 600; }
+.row .tx small { display: block; font-size: 17px; font-weight: 400; color: rgba(255,255,255,.62); margin-top: 3px; }
+.row .tx code { font: 15px ui-monospace, Consolas, monospace; color: rgba(255,255,255,.45); display: block; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .state { font-size: 17px; color: rgba(255,255,255,.55); white-space: nowrap; }
+.row.focus { background: rgba(255,255,255,.94); color: #111; transform: scale(1.02); box-shadow: 0 14px 34px rgba(0,0,0,.3); }
+.row.focus .tx small, .row.focus .state { color: rgba(0,0,0,.6); }
+.row.focus .tx code { color: rgba(0,0,0,.45); }
+.row.focus:not(.on) .sw { background: rgba(0,0,0,.18); }
+.sw { width: 76px; height: 44px; border-radius: 99px; background: rgba(120,120,128,.4); position: relative; transition: background .35s var(--ease); flex: none; }
+.sw::after { content: ""; position: absolute; left: 4px; top: 4px; width: 36px; height: 36px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.25); transition: transform .45s var(--lift); }
+.row.on .sw { background: #34c759; }
+.row.on .sw::after { transform: translateX(32px); }
+#uses { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; width: 1540px; padding: 14px; border-radius: 40px; }
+#groups { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; width: 1700px; align-items: start; }
+.grp { border-radius: 36px; padding: 18px 12px 12px; text-align: left; }
+.grp h3 { margin: 0 14px 8px; font-size: 21px; font-weight: 650; display: flex; align-items: center; gap: 10px; }
+.grp h3 .n { margin-left: auto; font-size: 17px; font-weight: 500; color: rgba(255,255,255,.55); }
+.grp .row { padding: 8px 12px; }
+.grp .row .tx { font-size: 19px; }
+.grp .row .tx code { font-size: 13px; }
+.grp .sw { width: 56px; height: 32px; }
+.grp .sw::after { width: 26px; height: 26px; top: 3px; left: 3px; }
+.grp .row.on .sw::after { transform: translateX(24px); }
+.grp .row.on .sw { background: #ff9f0a; }
+.grp.kept .row { opacity: .8; }
+.lock { width: 26px; height: 26px; opacity: .55; flex: none; }
+
+#sizes { display: flex; gap: 6px; padding: 6px; border-radius: 99px; margin-bottom: 40px; }
+.size { width: 150px; height: 58px; border-radius: 99px; display: grid; place-items: center; font-size: 23px; font-weight: 600; color: rgba(255,255,255,.8); transition: background .3s, color .3s, transform .45s var(--lift); }
+.size.cur { background: rgba(255,255,255,.24); color: #fff; }
+.size.focus { background: #fff; color: #111; transform: scale(1.08); }
+#pick { display: grid; grid-template-columns: repeat(6, 210px); gap: 62px 38px; --tw: 210px; --th: 126px; }
+#pick .tile .face { filter: saturate(.25) brightness(.5); }
+#pick .tile.sel .face { filter: none; }
+#pick .tile.extra .face { filter: saturate(.7) brightness(.8); }
+#pick .tile .num { position: absolute; right: -12px; top: -12px; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #111; font-size: 21px; font-weight: 700;
+  display: grid; place-items: center; z-index: 4; transform: scale(0); transition: transform .45s var(--lift); box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+#pick .tile.sel .num { transform: scale(1); }
+#pick .tile.extra .num { background: rgba(255,255,255,.35); color: #fff; }
+#pick .tile .name { opacity: .85; transform: none; font-size: 19px; top: calc(100% + 14px); }
+#dns { display: flex; gap: 30px; }
+.opt { width: 560px; padding: 34px 38px; border-radius: 40px; text-align: left; transition: transform .45s var(--lift), box-shadow .3s; position: relative; }
+.opt b { display: block; font-size: 32px; margin-bottom: 10px; }
+.opt span { font-size: 21px; color: rgba(255,255,255,.72); line-height: 1.45; display: block; }
+.opt .radio { position: absolute; right: 30px; top: 34px; width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,.5); transition: .3s; }
+.opt.cur .radio { border: 11px solid #34c759; background: #fff; }
+.opt.focus { transform: scale(1.04); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3), 0 0 0 4px #fff, 0 30px 70px rgba(0,0,0,.4); }
+#looks { display: flex; gap: 34px; }
+.look { width: 320px; height: 180px; position: relative; transition: transform .5s var(--lift); }
+.look .clip { position: absolute; inset: 0; border-radius: 30px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,.35); transition: box-shadow .35s; }
+.look img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.look .mini { position: absolute; left: 0; right: 0; top: 30px; text-align: center; font: 300 92px/0.82 "Antonio", sans-serif; color: rgba(255,255,255,.88); }
+.look span { position: absolute; left: 0; right: 0; top: calc(100% + 18px); text-align: center; font-size: 22px; font-weight: 600; opacity: .8; transition: transform .4s var(--ease), opacity .3s; }
+.look.focus { transform: scale(1.14); z-index: 2; }
+.look.focus .clip { box-shadow: 0 0 0 4px #fff, 0 40px 80px rgba(0,0,0,.5); }
+.look.focus span { opacity: 1; transform: translateY(6px); }
+#ring { width: 180px; height: 180px; margin-bottom: 18px; }
+#ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+#prog { transition: stroke-dashoffset .6s var(--ease); transform: rotate(-90deg); transform-origin: center; }
+#ringDone { opacity: 0; transform: scale(.4); transform-origin: 105px 105px; transition: opacity .4s, transform .6s var(--lift); }
+#ring.done #ringDone { opacity: 1; transform: none; }
+#ringDone circle { fill: #34c759; }
+#tasks { width: 980px; text-align: left; margin-top: 4px; }
+.task { display: flex; align-items: center; gap: 18px; font-size: 23px; padding: 9px 0; color: rgba(255,255,255,.45); transition: color .4s; }
+.task i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); display: grid; place-items: center; flex: none; font-style: normal; }
+.task.run { color: #fff; } .task.run i { border-color: #fff; border-top-color: transparent; animation: spin .8s linear infinite; }
+.task.ok { color: rgba(255,255,255,.92); } .task.ok i { background: #34c759; border-color: #34c759; animation: pop .45s var(--lift); }
+.task.ok i::after { content: "✓"; font-size: 17px; font-weight: 700; }
+.task small { margin-left: auto; font: 16px ui-monospace, Consolas, monospace; color: rgba(255,255,255,.5); max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pop { from { transform: scale(.4); } }
+
+
+/* ============ smoother focus: parallax, edit mode, reordering ============ */
+.tile .logo { transition: transform .55s var(--lift); }
+.tile.focus .logo { transform: translateX(calc(-50% + var(--px, 0px))) translateY(var(--py, 0px)) scale(1.06); }
+#home.noanim .tile { animation: none; }
+.tile.jiggle .face { animation: jiggle .26s ease-in-out infinite alternate; }
+.tile.jiggle.focus .face { animation: jigglef .26s ease-in-out infinite alternate; box-shadow: 0 0 0 4px rgba(255,255,255,.9), 0 34px 56px rgba(0,0,0,.45); }
+@keyframes jiggle { from { transform: rotate(-1.3deg); } to { transform: rotate(1.3deg); } }
+@keyframes jigglef { from { transform: scale(1.14) rotate(-1.3deg); } to { transform: scale(1.14) rotate(1.3deg); } }
+#editHint { position: absolute; left: 50%; bottom: 312px; z-index: 9; padding: 16px 30px; border-radius: 99px; font-size: 22px; font-weight: 500;
+  opacity: 0; transform: translate(-50%, 30px) scale(.9); transition: opacity .35s var(--ease), transform .6s var(--lift); pointer-events: none; }
+#editHint.on { opacity: 1; transform: translate(-50%, 0); }
+#stage.editing #hint { opacity: 0 !important; }
+
+/* ============ top bar (Up from the top row): profile, tabs, search, weather, Control Center, Settings ============ */
+#bar { position: absolute; left: 64px; right: 64px; top: 40px; height: 80px; display: flex; align-items: center; gap: 16px; z-index: 4;
+  opacity: 0; transform: translateY(-36px); pointer-events: none; transition: opacity .45s var(--ease), transform .7s var(--ease); }
+#home.bar #bar { opacity: 1; transform: none; pointer-events: auto; }
+#stage.baron #date { opacity: 0; transform: translateY(-14px); }
+#date { transition: opacity .5s var(--ease), transform .7s var(--ease), top .9s var(--ease), left .9s var(--ease), color .9s; }
+.bb { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; flex: none; transition: transform .5s var(--lift), background .25s, color .25s, box-shadow .3s; }
+.bb svg { width: 30px; height: 30px; }
+.bb.focus, .bpill.focus { background: rgba(255,255,255,.95); color: #111; transform: scale(1.12); box-shadow: 0 18px 44px rgba(0,0,0,.35); }
+.bpill { height: 68px; border-radius: 99px; display: flex; align-items: center; gap: 14px; padding: 0 26px 0 8px; font-size: 22px; font-weight: 600;
+  transition: transform .5s var(--lift), background .25s, color .25s, box-shadow .3s; flex: none; }
+.bpill .avatar { width: 52px; height: 52px; font-size: 19px; }
+#bWx { padding: 0 24px 0 16px; gap: 8px; font-weight: 500; }
+#bWx svg { width: 34px; height: 34px; }
+#tabs { margin: 0 auto; display: flex; gap: 4px; padding: 6px; border-radius: 99px; }
+.tab { height: 56px; padding: 0 30px; border-radius: 99px; display: flex; align-items: center; font-size: 23px; font-weight: 500; color: rgba(255,255,255,.82);
+  transition: background .3s var(--ease), color .25s, transform .45s var(--lift); }
+.tab.cur { background: rgba(255,255,255,.22); color: #fff; }
+.tab.focus { background: #fff; color: #111; transform: scale(1.08); }
+.tab svg { width: 26px; height: 26px; }
+/* idle: the dock and the bar leave, the scene, the clock and the greeting stay (ambient) */
+#home.full #bar { opacity: 0; transform: translateY(-36px); }
+#home.ambient #rows { transition: transform 1.6s var(--ease); }
+
+/* ============ Continue Watching: where you left off, above the apps ============ */
+#cw { position: absolute; left: 64px; right: 64px; transition: opacity .22s var(--ease), transform .45s var(--ease); }
+#cw.swap { opacity: 0; transform: translateY(10px); }
+#cw.none { opacity: 0; pointer-events: none; }
+#cw h3 { display: flex; align-items: center; gap: 12px; margin: 0 0 14px 8px; font-size: 24px; font-weight: 600; color: rgba(255,255,255,.88); text-shadow: 0 2px 12px rgba(0,0,0,.45); }
+#cw h3 img { width: 30px; height: 30px; border-radius: 8px; }
+#cwRow { display: flex; gap: 26px; }
+.cw { width: 452px; height: 128px; border-radius: 34px; padding: 12px; display: flex; gap: 18px; align-items: center; flex: none;
+  transition: transform .5s var(--lift), box-shadow .35s var(--ease), opacity .35s, width .4s var(--ease), margin .4s var(--ease), padding .4s; animation: fadein .5s var(--ease) both; }
+.cw .art { width: 182px; height: 104px; border-radius: 22px; position: relative; overflow: hidden; flex: none; background: #222; }
+.cw .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.6); transition: transform .8s var(--ease); }
+.cw .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,.65)); }
+.cw .art span { position: absolute; left: 12px; right: 10px; bottom: 9px; z-index: 2; font-size: 16px; font-weight: 750; letter-spacing: .2px; text-transform: uppercase; line-height: 1.1; }
+.cw .art .play { position: absolute; left: 50%; top: 42%; z-index: 3; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255,255,255,.92); color: #111; opacity: 0; transform: scale(.6); transition: opacity .3s, transform .45s var(--lift); }
+.cw .art .play svg { width: 20px; height: 20px; margin-left: 3px; }
+.cw .tx { min-width: 0; flex: 1; }
+.cw small { display: flex; align-items: center; gap: 9px; font-size: 15px; letter-spacing: 1.3px; text-transform: uppercase; color: rgba(255,255,255,.62); font-weight: 600; }
+.cw small img { width: 22px; height: 22px; border-radius: 6px; }
+.cw b { display: block; font-size: 25px; font-weight: 600; margin: 5px 0 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.3px; }
+.cw i { display: block; font-style: normal; font-size: 18px; color: rgba(255,255,255,.72); white-space: nowrap; }
+.cw .pb { height: 5px; margin-top: 9px; border-radius: 9px; background: rgba(255,255,255,.22); overflow: hidden; }
+.cw .pb u { display: block; height: 100%; background: #fff; border-radius: 9px; }
+.cw.focus { transform: scale(1.06); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.35), 0 0 0 3px #fff, 0 30px 60px rgba(0,0,0,.45); z-index: 3; }
+.cw.focus .art img { transform: scale(1.75); }
+.cw.focus .art .play { opacity: 1; transform: none; }
+.cw.gone { opacity: 0; width: 0; padding: 0; margin-right: -26px; transform: scale(.8); }
+#home.deep #cw { opacity: 0; pointer-events: none; }
+
+/* ============ overlays open as one motion: Home steps back while the glass and the content come forward ============ */
+#home, #date { transition: opacity .55s var(--ease), transform .8s var(--ease), filter .6s var(--ease); }
+#stage.wxon #home, #stage.recon #home { opacity: 0; transform: scale(.94); filter: blur(6px); pointer-events: none; }
+#stage.wxon #date, #stage.recon #date { opacity: 0; transform: translateY(-20px); }
+#stage.wxon #scenes, #stage.recon #scenes { transform: scale(1.06); }
+#wx .wash, #recents .wash { opacity: 0; transition: opacity .5s var(--ease); }
+#wx.on .wash, #recents.on .wash { opacity: 1; }
+#wx, #recents { transition: visibility 0s linear .5s; opacity: 1 !important; }
+#wx.on, #recents.on { transition-delay: 0s; }
+#wx .now, #wxDays, #recents h2, #ram, #rtrack, #recents .tip, #closeAll { opacity: 0; transition: opacity .3s var(--ease); }
+#wx.on .now, #wx.on #wxDays, #recents.on h2, #recents.on #ram, #recents.on #rtrack, #recents.on .tip, #recents.on #closeAll { opacity: 1; transition: opacity .5s var(--ease) .12s; }
+#wx.on .now { animation: riseIn .8s var(--ease) .1s backwards; }
+#wx.on .wd { animation: riseIn .75s var(--ease) backwards; animation-delay: calc(.16s + var(--d) * 55ms); }
+#recents.on .rcard { animation: riseIn .7s var(--ease) backwards; animation-delay: calc(.12s + var(--d) * 60ms); }
+#recents.on h2, #recents.on #ram { animation: dropIn .7s var(--ease) .08s backwards; }
+@keyframes riseIn { from { opacity: 0; transform: translateY(60px) scale(.94); } }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-24px); } }
+
+/* ============ dark app icons (Apple's dark icon style): the glyph in colour on a dark tile ============ */
+#stage.darkicons .tile .face { background: linear-gradient(165deg, #2e2e32 0%, #1b1b1e 55%, #121214 100%);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.14), inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 24px rgba(0,0,0,.4); }
+#stage.darkicons .tile .logo { height: 74%; top: 13%; -webkit-mask-image: none; mask-image: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+#stage.darkicons .tile .sys { color: rgba(235,235,245,.62); }
+#stage.darkicons #row1 .tile:not(.focus) .face { filter: none; }
+#stage.darkicons .tile.focus .face { box-shadow: inset 0 1.5px 0 rgba(255,255,255,.22), 0 0 0 1px rgba(255,255,255,.12), 0 34px 56px rgba(0,0,0,.55); }
+
+/* ============ tvOS app icons: full-bleed 5:3 artwork ============ */
+.tile .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .55s var(--lift); }
+.tile.focus .art { transform: scale(1.06) translate(var(--px, 0px), var(--py, 0px)); }
+.tile .face { border-radius: 22px; box-shadow: 0 10px 22px rgba(0,0,0,.3); }
+.tile .gloss { border-radius: 22px; }
+#row1 .tile:not(.focus) .face { filter: none; }
+.sysgear svg { width: 46% !important; height: 76% !important; }
+
+/* ============ Settings, as tvOS draws it: the icon alone on the left, a plain list on the right ============ */
+#tvset .left { width: 880px; gap: 0; }
+#tvset .left b { display: none; }
+#tvset .bigicon { width: 340px; height: 340px; border-radius: 76px;
+  background: linear-gradient(180deg, #f5f6f8 0%, #dfe2e7 50%, #bcc1ca 100%);
+  box-shadow: inset 0 2px 1px rgba(255,255,255,.95), inset 0 -4px 8px rgba(0,0,0,.12), 0 44px 90px rgba(0,0,0,.45); }
+@supports (corner-shape: superellipse(1.3)) { #tvset .bigicon { border-radius: 88px; corner-shape: superellipse(1.3); } }
+#tvset .bigicon svg { width: 250px; height: 250px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.28)); }
+#tvset .list { left: 900px; right: 150px; top: 84px; bottom: 50px; }
+#tvset h2 { font-size: 40px; font-weight: 650; letter-spacing: -.6px; margin: 0 0 22px 30px; }
+#tvset h5 { margin: 30px 0 8px 30px; font-size: 20px; font-weight: 600; letter-spacing: .2px; text-transform: none; color: rgba(255,255,255,.5); }
+.sr { background: none; height: 74px; border-radius: 18px; padding: 0 30px; margin-bottom: 4px; font-size: 29px; font-weight: 500; transform-origin: 50% 50%; }
+.sr .v { font-size: 27px; color: rgba(255,255,255,.5); }
+.sr .chev { opacity: .35; }
+#tvset.on .sr.focus { background: #fff; color: #111; transform: scale(1.05); box-shadow: 0 18px 44px rgba(0,0,0,.35); }
+.sr .spin { width: 24px; height: 24px; border-radius: 50%; border: 3px solid rgba(128,128,128,.35); border-top-color: currentColor; animation: spin .8s linear infinite; margin-left: 14px; }
+.sr .pbar { width: 160px; height: 8px; border-radius: 9px; background: rgba(128,128,128,.3); overflow: hidden; margin-left: 16px; }
+.sr .pbar i { display: block; height: 100%; background: currentColor; border-radius: 9px; transition: width .3s linear; }
+#tvset .foot { margin: 22px 30px 0; font-size: 21px; line-height: 1.5; color: rgba(255,255,255,.55); }
+
+/* ============ tvOS 26 list rows: a capsule that lifts, never clipped by the list's edges ============ */
+#tvset .list { left: 870px; right: 120px; top: 60px; bottom: 30px; padding: 24px 34px 40px; scroll-padding: 40px 0; }
+.sr { height: 76px; border-radius: 999px; padding: 0 34px; margin-bottom: 6px;
+  transition: background .3s var(--ease), color .25s, transform .5s var(--lift), box-shadow .4s var(--ease); }
+.sr:not(.focus) .t { color: rgba(255,255,255,.92); }
+#tvset.on .sr.focus { background: linear-gradient(180deg, #ffffff 0%, #f1f2f5 100%); color: #111; transform: scale(1.045);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 1px 2px rgba(0,0,0,.08), 0 22px 48px rgba(0,0,0,.38); }
+.sr .v { display: flex; align-items: center; gap: 12px; }
+.sr .chev { margin-left: 14px; width: 14px; height: 24px; }
+#tvset h2 { margin: 0 0 20px 34px; }
+#tvset h5 { margin: 28px 0 8px 34px; }
+#tvset .foot { margin: 22px 34px 0; }
+
+/* greeting and weather over the date */
+#date .g { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 4px; font-size: 24px; font-weight: 500; opacity: .85; }
+#date .wx { font-weight: 400; opacity: .85; }
+#date .wx svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 6px 0 10px; }
+
+/* hold OK: a small glass menu beside the app */
+#menu { position: absolute; z-index: 15; width: 440px; border-radius: 40px; padding: 12px; opacity: 0; pointer-events: none;
+  transform: scale(.82); transform-origin: var(--ox, 50%) var(--oy, 100%); transition: opacity .25s var(--ease), transform .45s var(--spring); }
+#menu.on { opacity: 1; transform: none; pointer-events: auto; }
+#menu .mh { display: flex; align-items: center; gap: 16px; padding: 10px 14px 14px; font-size: 24px; font-weight: 600; }
+#menu .mh img { width: 52px; height: 52px; border-radius: 14px; }
+.mi { display: flex; align-items: center; gap: 18px; height: 66px; padding: 0 20px; border-radius: 22px; font-size: 24px; font-weight: 500; transition: background .2s, color .2s, transform .4s var(--lift); }
+.mi svg { width: 28px; height: 28px; flex: none; }
+.mi.focus { background: rgba(255,255,255,.94); color: #111; transform: scale(1.03); }
+.mi.red { color: #ff6961; } .mi.red.focus { color: #d70015; }
+#stage.menuon #home .tile:not(.held) .face { filter: brightness(.6) blur(1px); }
+
+/* Recent Apps: big cards, the focused one in the middle */
+#recents { position: absolute; inset: 0; z-index: 11; opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .45s var(--ease), visibility 0s linear .45s; }
+#recents.on { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+#recents .wash { position: absolute; inset: 0; background: rgba(8,8,12,.45); -webkit-backdrop-filter: blur(50px) saturate(150%); backdrop-filter: blur(50px) saturate(150%); }
+#recents h2 { position: absolute; left: 90px; top: 64px; margin: 0; font-size: 40px; font-weight: 650; }
+#ram { position: absolute; right: 90px; top: 58px; display: flex; align-items: center; gap: 22px; padding: 16px 30px; border-radius: 99px; font-size: 22px; font-weight: 500; }
+#ram .bar, .ccmem .bar { width: 170px; height: 8px; border-radius: 9px; background: rgba(255,255,255,.22); overflow: hidden; }
+#ram .bar i, .ccmem .bar i { display: block; height: 100%; background: #fff; border-radius: 9px; transition: width .6s var(--ease); }
+#rtrack { position: absolute; left: 0; top: 290px; display: flex; gap: 60px; transition: transform .6s var(--ease); }
+.rcard { width: 640px; flex: none; transition: transform .55s var(--ease), opacity .45s var(--ease), margin .45s var(--ease), width .45s var(--ease); transform: scale(.82); opacity: .6; }
+.rcard .lab { display: flex; align-items: center; gap: 14px; font-size: 24px; font-weight: 600; margin: 0 0 18px 6px; opacity: 0; transition: opacity .3s; }
+.rcard .lab img { width: 44px; height: 44px; border-radius: 12px; }
+.rcard .shot { height: 380px; border-radius: 44px; overflow: hidden; position: relative; background: var(--bg); box-shadow: 0 40px 80px rgba(0,0,0,.45); }
+.rcard .shot img { position: absolute; left: 50%; top: 50%; height: 62%; transform: translate(-50%, -50%); }
+.rcard.focus { transform: none; opacity: 1; }
+.rcard.focus .lab { opacity: 1; }
+.rcard.gone { transform: translateY(-520px) scale(.9); opacity: 0; width: 0; margin-right: -60px; }
+#recents .tip { position: absolute; left: 0; right: 0; bottom: 150px; text-align: center; font-size: 22px; color: rgba(255,255,255,.7); }
+#closeAll { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); padding: 18px 50px; border-radius: 99px; font-size: 24px; font-weight: 600;
+  transition: transform .45s var(--lift), background .25s, color .25s; }
+#closeAll.focus { background: #fff; color: #111; transform: translateX(-50%) scale(1.08); }
+#recents .empty { position: absolute; left: 0; right: 0; top: 470px; text-align: center; font-size: 30px; color: rgba(255,255,255,.6); }
+
+/* Weather: today on the left, five days on glass */
+#wx { position: absolute; inset: 0; z-index: 11; opacity: 0; pointer-events: none; visibility: hidden; transition: opacity .45s var(--ease), visibility 0s linear .45s; }
+#wx.on { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+#wx .wash { position: absolute; inset: 0; background: rgba(8,10,16,.35); -webkit-backdrop-filter: blur(50px) saturate(160%); backdrop-filter: blur(50px) saturate(160%); }
+#wx .now { position: absolute; left: 120px; top: 150px; }
+#wx .now svg { width: 150px; height: 150px; }
+#wx .now b { display: block; font: 300 220px/1 "Inter", sans-serif; letter-spacing: -10px; margin-top: 10px; }
+#wx .now span { font-size: 36px; font-weight: 500; }
+#wx .now small { display: block; font-size: 26px; opacity: .7; margin-top: 8px; }
+#wxDays { position: absolute; right: 110px; top: 210px; display: grid; grid-template-columns: repeat(5, 200px); gap: 26px; }
+.wd { height: 340px; border-radius: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; font-size: 26px; font-weight: 600;
+  transition: transform .5s var(--lift), background .3s, box-shadow .3s; }
+.wd svg { width: 72px; height: 72px; }
+.wd span { font-size: 24px; font-weight: 500; opacity: .8; }
+.wd.focus { transform: scale(1.08); background: rgba(255,255,255,.3); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 30px 60px rgba(0,0,0,.35); }
+
+/* Control Center, with tvOS Launcher's extra tiles */
+#ccGrid { grid-template-rows: 128px 128px 112px 112px 112px 120px; gap: 18px 40px; }
+.ccround { width: 112px; height: 112px; }
+.ccround svg { width: 48px; height: 48px; }
+.ccround.on { background: rgba(255,255,255,.9); color: #111; }
+.ccmem .bar { width: 120px; height: 6px; margin-top: 8px; }
+.ccwide { grid-column: 1 / span 2; border-radius: 60px; display: flex; align-items: center; gap: 26px; padding: 0 36px; font-size: 25px; font-weight: 500; }
+.ccwide svg { width: 66px; height: 66px; flex: none; }
+.ccwide .t { font-size: 44px; font-weight: 300; letter-spacing: -1px; }
+.ccwide small { display: block; font-size: 21px; opacity: .72; }
+.ccwide .tm { margin-left: auto; text-align: right; }
+#ccLabel { top: 0; padding: 8px 18px; border-radius: 99px; background: rgba(20,20,26,.6); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); z-index: 3; width: auto !important; }
+#ccBt.on .gl { color: #3a9bff; }
+
+/* ============ app launch, screen saver, power off, toast ============ */
+#launch { position: absolute; z-index: 20; border-radius: 24px; overflow: hidden; opacity: 0; pointer-events: none; background: var(--bg); }
+#launch img { position: absolute; left: 50%; top: 50%; height: 100%; transform: translate(-50%, -50%); transition: height .7s var(--ease);
+  -webkit-mask-image: radial-gradient(closest-side, #000 80%, transparent); mask-image: radial-gradient(closest-side, #000 80%, transparent); }
+#launch.go { transition: left .7s var(--ease), top .7s var(--ease), width .7s var(--ease), height .7s var(--ease), border-radius .7s var(--ease);
+  left: 0 !important; top: 0 !important; width: 1920px !important; height: 1080px !important; border-radius: 0; }
+#launch.go img { height: 36%; }
+#launch .bar { position: absolute; left: 50%; bottom: 140px; transform: translateX(-50%); width: 220px; height: 6px; border-radius: 9px; background: rgba(128,128,128,.35); overflow: hidden; opacity: 0; transition: opacity .4s .5s; }
+#launch.go .bar { opacity: 1; }
+#launch .bar i { display: block; height: 100%; width: 40%; background: currentColor; border-radius: 9px; animation: load 1.2s ease-in-out infinite; }
+@keyframes load { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+#launch .note { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; font-size: 22px; opacity: 0; transition: opacity .4s .6s; }
+#launch.go .note { opacity: .75; }
+#stage.saver #home { opacity: 0 !important; pointer-events: none; }
+#stage.saver .scene.on .sbg, #stage.saver .scene.on .fg, #stage.saver .scene.on .gclock { animation: drift 24s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.07) translate(-12px, -6px); } }
+#off { position: absolute; inset: 0; z-index: 40; background: #000; opacity: 0; pointer-events: none; transition: opacity .9s ease-in; display: grid; place-items: center; }
+#off.on { opacity: 1; pointer-events: auto; }
+#off span { font-size: 20px; color: #ffffff30; }
+#toast { position: absolute; left: 50%; bottom: 40px; z-index: 30; padding: 20px 34px; border-radius: 99px; font-size: 24px; font-weight: 600;
+  transform: translate(-50%, 160px); transition: transform .7s var(--lift); text-align: center; white-space: nowrap; }
+#toast.on { transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01s !important; animation-duration: .01s !important; } }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="tv"><div id="stage">
+  <div id="scenes"></div>
+  <div id="date"></div>
+
+  <div id="home" class="hidden">
+    <div id="bar">
+      <div id="bProf" class="bpill glass" data-f data-act="profile"></div>
+      <div class="bb glass" data-f data-act="search" title="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></div>
+      <div id="tabs" class="glass">
+        <div class="tab cur" data-f data-act="tab-home">Home</div>
+        <div class="tab" data-f data-act="tab-apps">Apps</div>
+        <div class="tab" data-f data-act="tab-live">Live TV</div>
+      </div>
+      <div id="bWx" class="bpill glass" data-f data-act="weather"></div>
+      <div class="bb glass" data-f data-act="cc" title="Control Center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="3.5"/><rect x="3" y="13" width="18" height="7" rx="3.5"/><circle cx="16.5" cy="7.5" r="1.6" fill="currentColor"/><circle cx="7.5" cy="16.5" r="1.6" fill="currentColor"/></svg></div>
+      <div class="bb glass" data-f data-act="settings" title="Settings"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.9a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.5 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.9a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
+    </div>
+    <div id="rows">
+      <div id="hint"><svg viewBox="0 0 40 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12l14-8 14 8"/></svg>Press Up twice for profiles, search and settings</div>
+      <div id="cw"><h3 id="cwHead"></h3><div id="cwRow"></div></div>
+      <div id="band"></div><div id="row1"></div><div id="grid"></div>
+    </div>
+  </div>
+
+  <div id="cc">
+    <div id="ccPanel">
+      <div id="ccHead">
+        <div id="ccTime" class="cct" style="--d:0"></div>
+        <div class="ccswitch cct" style="--d:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="3.5"/><rect x="3" y="13" width="18" height="7" rx="3.5"/><circle cx="16.5" cy="7.5" r="1.6" fill="currentColor"/><circle cx="7.5" cy="16.5" r="1.6" fill="currentColor"/></svg></div>
+        <div id="ccAvatar" class="cct" style="--d:2" data-f data-cc="profiles"></div>
+      </div>
+      <div id="ccGrid">
+        <div class="lg ccbig cct" style="--d:3" data-f data-cc="power"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>Power Off</div>
+        <div id="ccWifi" class="lg ccpill cct" style="--d:4" data-f data-cc="wifi"><div class="gl plain"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5l3.2-3.9a5 5 0 0 0-6.4 0z"/><path d="M5.6 12.9l1.9 2.3a7.3 7.3 0 0 1 9 0l1.9-2.3a10.2 10.2 0 0 0-12.8 0z" opacity=".95"/><path d="M1.6 8.1l1.9 2.3a13.3 13.3 0 0 1 17 0l1.9-2.3a16.3 16.3 0 0 0-20.8 0z" opacity=".95"/></svg></div><div>Wi-Fi<small>Home WiFi</small></div></div>
+        <div id="ccDnd" class="lg ccpill cct" style="--d:5" data-f data-cc="dnd"><div class="gl"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></div><div>Do Not<br>Disturb</div></div>
+        <div class="lg ccpill cct" style="--d:6" data-f data-cc="audio"><div class="gl plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.3 15.7a8 8 0 1 1 11.4 0"/><path d="M8.8 13.2a4.5 4.5 0 1 1 6.4 0"/><path d="M12 14l4.5 6h-9z" fill="currentColor"/></svg></div><div>Audio<small id="ccAudioV">TV Speakers</small></div></div>
+        <div id="ccSleep" class="lg ccpill cct" style="--d:7" data-f data-cc="sleep"><div class="gl plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5M12 3v2"/></svg></div><div>Sleep Timer<small id="ccSleepV">Off</small></div></div>
+        <div id="ccBt" class="lg ccpill cct on" style="--d:8" data-f data-cc="bt"><div class="gl plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 4V3l5 4L7 17"/></svg></div><div>Bluetooth<small id="ccBtV">On · Remote</small></div></div>
+        <div class="lg ccpill ccmem cct" style="--d:9" data-f data-cc="memory"><div class="gl plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" stroke-linecap="round"/></svg></div><div>Memory<small id="ccMemV"></small><div class="bar"><i id="ccMemBar"></i></div></div></div>
+        <div class="ccrow">
+          <div class="lg ccround cct" style="--d:10" data-f data-cc="inputs" data-tip="Inputs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 10.5h6M12.5 8l2.5 2.5-2.5 2.5"/></svg></div>
+          <div class="lg ccround cct" style="--d:11" data-f data-cc="saver" data-tip="Screen Saver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l5.5-7 4 5 3-3.5L21 18z" fill="currentColor"/><circle cx="16.5" cy="7" r="2"/></svg></div>
+          <div id="ccSnd" class="lg ccround cct on" style="--d:12" data-f data-cc="sounds" data-tip="UI Sounds: On"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></div>
+          <div class="lg ccround cct" style="--d:13" data-f data-cc="access" data-tip="Accessibility"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="7.3" r="1.3" fill="currentColor"/><path d="M7.5 10l4.5 1 4.5-1M12 11v3.5l-2.2 4M12 14.5l2.2 4"/></svg></div>
+          <div class="lg ccround cct" style="--d:14" data-f data-cc="search" data-tip="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></div>
+        </div>
+        <div class="lg ccwide cct" style="--d:15" data-f data-cc="weather"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="#ffd60a"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg><div><span class="t" id="ccWxT"></span><small id="ccWxC"></small></div><div class="tm"><span id="ccWxTm"></span><small>Tomorrow</small></div></div>
+        <div id="ccLabel"></div>
+      </div>
+      <div id="ccPage" class="lg" style="border-radius:48px"></div>
+    </div>
+  </div>
+
+  <div id="tvset"><div class="wash"></div>
+    <div class="left"><div class="bigicon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.9a7 7 0 0 0-1.7 1l-2.5-1-2 3.5L6.5 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.9a7 7 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div><b>Settings</b></div>
+    <div class="list" id="setList"></div>
+  </div>
+
+  <div id="gtv"></div>
+
+  <div id="menu" class="glass"></div>
+  <div id="editHint" class="glass">Move with the arrows · press OK when done</div>
+  <div id="recents"><div class="wash"></div><h2>Recent Apps</h2>
+    <div id="ram" class="glass"><span id="ramV"></span><div class="bar"><i id="ramBar"></i></div></div>
+    <div id="rtrack"></div><div class="tip">Press ↑ on an app to close it</div>
+    <div id="closeAll" class="glass" data-f>Close All</div></div>
+  <div id="wx"><div class="wash"></div><div class="now"></div><div id="wxDays"></div></div>
+
+  <div id="setup" class="on">
+    <img class="bgimg" src="demo/scenes/scene-golden.jpg" alt="">
+    <div id="dots"></div>
+    <div class="step on" id="s0"><div id="hello"></div><p>Let's make this TV quiet, fast and yours.<br>Nothing changes until the last step, and everything can be undone.</p><div class="btn glass" data-f data-next>Get Started</div></div>
+    <div class="step" id="s1">
+      <div class="tvcard glass"><div class="tvicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8"/></svg></div>
+        <div><small>Connected</small><b>Acer AR32HDIGU2841AT</b><i>Google TV 14 · Realtek RTD2841A · 1.5 GB RAM · build UKR1.260612</i></div></div>
+      <div class="facts">
+        <div class="fact glass"><b>24 packages</b><span>on the tested list for this exact model</span></div>
+        <div class="fact glass"><b>Backup first</b><span>every app's state, Home and settings are saved before any change</span></div>
+        <div class="fact glass"><b>Nothing deleted</b><span>apps are switched off, never uninstalled, and Restore puts them back</span></div>
+      </div>
+      <p class="src">List: cleanyourtv · examples/acer-ar32hdigu2841at, tested by its owner on this model</p>
+      <div class="btn glass" data-f data-next>Continue</div></div>
+    <div class="step" id="s2"><h1>Which of These Do You Use?</h1><p>Keep what you use. What you switch off is disabled, not deleted.</p><div id="uses" class="glass"></div><div class="btn glass" data-f data-next>Continue</div></div>
+    <div class="step" id="s3"><h1>Switched Off for You</h1><p>Turn one off to keep it on your TV. The locked ones are never touched.</p><div id="groups"></div><div class="btn glass" data-f data-next>Continue</div></div>
+    <div class="step" id="s4"><h1>Your Top Row</h1><p>How many apps, and in which order. Pick them in the order you want them.</p><div id="sizes" class="glass"></div><div id="pick"></div><div class="btn glass" data-f data-next>Continue</div></div>
+    <div class="step" id="s5"><h1>Block Ads Inside Apps?</h1><p>Optional. Uses Android's own Private DNS setting.</p><div id="dns"></div><div class="btn glass" data-f data-next>Continue</div></div>
+    <div class="step" id="s6"><h1>Choose a Look</h1><p>Your clock sits behind the scenery. Scenes change every 20 seconds.</p><div id="looks"></div></div>
+    <div class="step" id="s7">
+      <svg id="ring" viewBox="0 0 210 210"><circle cx="105" cy="105" r="92" stroke="rgba(255,255,255,.15)"/><circle id="prog" cx="105" cy="105" r="92" stroke="#fff" stroke-dasharray="578" stroke-dashoffset="578"/>
+        <g id="ringDone"><circle cx="105" cy="105" r="72"/><path d="M74 107l21 21 43-46" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g></svg>
+      <h1 id="cleanTitle">Cleaning Your TV</h1><div id="tasks"></div>
+    </div>
+  </div>
+
+
+  <div id="launch"><img alt=""><div class="bar"><i></i></div><div class="note">Demo · press Back to return Home</div></div>
+  <div id="off"><span>Press any key to turn the TV on</span></div>
+  <div id="toast" class="glass"></div>
+</div></div>
+<div id="help"><b>← ↑ → ↓</b> move · <b>Enter</b> select · <b>Esc / Backspace</b> back · <b>hold Enter</b> app menu · <b>M</b> Control Center · <b>A</b> recent apps · <b>R</b> restart setup · mouse works too</div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const stage = $("#stage"), tv = $("#tv");
+function fit() { const k = Math.min((innerWidth - 40) / 1948, (innerHeight - 90) / 1154); tv.style.transform = `translateY(-20px) scale(${k})`; }
+addEventListener("resize", fit); fit();
+
+/* ---------- top shelf scenes (couch-tv: photo, cut-out foreground, blurred glass copy for the clock) ---------- */
+const SCENES = [
+  { id: "night", name: "Night", fg: true }, { id: "golden", name: "Golden Hour", fg: true }, { id: "water", name: "Waterline", fg: false },
+  { id: "fog", name: "Fog", fg: true }, { id: "dawn", name: "Dawn", fg: true },
+];
+const P = (id, k = "") => `demo/scenes/scene-${id}${k}`;
+$("#scenes").innerHTML = SCENES.map((s) => `<div class="scene s-${s.id}"><img class="sbg" src="${P(s.id, ".jpg")}" alt="">
+  <div class="gclock"><span class="fill" style="background-image:url(${P(s.id, "-glass.jpg")})"></span><span class="rim"></span><span class="sheen"></span></div>
+  ${s.fg ? `<img class="fg" src="${P(s.id, "-fg.webp")}" alt="">` : ""}<div class="shade"></div></div>`).join("");
+let scene = 0, sceneTimer, saver = false, launched = false, full = false, poweredOff = false;
+function showScene(i) {
+  scene = (i + SCENES.length) % SCENES.length;
+  $$(".scene").forEach((e, k) => e.classList.toggle("on", k === scene));
+  const d = $("#date"); d.classList.add("swap");
+  setTimeout(() => { d.className = "d-" + SCENES[scene].id; }, 500);
+  clearInterval(sceneTimer); sceneTimer = setInterval(() => showScene(scene + 1), saver ? 9000 : 20000);
+  if ($("#tvset").classList.contains("on")) renderSettings();
+}
+function alignGlass() { $$(".gclock").forEach((g) => { const f = $(".fill", g); f.style.backgroundPosition = `${-(g.offsetLeft + f.offsetLeft)}px ${-(g.offsetTop + f.offsetTop)}px`; }); }
+function tick() {
+  const n = new Date(), t = `${n.getHours() % 12 || 12}:${String(n.getMinutes()).padStart(2, "0")}`;
+  $$(".gclock").forEach((g) => { if (g.dataset.t !== t) { g.dataset.t = t; $$("span", g).forEach((s) => s.textContent = t); } });
+  const h = n.getHours(), greet = h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 22 ? "Good evening" : "Good night";
+  $("#date").innerHTML = `<div class="g">${greet}, ${PROFILES[prof].name}</div>${n.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}<span class="wx">${wxIcon(WX.now[1])}${WX.now[0]}° ${WX.now[2]}</span>`;
+  $("#ccWxT").textContent = WX.now[0] + "°"; $("#ccWxC").textContent = `${WX.now[2]} · H ${WX.days[0][1]}° L ${WX.days[0][2]}°`; $("#ccWxTm").textContent = WX.days[1][1] + "°";
+  $("#ccTime").textContent = n.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  $$(".look .mini").forEach((m) => m.textContent = t);
+  alignGlass();
+}
+
+/* ---------- Google TV profiles: Google TV's own (Android users); PureTV shows them and asks Google TV to switch ---------- */
+const PROFILES = [
+  { name: "Profile 1", init: "P1", bg: "linear-gradient(140deg,#ffd3a5,#fd6585)", mail: "you@example.com" },
+  { name: "Profile 2", init: "P2", bg: "linear-gradient(140deg,#a1c4fd,#c2e9fb)", mail: "family@example.com" },
+  { name: "Kids", init: "K", bg: "linear-gradient(140deg,#d4fc79,#96e6a1)", mail: "Supervised by Profile 1" },
+];
+let prof = 0;
+const avatar = (p, cls = "") => `<div class="avatar ${cls}" style="background:${p.bg}">${p.init}</div>`;
+function renderAvatar() {
+  const a = $("#ccAvatar"); a.style.background = PROFILES[prof].bg; a.textContent = PROFILES[prof].init;
+  $("#bProf").innerHTML = avatar(PROFILES[prof]) + PROFILES[prof].name;
+  if (typeof WX !== "undefined") $("#bWx").innerHTML = wxIcon(WX.now[1]) + WX.now[0] + "°";
+}
+
+/* ---------- apps: real logos (from couch-tv's demo; they belong to their owners) ---------- */
+const APPS = [
+  ["com.google.android.youtube.tv", "YouTube", "#ffffff"], ["com.netflix.ninja", "Netflix", "#ffffff"], ["com.amazon.amazonvideo.livingroom", "Prime Video", "#0578ff"],
+  ["com.disney.disneyplus", "Disney+", "#0f3e4c"], ["com.apple.atve.androidtv.appletv", "Apple TV", "#222222"], ["com.spotify.tv.android", "Spotify", "#1ed760"],
+  ["com.wbd.stream", "Max", "#050812"], ["com.cbs.ca", "Paramount+", "#0064ff"], ["com.crunchyroll.webapp", "Crunchyroll", "#ff5e00"],
+  ["tv.twitch.android.app", "Twitch", "#9146ff"], ["dazn", "DAZN", "#080e12"],
+].map(([pkg, name, bg]) => ({ pkg, name, bg, logo: `demo/logos/${pkg}.png`, dlogo: `demo/logos-dark/${pkg}.png`, dark: bg !== "#ffffff" }));
+let iconMode = "tv";
+function gearPath(teeth = 12, R = 46, r = 37, hole = 15) {
+  const step = Math.PI * 2 / teeth, pt = (rad, a) => `${(50 + rad * Math.cos(a)).toFixed(2)},${(50 + rad * Math.sin(a)).toFixed(2)}`;
+  let d = "";
+  for (let i = 0; i < teeth; i++) {
+    const a = i * step - Math.PI / 2;
+    d += (i ? "L" : "M") + pt(r, a - step * .3) + "L" + pt(R, a - step * .17) + "A" + R + "," + R + " 0 0 1 " + pt(R, a + step * .17) + "L" + pt(r, a + step * .3) + "A" + r + "," + r + " 0 0 1 " + pt(r, a + step * .7);
+  }
+  return d + `ZM${50 + hole},50A${hole},${hole} 0 1 0 ${50 - hole},50A${hole},${hole} 0 1 0 ${50 + hole},50Z`;
+}
+function gearSVG(kind) {   // "metal": the tvOS Settings icon's grey gear; "mono": one colour, for small buttons
+  const d = gearPath();
+  if (kind === "mono") return `<svg viewBox="0 0 100 100"><path fill="currentColor" fill-rule="evenodd" d="${d}"/></svg>`;
+  return `<svg viewBox="0 0 100 100"><defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#868c98"/><stop offset="1" stop-color="#3b4049"/></linearGradient></defs>`
+    + `<path fill="url(#gm)" fill-rule="evenodd" d="${d}"/><circle cx="50" cy="50" r="26" fill="none" stroke="#5a606b" stroke-width="3"/><circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1" transform="translate(0 1)"/></svg>`;
+}
+const GEAR = gearSVG("metal");
+const SYS = {
+  settings: ["Settings", "linear-gradient(180deg,#f5f6f8 0%,#dfe2e7 50%,#bcc1ca 100%)", GEAR],
+  inputs: ["Inputs", "linear-gradient(160deg,#4b5563,#1f2937)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 10.5h6M12.5 8l2.5 2.5-2.5 2.5"/></svg>'],
+  search: ["Search", "linear-gradient(180deg,#9aa0ab,#5f6571)", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>'],
+};
+let dockSize = 5, topRow = APPS.slice(0, 5).map((a) => a.pkg);
+const app = (pkg) => APPS.find((a) => a.pkg === pkg);
+const artHTML = (a) => `<img class="art" src="demo/icons-tv/${a.pkg}.jpg" alt="">`;
+function tileEl(a, i, extra = "") {
+  const t = document.createElement("div"); t.className = "tile"; t.dataset.f = ""; t.style.setProperty("--i", i);
+  if (a.sys) { const [n, bg, ic] = SYS[a.sys]; t.dataset.act = a.sys; t.innerHTML = `<div class="face" style="--bg:${bg}"><div class="sys${a.sys === "settings" ? " sysgear" : ""}">${ic}</div><div class="gloss"></div></div><div class="name">${n}</div>`; }
+  else { t.dataset.app = a.pkg; t.innerHTML = `<div class="face" style="--bg:${a.bg}">${artHTML(a)}<div class="gloss"></div></div><div class="name">${a.name}</div>${extra}`; }
+  return t;
+}
+/* geometry follows the top row's size, like tvOS: wide 5:3 icons, the next row peeking under the glass */
+function buildHome() {
+  const cols = dockSize + 1, gap = 36, tw = (1792 - gap * (cols - 1)) / cols, th = tw * .6;
+  const bandH = th + 52, bandTop = 1080 - 64 - bandH, gridTop = bandTop + bandH + 58, rows = $("#rows");
+  rows.style.setProperty("--cols", cols); rows.style.setProperty("--tw", tw + "px"); rows.style.setProperty("--th", th + "px");
+  rows.style.setProperty("--deep", -(gridTop - 330) + "px"); rows.style.setProperty("--full", bandH + 130 + "px");
+  Object.assign($("#band").style, { top: bandTop + "px", height: bandH + "px" });
+  $("#row1").style.top = bandTop + 26 + "px"; $("#grid").style.top = gridTop + "px";
+  $("#cw").style.top = bandTop - 212 + "px"; $("#hint").style.top = bandTop - 290 + "px";
+  renderCW();
+  const r1 = $("#row1"), g = $("#grid"); r1.replaceChildren(); g.replaceChildren();
+  const first = topRow.filter((p) => !hidden.has(p)).slice(0, dockSize).map(app);
+  first.forEach((a, i) => r1.append(tileEl(a, i)));
+  r1.append(tileEl({ sys: "settings" }, first.length));
+  const rest = APPS.filter((a) => !first.includes(a) && !hidden.has(a.pkg));
+  rest.forEach((a, i) => g.append(tileEl(a, i + cols)));
+  g.append(tileEl({ sys: "search" }, rest.length + cols), tileEl({ sys: "inputs" }, rest.length + cols + 1));
+}
+
+/* ---------- focus engine: the nearest item in the pressed direction, inside the top layer ---------- */
+let layers = [], cur = null;
+const scope = () => layers[layers.length - 1].root;
+const inScope = (r) => scope() === $(r);
+function items() { return $$("[data-f]", scope()).filter((e) => e.offsetParent !== null && !e.closest(".step:not(.on), .away, #ccPage:not(.on)")); }
+function focus(el) {
+  if (!el) return;
+  if (cur && cur !== el) { cur.classList.remove("focus"); ["--rx", "--ry", "--gx", "--gy", "--px", "--py"].forEach((p) => cur.style.removeProperty(p)); }
+  cur = el; el.classList.add("focus");
+  if (inScope("#home")) {
+    const deep = !!el.closest("#grid"), h = $("#home");
+    const onBar = !!el.closest("#bar");
+    h.classList.toggle("deep", deep); stage.classList.toggle("deep", deep); h.classList.toggle("top", !!el.closest("#row1"));
+    h.classList.toggle("bar", onBar); stage.classList.toggle("baron", onBar);
+    if (!onBar) $$(".tab").forEach((t) => t.classList.toggle("cur", t.dataset.act === (deep ? "tab-apps" : "tab-home")));
+    if (el.closest("#row1")) setCWFilter(el.dataset.app && cwList().some((c) => c.pkg === el.dataset.app) ? el.dataset.app : null);
+  }
+  const lab = $("#ccLabel");
+  if (el.dataset.tip) { const row = el.parentElement; lab.textContent = el.dataset.tip;
+    lab.style.cssText = `left:${row.offsetLeft + el.offsetLeft + el.offsetWidth / 2}px;right:auto;top:${row.offsetTop + el.offsetHeight + 10}px;transform:translateX(-50%);white-space:nowrap`; lab.classList.add("on"); }
+  else lab.classList.remove("on");
+  if (el.closest("#setList") && el === $("#setList .sr")) $("#setList").scrollTo({ top: 0, behavior: "smooth" });   // first row: the title comes back too
+  else if (el.closest("#setList, #groups .grp")) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  if (el.classList.contains("rcard")) centerCard(el);
+}
+function nudge(dx, dy) {  // the focused tile leans toward the press; at an edge it leans and springs back
+  if (!cur || !cur.classList.contains("tile")) return;
+  const el = cur;
+  el.style.setProperty("--ry", dx * 8 + "deg"); el.style.setProperty("--rx", -dy * 8 + "deg");
+  el.style.setProperty("--gx", 50 + dx * 40 + "%"); el.style.setProperty("--gy", dy > 0 ? "100%" : "0%");
+  el.style.setProperty("--px", dx * 9 + "px"); el.style.setProperty("--py", dy * 6 + "px");
+  clearTimeout(nudge.t); nudge.t = setTimeout(() => { ["--rx", "--ry"].forEach((p) => el.style.setProperty(p, "0deg")); ["--px", "--py"].forEach((p) => el.style.setProperty(p, "0px")); el.style.setProperty("--gx", "50%"); el.style.setProperty("--gy", "0%"); }, 170);
+}
+function move(dx, dy) {
+  if (editing) return editMove(dx, dy);
+  if (inScope("#recents") && dy < 0 && cur && cur.classList.contains("rcard")) return closeRecent(cur);
+  if (!cur || !document.contains(cur) || !items().includes(cur)) return focus(items()[0]);
+  if (dy < 0 && inScope("#home") && cur.closest("#row1")) {   // Up from the apps always lands on Continue Watching first
+    const cards = $$("#cwRow .cw[data-f]"), x = cur.getBoundingClientRect().left;
+    if (cards.length) { focus(cards.reduce((b, c) => Math.abs(c.getBoundingClientRect().left - x) < Math.abs(b.getBoundingClientRect().left - x) ? c : b)); snd("nav"); return; }
+  }
+  const k = stage.getBoundingClientRect().width / 1920, a = cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  let best = null, bs = 1e9;
+  for (const e of items()) {
+    if (e === cur) continue;
+    const b = e.getBoundingClientRect(), x = (b.left + b.width / 2 - ax) / k, y = (b.top + b.height / 2 - ay) / k;
+    const along = x * dx + y * dy, across = Math.abs(x * dy) + Math.abs(y * dx);
+    if (along < 8) continue; const s = along + across * 2.2; if (s < bs) { bs = s; best = e; }
+  }
+  if (best) { focus(best); nudge(dx * .5, dy * .5); snd("nav"); return; }
+  nudge(dx, dy); snd("edge");
+  if (dy < 0 && inScope("#home") && cur.closest("#bar, #row1")) enterFull();
+}
+function push(root, first) { layers.push({ root, last: cur }); if (cur) cur.classList.remove("focus"); cur = null; focus(first || items()[0]); }
+function pop() { const l = layers.pop(); if (cur) cur.classList.remove("focus"); cur = null; focus(l.last && items().includes(l.last) ? l.last : items()[0]); }
+function toast(t) { const e = $("#toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 3400); }
+
+/* ---------- full screen (Up from the top row) ---------- */
+function enterFull(ambient) {
+  full = true; const h = $("#home"); h.classList.add("full"); h.classList.toggle("ambient", !!ambient); h.classList.remove("top", "bar"); stage.classList.remove("baron");
+  if (cur) cur.classList.remove("focus");
+  if (cur && cur.closest("#bar")) cur = $("#row1 .tile");
+}
+function exitFull() { full = false; $("#home").classList.remove("full"); setTimeout(() => $("#home").classList.remove("ambient"), 900); if (cur) focus(cur); }
+
+/* ---------- Control Center ---------- */
+let dnd = false, sleepIx = 0, audioIx = 0, ccPage = null;
+const SLEEP = ["Off", "15 minutes", "30 minutes", "1 hour", "2 hours"];
+const AUDIO = [["TV Speakers", "Built in"], ["Soundbar", "HDMI eARC"], ["Headphones", "Bluetooth"]];
+const INPUTS = [["HDMI 1", "PlayStation 5"], ["HDMI 2", "Nothing connected"], ["HDMI 3 (eARC)", "Soundbar"], ["AV", "Nothing connected"], ["Live TV", "Antenna"]];
+const TICK = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_TV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8"/></svg>';
+function openCC() {
+  if (!inScope("#home") || full) { if (full) exitFull(); if (!inScope("#home")) return; }
+  $("#home").classList.remove("bar"); stage.classList.remove("baron");
+  renderAvatar(); tick(); closeCCPage(true); renderMem();
+  $("#cc").classList.add("on"); stage.classList.add("ccon"); push($("#cc"), $('[data-cc="power"]'));
+}
+function closeCC() { $("#cc").classList.remove("on"); stage.classList.remove("ccon"); closeCCPage(true); pop(); }
+function openCCPage(kind, from) {
+  ccPage = { kind, from }; const pg = $("#ccPage");
+  if (kind === "profiles") pg.innerHTML = `<h3>Who's watching?</h3>` + PROFILES.map((p, i) => `<div class="ccl${i === prof ? " cur" : ""}" data-f data-pick="${i}">${avatar(p)}<div>${p.name}<small>${p.mail}</small></div>${TICK}</div>`).join("")
+    + `<div class="ccl" data-f data-pick="accounts"><div class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-7 8-7s8 2.5 8 7z"/></svg></div><div>Profiles &amp; Accounts<small>Google TV's own screen</small></div></div>`;
+  if (kind === "audio") pg.innerHTML = `<h3>Audio Output</h3>` + AUDIO.map(([t, s], i) => `<div class="ccl${i === audioIx ? " cur" : ""}" data-f data-pick="${i}"><div class="ic">${ICON_TV}</div><div>${t}<small>${s}</small></div>${TICK}</div>`).join("");
+  if (kind === "inputs") pg.innerHTML = `<h3>Inputs</h3>` + INPUTS.map(([t, s], i) => `<div class="ccl" data-f data-pick="${i}"><div class="ic">${ICON_TV}</div><div>${t}<small>${s}</small></div></div>`).join("");
+  $("#ccGrid").classList.add("away"); pg.classList.add("on");
+  if (cur) cur.classList.remove("focus"); cur = null; focus($(".ccl.cur", pg) || $(".ccl", pg));
+}
+function closeCCPage(quiet) {
+  const pg = $("#ccPage"); if (!pg.classList.contains("on")) return;
+  pg.classList.remove("on"); $("#ccGrid").classList.remove("away");
+  const from = ccPage && ccPage.from; ccPage = null;
+  if (!quiet) { if (cur) cur.classList.remove("focus"); cur = null; focus(from && document.contains(from) ? from : items()[0]); }
+}
+function ccSelect(e) {
+  if (e.dataset.pick !== undefined) {
+    const k = ccPage.kind, v = e.dataset.pick;
+    if (k === "profiles") {
+      if (v === "accounts") { closeCC(); return openGtv("accounts"); }
+      const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; renderCW(); closeCCPage();
+      if (prof !== was) toast(`Google TV switches to ${PROFILES[prof].name}: its own accounts, apps and recommendations`);
+      return;
+    }
+    if (k === "audio") { audioIx = +v; $("#ccAudioV").textContent = AUDIO[audioIx][0]; return closeCCPage(); }
+    if (k === "inputs") { closeCC(); return toast(`Switching to ${INPUTS[+v][0]} (the TV's own input service)`); }
+  }
+  const c = e.dataset.cc;
+  if (c === "profiles" || c === "audio" || c === "inputs") return openCCPage(c, e);
+  if (c === "dnd") { dnd = !dnd; e.classList.toggle("on", dnd); return; }
+  if (c === "sleep") { sleepIx = (sleepIx + 1) % SLEEP.length; $("#ccSleepV").textContent = SLEEP[sleepIx]; e.classList.toggle("on", sleepIx > 0); return; }
+  if (c === "wifi") { closeCC(); return openGtv("network"); }
+  if (c === "bt") { const on = !e.classList.contains("on"); e.classList.toggle("on", on); $("#ccBtV").textContent = on ? "On · Remote" : "Off"; return; }
+  if (c === "memory") { closeCC(); return openRecents(); }
+  if (c === "sounds") { sounds = !sounds; e.classList.toggle("on", sounds); e.dataset.tip = "UI Sounds: " + (sounds ? "On" : "Off"); focus(e); if (sounds) snd("ok"); return; }
+  if (c === "weather") { closeCC(); return openWx(); }
+  if (c === "access") { closeCC(); return openGtv("access"); }
+  if (c === "search") { closeCC(); return toast("Opens Google TV's own search, the same as the mic button"); }
+  if (c === "saver") { closeCC(); return startSaver(); }
+  if (c === "power") { closeCC(); poweredOff = true; return $("#off").classList.add("on"); }
+}
+
+/* ---------- Settings (tvOS layout) ---------- */
+const CHEV = '<svg class="chev" viewBox="0 0 10 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 7-6 7"/></svg>';
+function renderSettings() {
+  const rows = [
+    [null, "Top Row", `${dockSize} apps`, "dock"], [null, "Scene", SCENES[scene].name, "scene"], [null, "Screen Saver", "Start", "saver"],
+    ["Clean Up", "What's Switched Off", String(offList().length), "review"], [null, "Apps You Use", "", "uses"], [null, "Check After an Update", "", "recheck"], [null, "Restore Original TV", "", "restore", "danger"],
+    ["Apps", "Hidden Apps", hidden.size ? `${hidden.size} hidden` : "None", "hidden"], [null, "UI Sounds", sounds ? "On" : "Off", "sounds"],
+    ["Google TV", "Profiles & Accounts", `${PROFILES.length} profiles`, "accounts"], [null, "Google TV Settings", "", "gtv"],
+    ["System", "Software Updates", upd.state === "available" ? "Update available" : `Version ${VERSION}`, "updates"], [null, "About", `PureTV ${VERSION}`, "about"],
+  ];
+  if (setLevel === "updates") return renderUpdates();
+  const had = cur && cur.dataset.set; let d = 0;
+  $("#setList").innerHTML = `<h2>Settings</h2>` + rows.map(([h, t, v, act, cls]) => `${h ? `<h5>${h}</h5>` : ""}<div class="sr ${cls || ""}" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("");
+  if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
+}
+function openSettings() { setLevel = "root"; renderSettings(); $("#tvset").classList.add("on"); stage.classList.add("seton"); push($("#tvset"), $("#setList .sr")); }
+function closeSettings() { $("#tvset").classList.remove("on"); stage.classList.remove("seton"); pop(); }
+function setSelect(e) {
+  const a = e.dataset.set;
+  if (a === "scene") return showScene(scene + 1);
+  if (a === "icons") { iconMode = iconMode === "dark" ? "default" : "dark"; stage.classList.toggle("darkicons", iconMode === "dark"); $("#home").classList.add("noanim"); buildHome(); return renderSettings(); }
+  if (a === "saver") { closeSettings(); return startSaver(); }
+  if (a === "dock") { closeSettings(); return runSetup(4, true); }
+  if (a === "review") { closeSettings(); return runSetup(3, true); }
+  if (a === "uses") { closeSettings(); return runSetup(2, true); }
+  if (a === "recheck") return toast(`Checked: all ${offList().length} still off. After a firmware update this switches them off again`);
+  if (a === "restore") return toast("Restore turns every one back on and gives Home back to Google TV, from the backup");
+  if (a === "accounts") return openGtv("accounts");
+  if (a === "gtv") return openGtv("settings");
+  if (a === "hidden") { if (!hidden.size) return toast("Hold OK on an app to hide it from Home"); const n = hidden.size; hidden.clear(); buildHome(); renderSettings(); return toast(`${n} hidden app${n > 1 ? "s are" : " is"} back on Home`); }
+  if (a === "sounds") { sounds = !sounds; $("#ccSnd").classList.toggle("on", sounds); return renderSettings(); }
+  if (a === "updates") { setLevel = "updates"; cur = null; renderSettings(); return focus($("#setList .sr")); }
+  if (a === "upd") return runUpdate();
+  if (a === "auto") { autoUpdate = !autoUpdate; return renderSettings(); }
+  if (a === "src") return toast("Updates come only from PureTV's own GitHub releases");
+  if (a === "about") return toast("PureTV Home 1.0 · lists from cleanyourtv · scenes from couch-tv");
+}
+
+/* ---------- Google TV's own screens ---------- */
+function openGtv(page) {
+  const G = $("#gtv"), head = (t) => `<h2>${t}</h2><p>Google TV · its own screen, unchanged</p>`, row = (t, s) => `<div class="gi" data-f><div>${t}${s ? `<small>${s}</small>` : ""}</div></div>`;
+  G.innerHTML = page === "accounts" ? head("Accounts &amp; Sign In") + PROFILES.map((p) => `<div class="gi" data-f>${avatar(p)}<div>${p.name}<small>${p.mail}</small></div></div>`).join("") + row("Add a profile")
+    : page === "network" ? head("Network &amp; Internet") + row("Wi-Fi", "On") + row("Home WiFi", "Connected") + row("Home WiFi 5G", "Saved") + row("Ethernet", "Not connected") + row("Private DNS", "Automatic")
+    : page === "appinfo" ? head(app(appInfoPkg).name) + row("Open") + row("Force stop") + row("Clear cache", "28 MB") + row("Notifications", "On") + row("Permissions") + row("Disable")
+    : page === "access" ? head("Accessibility") + row("Captions") + row("High contrast text", "Off") + row("TalkBack", "Off") + row("Text to speech")
+    : head("Settings") + [["Accounts &amp; Sign In", PROFILES.length + " profiles"], ["Network &amp; Internet", "Home WiFi"], ["Apps", ""], ["Display &amp; Sound", "Picture, audio output"], ["Remotes &amp; Accessories", ""], ["Privacy", ""], ["System", "About, storage, developer options"]].map(([t, s]) => row(t, s)).join("");
+  G.classList.add("on"); push(G);
+}
+function closeOverlays() {
+  ["#menu", "#recents", "#wx"].forEach((q) => $(q).classList.remove("on")); stage.classList.remove("menuon", "wxon", "recon"); if (editing) endEdit(true);
+  $("#cc").classList.remove("on"); $("#tvset").classList.remove("on"); $("#gtv").classList.remove("on"); closeCCPage(true);
+  stage.classList.remove("ccon", "seton"); full = false; $("#home").classList.remove("full");
+}
+
+/* ---------- launch an app: the icon grows into the app ---------- */
+function launch(el) {
+  const a = app(el.dataset.app), L = $("#launch"), face = $(".face, .art", el) || el, k = stage.getBoundingClientRect().width / 1920;
+  const item = el.dataset.cw && cwList().find((c) => c.id === el.dataset.cw);
+  $(".note", L).textContent = item ? `Resuming ${item.title} · ${item.ep} at ${item.at} — on the TV, ${a.name} opens straight to it` : "Demo · press Back to return Home";
+  const s = stage.getBoundingClientRect(), r = face.getBoundingClientRect();
+  L.className = ""; L.style.cssText = `--bg:${a.bg};color:${a.dark ? "#fff" : "#111"};left:${(r.left - s.left) / k}px;top:${(r.top - s.top) / k}px;width:${r.width / k}px;height:${r.height / k}px;opacity:1`;
+  $("img", L).src = a.logo; void L.offsetWidth; L.classList.add("go"); launched = true;
+  recents = [a.pkg, ...recents.filter((p) => p !== a.pkg)].slice(0, 8);
+}
+function closeApp() { const L = $("#launch"); L.style.transition = "opacity .45s"; L.style.opacity = 0; launched = false; setTimeout(() => { L.className = ""; L.style.transition = ""; }, 460); }
+function startSaver() { saver = true; stage.classList.add("saver"); showScene(scene + 1); }
+function stopSaver() { saver = false; stage.classList.remove("saver"); showScene(scene); }
+
+function select() {
+  const e = cur; if (!e) return;
+  if (e.closest("#setup")) return setupSelect(e);
+  if (e.closest("#cc")) return ccSelect(e);
+  if (e.closest("#tvset")) return setSelect(e);
+  if (e.closest("#gtv")) return toast("This is Google TV's own screen. PureTV doesn't change it");
+  if (e.closest("#menu")) return menuSelect(e);
+  if (e.closest("#recents")) return recentSelect(e);
+  if (e.closest("#wx")) return closeWx();
+  if (e.dataset.app) return launch(e);
+  const act = e.dataset.act;
+  if (act === "settings") return openSettings();
+  if (act === "profile") return openProfileMenu(e);
+  if (act === "cc") return openCC();
+  if (act === "weather") return openWx();
+  if (act === "tab-home") return focus($("#row1 .tile"));
+  if (act === "tab-apps") return focus($("#grid .tile"));
+  if (act === "tab-live") return toast("Live TV opens the TV's own tuner and HDMI inputs (com.apps.passthrough)");
+  if (act === "search") return toast("Opens Google TV's own search, the same as the mic button");
+  if (act === "inputs") { openCC(); return openCCPage("inputs", $('[data-cc="inputs"]')); }
+}
+function back() {
+  if (editing) return endEdit();
+  if (saver) return stopSaver();
+  if (launched) return closeApp();
+  if (full) return exitFull();
+  if (inScope("#gtv")) { $("#gtv").classList.remove("on"); return pop(); }
+  if (inScope("#menu")) return closeMenu();
+  if (inScope("#recents")) return closeRecents();
+  if (inScope("#wx")) return closeWx();
+  if (inScope("#cc")) return ccPage ? closeCCPage() : closeCC();
+  if (inScope("#tvset") && setLevel === "updates") { setLevel = "root"; cur = null; renderSettings(); return focus($('[data-set="updates"]')); }
+  if (inScope("#tvset")) return closeSettings();
+  if (inScope("#setup")) return setupBack();
+  if ($("#home").classList.contains("deep")) return focus($("#row1 .tile"));
+}
+
+
+/* ---------- weather (on the TV: Open-Meteo, free and keyless, as tvOS Launcher uses) ---------- */
+const WX = { now: [24, "sun", "Clear"], days: [["Today", 29, 18, "sun"], ["Tue", 30, 19, "sun"], ["Wed", 28, 19, "cloud"], ["Thu", 26, 18, "rain"], ["Fri", 27, 17, "partly"]] };
+function wxIcon(k, size) {
+  const sun = '<circle cx="12" cy="12" r="4.2" fill="#ffd60a"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="#ffd60a" stroke-width="1.8" stroke-linecap="round"/>';
+  const cloud = '<path d="M7 18h10a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.5A3.3 3.3 0 0 0 7 18z" fill="#e5e7ee"/>';
+  const d = k === "sun" ? sun : k === "cloud" ? cloud
+    : k === "rain" ? cloud.replace("M7 18", "M7 15").replace("a4 4 0 0 0 .4-8", "a4 4 0 0 0 .4-8").replace("18z", "15z") + '<path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3" stroke="#64d2ff" stroke-width="1.8" stroke-linecap="round"/>'
+    : '<g transform="translate(-3 -3) scale(.75)">' + sun + '</g>' + cloud;
+  return `<svg viewBox="0 0 24 24"${size ? ` width="${size}" height="${size}"` : ""}>${d}</svg>`;
+}
+function openWx() {
+  const w = $("#wx");
+  $(".now", w).innerHTML = `${wxIcon(WX.now[1])}<b>${WX.now[0]}°</b><span>${WX.now[2]}</span><small>High ${WX.days[0][1]}° · Low ${WX.days[0][2]}°</small>`;
+  $("#wxDays").innerHTML = WX.days.map(([d, hi, lo, k], i) => `<div class="wd glass" data-f style="--d:${i}">${d}${wxIcon(k)}<div>${hi}°</div><span>${lo}°</span></div>`).join("");
+  stage.classList.add("wxon"); w.classList.add("on"); push(w);
+}
+function closeWx() { $("#wx").classList.remove("on"); stage.classList.remove("wxon"); pop(); }
+
+/* ---------- UI sounds: our own, made on the fly (soft ticks, nothing recorded) ---------- */
+let sounds = true, actx = null;
+function snd(kind) {
+  if (!sounds) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain(), f = actx.createBiquadFilter();
+    const [f0, f1, vol, dur, type] = { nav: [2400, 1700, .035, .045, "sine"], ok: [1500, 900, .06, .09, "triangle"], back: [900, 520, .05, .08, "triangle"], edge: [260, 180, .05, .07, "sine"] }[kind];
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    f.type = "lowpass"; f.frequency.value = 4200;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(f); f.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + .02);
+  } catch (err) { /* no audio here: stay silent */ }
+}
+
+/* ---------- memory and Recent Apps (tvOS Launcher's switcher) ---------- */
+let recents = ["com.netflix.ninja", "com.google.android.youtube.tv", "com.spotify.tv.android"], hidden = new Set(), appInfoPkg = null;
+const RAM_TOTAL = 1.5;
+const ramUsed = () => Math.min(RAM_TOTAL - .08, .62 + recents.length * .17);
+function renderMem() {
+  const u = ramUsed(), pct = Math.round(u / RAM_TOTAL * 100);
+  $("#ccMemV").textContent = `${pct}% used`; $("#ccMemBar").style.width = pct + "%";
+  $("#ramV").textContent = `RAM ${u.toFixed(1)} GB used of ${RAM_TOTAL} GB`; $("#ramBar").style.width = pct + "%";
+}
+function openRecents() {
+  const r = $("#recents"), tr = $("#rtrack");
+  tr.innerHTML = recents.map((p, i) => { const a = app(p); return `<div class="rcard" data-f data-rapp="${p}" style="--d:${i}"><div class="lab"><img src="${a.logo}" alt="">${a.name}</div><div class="shot" style="--bg:${a.bg}"><img src="${a.logo}" alt=""></div></div>`; }).join("");
+  $(".empty", r) && $(".empty", r).remove();
+  if (!recents.length) r.insertAdjacentHTML("beforeend", '<div class="empty">No recent apps</div>');
+  renderMem(); stage.classList.add("recon"); r.classList.add("on"); push(r, $(".rcard", r) || $("#closeAll"));
+  if (!recents.length) tr.style.transform = "";
+}
+function closeRecents() { $("#recents").classList.remove("on"); stage.classList.remove("recon"); pop(); }
+function centerCard(el) { $("#rtrack").style.transform = `translateX(${960 - (el.offsetLeft + 320)}px)`; }
+function closeRecent(card) {
+  const p = card.dataset.rapp, next = card.nextElementSibling || card.previousElementSibling;
+  recents = recents.filter((x) => x !== p); card.classList.add("gone"); card.removeAttribute("data-f"); snd("back"); renderMem();
+  if (next && next.dataset.rapp) { cur = null; focus(next); setTimeout(() => focus(next), 460); }
+  else { cur = null; focus($("#closeAll")); $("#recents").insertAdjacentHTML("beforeend", '<div class="empty">No recent apps</div>'); }
+  setTimeout(() => card.remove(), 480);
+}
+function recentSelect(e) {
+  if (e.id === "closeAll") {
+    $$(".rcard").forEach((c, i) => setTimeout(() => c.classList.add("gone"), i * 70));
+    const n = recents.length; recents = []; renderMem(); snd("back");
+    return setTimeout(() => { closeRecents(); if (n) toast(`Closed ${n} app${n > 1 ? "s" : ""} · ${(n * .17).toFixed(1)} GB of memory freed`); }, 420 + n * 70);
+  }
+  const L = e; closeRecents(); launch($(`#home [data-app="${L.dataset.rapp}"]`) || L);
+}
+
+/* ---------- hold OK on an app: a menu, then Move with the tile wiggling (tvOS edit mode) ---------- */
+const MI = {
+  move: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>',
+  top: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><path d="M12 20v-7M9 16l3-3 3 3"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M12 4v7M9 8l3 3 3-3"/></svg>',
+  hide: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.3 3.8M6.6 6.6C3.8 8.4 2 12 2 12s4 6 10 6a9.6 9.6 0 0 0 4.4-1"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+};
+let held = null;
+function longPress() {
+  if (cur && cur.dataset.cw && inScope("#home")) return openCWMenu(cur);
+  if (!cur || !cur.dataset.app || !inScope("#home") || !cur.classList.contains("tile")) return select();
+  held = cur; held.classList.add("held"); snd("ok");
+  const a = app(held.dataset.app), inTop = !!held.closest("#row1"), m = $("#menu");
+  m.innerHTML = `<div class="mh"><img src="${a.logo}" alt="">${a.name}</div>`
+    + `<div class="mi" data-f data-m="move">${MI.move}Move</div>`
+    + (inTop ? `<div class="mi" data-f data-m="down">${MI.down}Move to All Apps</div>` : `<div class="mi" data-f data-m="top">${MI.top}Move to Top Row</div>`)
+    + `<div class="mi" data-f data-m="hide">${MI.hide}Hide from Home</div><div class="mi" data-f data-m="info">${MI.info}App Info</div>`;
+  const k = 1920 / stage.getBoundingClientRect().width, s = stage.getBoundingClientRect(), r = held.getBoundingClientRect();
+  const cx = (r.left - s.left + r.width / 2) * k, top = (r.top - s.top) * k, below = top < 420;
+  const left = Math.max(40, Math.min(1920 - 480, cx - 220));
+  m.style.left = left + "px"; m.style.top = below ? top + r.height * k + 40 + "px" : "auto"; m.style.bottom = below ? "auto" : 1080 - top + 34 + "px";
+  m.style.setProperty("--ox", cx - left + "px"); m.style.setProperty("--oy", below ? "0%" : "100%");
+  stage.classList.add("menuon"); m.classList.add("on"); push(m, $(".mi", m));
+}
+function closeMenu(keep) { $("#menu").classList.remove("on"); stage.classList.remove("menuon"); pop(); if (held && !keep) held.classList.remove("held"); }
+function openProfileMenu(anchor) {
+  held = null; const m = $("#menu"), k = 1920 / stage.getBoundingClientRect().width, s = stage.getBoundingClientRect(), r = anchor.getBoundingClientRect();
+  m.innerHTML = `<div class="mh">Who's watching?</div>` + PROFILES.map((p, i) => `<div class="mi" data-f data-prof="${i}"><div class="avatar" style="width:44px;height:44px;font-size:16px;background:${p.bg}">${p.init}</div>${p.name}${i === prof ? '<span style="margin-left:auto;opacity:.6">Current</span>' : ""}</div>`).join("")
+    + `<div class="mi" data-f data-prof="accounts">${MI.info}Profiles &amp; Accounts</div>`;
+  m.style.left = (r.left - s.left) * k + "px"; m.style.top = (r.bottom - s.top) * k + 18 + "px"; m.style.bottom = "auto";
+  m.style.setProperty("--ox", "60px"); m.style.setProperty("--oy", "0%");
+  m.classList.add("on"); push(m, $(`.mi[data-prof="${prof}"]`, m));
+}
+function menuSelect(e) {
+  if (e.dataset.cwm) return cwAction(e.dataset.cwm);
+  if (e.dataset.prof !== undefined) {
+    const v = e.dataset.prof; closeMenu();
+    if (v === "accounts") return openGtv("accounts");
+    const was = prof; prof = +v; renderAvatar(); tick(); cwFilter = null; renderCW(); if (inScope("#home")) focus($("#bProf"));
+    if (prof !== was) toast(`Google TV switches to ${PROFILES[prof].name}: its own accounts, apps and recommendations`);
+    return;
+  }
+  const p = held.dataset.app, act = e.dataset.m; closeMenu(true); held.classList.remove("held");
+  if (act === "move") return startEdit(p);
+  if (act === "top") { topRow = [...topRow.filter((x) => x !== p).slice(0, dockSize - 1), p, ...topRow.filter((x) => x !== p).slice(dockSize - 1)]; return reflow(p, `${app(p).name} is in your top row`); }
+  if (act === "down") { topRow = topRow.filter((x) => x !== p); return reflow(p, `${app(p).name} moved to All Apps`); }
+  if (act === "hide") { hidden.add(p); topRow = topRow.filter((x) => x !== p); reflow(null); return toast(`${app(p).name} is hidden. Settings › Hidden Apps brings it back`); }
+  if (act === "info") { appInfoPkg = p; return openGtv("appinfo"); }
+}
+/* rebuild Home and let every tile glide from where it was to where it is now (FLIP) */
+function reflow(focusPkg, msg) {
+  const before = new Map($$("#home .tile").map((t) => [t.dataset.app || t.dataset.act, t.getBoundingClientRect()]));
+  const k = stage.getBoundingClientRect().width / 1920;
+  $("#home").classList.add("noanim"); buildHome();
+  $$("#home .tile").forEach((t) => {
+    const b = before.get(t.dataset.app || t.dataset.act); if (!b) { t.animate([{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }); return; }
+    const a = t.getBoundingClientRect(), dx = (b.left - a.left) / k, dy = (b.top - a.top) / k;
+    if (dx || dy) t.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" });
+  });
+  cur = null; focus((focusPkg && $(`#home [data-app="${focusPkg}"]`)) || $("#row1 .tile"));
+  if (editing) cur.classList.add("jiggle");
+  if (msg) toast(msg);
+}
+let editing = null;
+function startEdit(p) {
+  editing = p; const t = $(`#home [data-app="${p}"]`); cur = null; focus(t); t.classList.add("jiggle"); $("#editHint").classList.add("on"); stage.classList.add("editing");
+}
+function endEdit(quiet) {
+  const t = editing && $(`#home [data-app="${editing}"]`); if (t) t.classList.remove("jiggle");
+  editing = null; $("#editHint").classList.remove("on"); stage.classList.remove("editing"); if (!quiet) snd("ok");
+}
+function editMove(dx, dy) {
+  const p = editing, top = topRow.filter((x) => !hidden.has(x)).slice(0, dockSize), inTop = top.includes(p);
+  const order = APPS.map((a) => a.pkg).filter((x) => !top.includes(x) && !hidden.has(x));
+  if (inTop) {
+    const i = top.indexOf(p);
+    if (dx) { const j = i + dx; if (j < 0 || j >= top.length) return snd("edge"); [top[i], top[j]] = [top[j], top[i]]; topRow = [...top, ...topRow.filter((x) => !top.includes(x))]; }
+    else if (dy > 0) { topRow = topRow.filter((x) => x !== p); }
+    else return snd("edge");
+  } else {
+    const i = order.indexOf(p), cols = dockSize + 1;
+    if (dy < 0 && i < cols) { topRow = [...top.slice(0, Math.min(i, top.length)), p, ...top.slice(Math.min(i, top.length)), ...topRow.filter((x) => !top.includes(x) && x !== p)]; }
+    else {
+      const j = dx ? i + dx : i + dy * cols; if (j < 0 || j >= order.length) return snd("edge");
+      const all = APPS.map((a) => a.pkg), a1 = all.indexOf(p), a2 = all.indexOf(order[j]);
+      const moved = APPS.splice(a1, 1)[0]; APPS.splice(a2, 0, moved);
+    }
+  }
+  snd("nav"); reflow(p);
+}
+
+/* ---------- Continue Watching. On the TV this is Android's own Watch Next list (TvContract.WatchNextPrograms),
+   which the streaming apps fill with the show, the episode, the progress and a link straight to it.
+   The shows below are made-up samples for the demo. ---------- */
+const CW = [
+  [{ id: "a1", pkg: "com.netflix.ninja", title: "Northern Lights", ep: "S2 · E4", at: "31:12", left: "23 min left", pct: 58, art: "night" },
+   { id: "a2", pkg: "com.amazon.amazonvideo.livingroom", title: "The Long Road", ep: "S1 · E7", at: "12:40", left: "41 min left", pct: 24, art: "golden" },
+   { id: "a3", pkg: "com.google.android.youtube.tv", title: "Pasta Night, Slowly", ep: "Video", at: "8:05", left: "11 min left", pct: 42, art: "dawn" },
+   { id: "a4", pkg: "com.disney.disneyplus", title: "Starfall", ep: "Movie", at: "1:21:30", left: "18 min left", pct: 82, art: "water" },
+   { id: "a5", pkg: "com.netflix.ninja", title: "The Quiet Valley", ep: "S1 · E2", at: "5:48", left: "44 min left", pct: 12, art: "fog" }],
+  [{ id: "b1", pkg: "com.apple.atve.androidtv.appletv", title: "Quiet Harbour", ep: "S3 · E2", at: "20:15", left: "30 min left", pct: 40, art: "water" },
+   { id: "b2", pkg: "com.wbd.stream", title: "Glass City", ep: "S1 · E1", at: "44:02", left: "9 min left", pct: 84, art: "night" },
+   { id: "b3", pkg: "com.crunchyroll.webapp", title: "Sky Blade", ep: "E12", at: "3:30", left: "20 min left", pct: 15, art: "golden" }],
+  [{ id: "c1", pkg: "com.google.android.youtube.tv", title: "Counting Songs", ep: "Video", at: "2:10", left: "6 min left", pct: 30, art: "dawn" },
+   { id: "c2", pkg: "com.disney.disneyplus", title: "Little Explorers", ep: "S1 · E3", at: "9:00", left: "13 min left", pct: 45, art: "fog" }],
+];
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
+let cwFilter = null;
+const cwList = () => CW[prof] || [];
+function renderCW() {
+  const list = cwList().filter((c) => !cwFilter || c.pkg === cwFilter).slice(0, 3), a = cwFilter && app(cwFilter);
+  $("#cwHead").innerHTML = a ? `<img src="${a.logo}" alt="">Continue Watching on ${a.name}` : "Continue Watching";
+  $("#cwRow").innerHTML = list.map((c, i) => { const ap = app(c.pkg);
+    return `<div class="cw glass" data-f data-app="${c.pkg}" data-cw="${c.id}" style="animation-delay:${i * 50}ms"><div class="art"><img src="${P(c.art, ".jpg")}" alt="" style="object-position:${30 + i * 20}% 60%"><span>${c.title}</span><div class="play">${PLAY}</div></div>`
+      + `<div class="tx"><small><img src="${ap.logo}" alt="">${ap.name}</small><b>${c.title}</b><i>${c.ep} · ${c.left}</i><div class="pb"><u style="width:${c.pct}%"></u></div></div></div>`; }).join("");
+  $("#cw").classList.toggle("none", !list.length);
+}
+function setCWFilter(f) {
+  if (f === cwFilter) return;
+  cwFilter = f; const w = $("#cw"); w.classList.add("swap");
+  clearTimeout(setCWFilter.t); setCWFilter.t = setTimeout(() => { renderCW(); w.classList.remove("swap"); }, 210);
+}
+function openCWMenu(card) {
+  held = card; card.classList.add("held"); snd("ok");
+  const c = cwList().find((x) => x.id === card.dataset.cw), a = app(c.pkg), m = $("#menu");
+  m.innerHTML = `<div class="mh"><img src="${a.logo}" alt="">${c.title}</div>`
+    + `<div class="mi" data-f data-cwm="resume">${PLAY}Resume from ${c.at}</div>`
+    + `<div class="mi" data-f data-cwm="start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.7"/><path d="M4 4v4.7h4.7"/></svg>Start Over</div>`
+    + `<div class="mi red" data-f data-cwm="remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Remove from Continue Watching</div>`;
+  const k = 1920 / stage.getBoundingClientRect().width, s = stage.getBoundingClientRect(), r = card.getBoundingClientRect();
+  const left = Math.max(40, Math.min(1920 - 480, (r.left - s.left) * k));
+  m.style.left = left + "px"; m.style.top = "auto"; m.style.bottom = 1080 - (r.top - s.top) * k + 24 + "px";
+  m.style.setProperty("--ox", "80px"); m.style.setProperty("--oy", "100%");
+  stage.classList.add("menuon"); m.classList.add("on"); push(m, $(".mi", m));
+}
+function cwAction(act) {
+  const card = held, id = card.dataset.cw, c = cwList().find((x) => x.id === id); closeMenu(true); card.classList.remove("held");
+  if (act === "resume") return launch(card);
+  if (act === "start") { launch(card); $("#launch .note").textContent = `Starting ${c.title} · ${c.ep} from the beginning`; return; }
+  CW[prof] = cwList().filter((x) => x.id !== id); card.classList.add("gone"); card.removeAttribute("data-f"); snd("back");
+  const next = card.nextElementSibling || card.previousElementSibling;
+  cur = null; focus(next && next.dataset.cw ? next : $("#row1 .tile"));
+  setTimeout(() => { if (cwFilter && !cwList().some((x) => x.pkg === cwFilter)) cwFilter = null; renderCW(); if (cur && !document.contains(cur)) focus($("#cw .cw") || $("#row1 .tile")); }, 420);
+  toast(`${c.title} removed from Continue Watching`);
+}
+
+/* ---------- Software Updates (the launcher checks PureTV's GitHub releases; see launcher Updater.java) ---------- */
+let VERSION = "1.0", setLevel = "root", autoUpdate = true, upd = { state: "idle", pct: 0, next: "1.1" };
+function renderUpdates() {
+  const s = upd.state, val = s === "checking" ? '<span class="spin"></span>' : s === "latest" ? "Up to date" : s === "available" ? `Install PureTV ${upd.next}`
+    : s === "downloading" ? `<span>${upd.pct}%</span><span class="pbar"><i style="width:${upd.pct}%"></i></span>` : s === "installing" ? 'Installing<span class="spin"></span>' : "";
+  const title = s === "available" ? `PureTV ${upd.next} is available` : s === "latest" ? `PureTV ${VERSION} is up to date` : "Check for Updates";
+  const rows = [["Update Software", title, val, "upd"], ["Automatically Update", "Automatically Update", autoUpdate ? "On" : "Off", "auto"], ["Source", "Update Source", "GitHub Releases", "src"]];
+  const had = cur && cur.dataset.set; let d = 0;
+  $("#setList").innerHTML = `<h2>Software Updates</h2>` + rows.map(([, t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v" style="display:flex;align-items:center">${v}</span>${CHEV}</div>`).join("")
+    + `<p class="foot">PureTV looks for a new release on its GitHub page${autoUpdate ? " once a day and installs it while the TV is idle" : " only when you ask"}. Updates install through Android's own installer: the first time, the TV asks you to allow PureTV to install updates. Your settings, top row and profiles stay as they are.</p>`;
+  if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
+}
+function runUpdate() {
+  if (upd.state === "checking" || upd.state === "downloading" || upd.state === "installing") return;
+  if (upd.state === "available") {
+    upd.state = "downloading"; upd.pct = 0; renderSettings();
+    const t = setInterval(() => {
+      upd.pct = Math.min(100, upd.pct + 7 + Math.round(Math.random() * 8)); renderSettings();
+      if (upd.pct >= 100) {
+        clearInterval(t); upd.state = "installing"; renderSettings();
+        setTimeout(() => { VERSION = upd.next; upd.state = "latest"; renderSettings(); toast(`PureTV ${VERSION} is installed. Home restarted with your settings kept`); }, 1600);
+      }
+    }, 180);
+    return;
+  }
+  upd.state = "checking"; renderSettings();
+  setTimeout(() => { upd.state = VERSION === upd.next ? "latest" : "available"; renderSettings(); }, 1400);   // demo: 1.1 is "on GitHub"
+}
+/* ---------- setup: cleanyourtv's own checklist, applied to the tested list for this model ----------
+   Source: cleanyourtv PROMPT.md (Back up first, Debloat, Launcher) and examples/acer-ar32hdigu2841at/debloat.txt */
+const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+// "Before touching streaming apps, voice assistant, Chromecast, Miracast or the update service, ask me which ones I use"
+const USES = [
+  ["#30d158", I('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'), "Google Assistant", "The mic button on your remote", ["com.google.android.katniss"], true],
+  ["#0a84ff", I('<path d="M3 18a3 3 0 0 1 3 3M3 14a7 7 0 0 1 7 7M3 10a11 11 0 0 1 11 11"/><path d="M3 7V5h18v14h-5"/>'), "Chromecast built-in", "Cast from your phone", ["com.google.android.apps.mediashell"], true],
+  ["#5e5ce6", I('<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>'), "Screen mirroring", "FastCast (Miracast) and SCast receivers", ["com.creative.fastscreen.tv", "com.apps.scast"], false],
+  ["#64d2ff", I('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), "Firmware updates", "TV, remote and accessory updates", ["com.apps.ota", "com.apps.authota", "com.realsil.ota", "com.google.android.tv.dfuservice"], true],
+  ["#ff375f", I('<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M16 12h.01M18 14h.01"/>'), "Play Games", "Google Play Games app and sync", ["com.google.android.play.games"], false],
+  ["#ff2d55", I('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>'), "YouTube Music", "The preloaded stub app", ["com.google.android.youtube.tvmusic"], false],
+  ["#ff9f0a", I('<path d="M6 4l13 8-13 8z"/>'), "MX Player", "Preloaded video player", ["com.mxtech.videoplayer.television"], false],
+  ["#8e8e93", I('<rect x="7" y="2" width="10" height="9" rx="1"/><path d="M5 11h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/>'), "USB media player", "Plays files from a USB drive", ["com.apps.usbmediaplayer"], false],
+];
+// The rest of the tested list: switched off unless you keep one
+const GROUPS = [
+  ["Telemetry and feedback", [["com.apps.function.gdpr", "SCBC data consent agent"], ["com.google.android.feedback", "Google feedback bug reporter"], ["com.android.tv.feedbackconsent", "TV feedback consent dialog"]]],
+  ["Ads, partner rows and auto-installs", [["com.apps.mk.wd", "Boot receiver that opens ads, apps and channels"], ["android.autoinstalls.config.scbc.device", "Installs partner apps through Play"], ["com.realtek.leanbacklauncher.partnercustomizer", "Injects partner rows and apps into Home"], ["com.google.android.partnersetup", "Google partner setup client"]]],
+  ["Demo, signage and background bloat", [["com.apps.esticker", "Demo sticker overlay"], ["com.apps.esticker3", "In-store feature animation"], ["com.apps.biz.mt", "MOKA background telemetry"], ["com.apps.biz.ds", "MOKA digital signage"], ["com.apps.tvmanager", "Memory 'cleaner' and auto-start manager"], ["com.mk.tv.meeting.service", "Enterprise meeting service"], ["com.apps.wifihotspot", "Wi-Fi hotspot toggle"], ["com.apps.function.audiolink", "Bluetooth audio receiver"], ["com.mk.tv.timeclock", "On-screen clock overlay"], ["com.google.android.apps.tv.dreamx", "Ambient mode screensaver"]]],
+];
+// "Never disable what the TV needs to work", and this model's "Kept on purpose"
+const KEPT = [
+  ["Google TV home", "Keeps your profiles; PureTV gets Home by redirect"], ["Setup wizard", "Owns your saved Wi-Fi network"], ["HDMI and inputs", "com.apps.passthrough"],
+  ["Remote buttons", "Key handlers and Bluetooth remote"], ["Play Store and Services", "App updates and sign-in"], ["Keyboard, TV middleware, core Android", "The TV needs these to start"],
+];
+const LOCK = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z"/></svg>';
+const HELLOS = ["Hello", "नमस्ते", "Hola", "Bonjour", "こんにちは", "Ciao", "Hallo"];
+let cs = 0, again = false, enteredAt = 0, helloTimer, dns = false, picks = topRow.slice(), keepUse = USES.map((u) => u[5]), offRows = null;
+function offList() {
+  const list = [];
+  USES.forEach((u, i) => { if (!keepUse[i]) list.push(...u[4]); });
+  GROUPS.forEach(([, rows]) => rows.forEach(([p]) => { if (!offRows || offRows.has(p)) list.push(p); }));
+  return list;
+}
+function runSetup(at = 0, isAgain = false) {
+  again = isAgain; enteredAt = at; picks = topRow.slice();
+  $("#home").classList.add("hidden"); $("#setup").classList.add("on"); stage.classList.remove("deep", "sideon");
+  closeOverlays();
+  $("#setup .bgimg").src = P(SCENES[scene].id, ".jpg");
+  $("#dots").innerHTML = "<i></i>".repeat(8); $("#dots").style.opacity = isAgain ? 0 : 1;
+  $("#uses").innerHTML = USES.map(([c, ic, t, d, pk], i) => `<div class="row${keepUse[i] ? " on" : ""}" data-f data-use="${i}"><div class="ic" style="background:${c}">${ic}</div><div class="tx">${t}<small>${d}</small></div><div class="state">${keepUse[i] ? "Keep" : "Switch off"}</div><div class="sw"></div></div>`).join("");
+  $("#groups").innerHTML = GROUPS.map(([t, rows]) => `<div class="grp glass"><h3>${t}<span class="n">${rows.length}</span></h3>${rows.map(([p, n]) => `<div class="row${!offRows || offRows.has(p) ? " on" : ""}" data-f data-pkg="${p}"><div class="tx">${n}<code>${p}</code></div><div class="sw"></div></div>`).join("")}</div>`).join("")
+    + `<div class="grp glass kept" style="grid-column:3;margin-top:-6px"><h3>Always kept${LOCK}</h3>${KEPT.map(([t, d]) => `<div class="row"><div class="tx">${t}<code>${d}</code></div></div>`).join("")}</div>`;
+  // the third column holds the long group; put "always kept" under the short ones
+  const g = $("#groups"), cards = $$(".grp", g); cards[3].style.gridColumn = "1 / span 2"; cards[2].style.gridRow = "1 / span 2"; cards[2].style.gridColumn = "3";
+  cards[3].style.display = "grid"; cards[3].style.gridTemplateColumns = "1fr 1fr"; cards[3].querySelector("h3").style.gridColumn = "1 / span 2";
+  $("#sizes").innerHTML = [4, 5, 6, 7].map((n) => `<div class="size${n === dockSize ? " cur" : ""}" data-f data-size="${n}">${n} apps</div>`).join("");
+  renderPick();
+  $("#dns").innerHTML = [[false, "Off", "Leave DNS as it is. Choose this if your router already filters (Pi-hole, AdGuard Home, a VPN): Private DNS would go around it."],
+    [true, "AdGuard DNS", "Ad and tracker domains stop loading in every app. It does not block YouTube ads, and AdGuard sees which sites the TV looks up."]]
+    .map(([v, t, d]) => `<div class="opt glass${dns === v ? " cur" : ""}" data-f data-dns="${v ? 1 : 0}"><b>${t}</b><span>${d}</span><div class="radio"></div></div>`).join("");
+  $("#looks").innerHTML = SCENES.map((s, i) => `<div class="look" data-f data-i="${i}"><div class="clip"><img src="${P(s.id, ".jpg")}" alt=""><div class="mini"></div>${s.fg ? `<img src="${P(s.id, "-fg.webp")}" alt="">` : ""}</div><span>${s.name}</span></div>`).join("");
+  tick(); layers = [{ root: $("#setup") }]; cur = null; step(at);
+  const h = $("#hello"); h.innerHTML = HELLOS.map((w) => `<span>${w}</span>`).join(""); let hi = 0; h.children[0].classList.add("on");
+  clearInterval(helloTimer); helloTimer = setInterval(() => { h.children[hi].classList.remove("on"); hi = (hi + 1) % HELLOS.length; h.children[hi].classList.add("on"); }, 2200);
+}
+function renderPick() {
+  const p = $("#pick"), had = cur && cur.closest("#pick") ? cur.dataset.app : null; p.replaceChildren();
+  APPS.forEach((a, i) => { const k = picks.indexOf(a.pkg); const t = tileEl(a, i, `<div class="num">${k + 1}</div>`);
+    t.classList.toggle("sel", k >= 0 && k < dockSize); t.classList.toggle("extra", k >= dockSize); p.append(t); });
+  if (had) { cur = null; focus($(`#pick [data-app="${had}"]`)); }
+}
+function step(n) {
+  cs = n; $$(".step").forEach((s, i) => { s.classList.toggle("on", i === n); s.classList.toggle("past", i < n); });
+  $$("#dots i").forEach((d, i) => d.classList.toggle("on", i === n));
+  if (cur) cur.classList.remove("focus"); cur = null;
+  if (n === 7) return applyRun();
+  const first = { 2: "#uses .row", 3: "#groups .row[data-f]", 4: "#sizes .size.cur", 5: "#dns .opt.cur" }[n];
+  setTimeout(() => focus(n === 6 ? $$(".look")[scene] : $(first || `#s${n} [data-f]`)), 80);
+}
+function setupSelect(e) {
+  if (e.dataset.use) { const i = +e.dataset.use; keepUse[i] = !keepUse[i]; e.classList.toggle("on", keepUse[i]); $(".state", e).textContent = keepUse[i] ? "Keep" : "Switch off"; return; }
+  if (e.dataset.pkg) { e.classList.toggle("on"); return; }
+  if (e.dataset.size) { dockSize = +e.dataset.size; $$(".size").forEach((s) => s.classList.toggle("cur", s === e)); renderPick(); return; }
+  if (e.dataset.app) { const k = picks.indexOf(e.dataset.app); if (k >= 0) picks.splice(k, 1); else picks.push(e.dataset.app); renderPick(); return; }
+  if (e.dataset.dns) { dns = e.dataset.dns === "1"; $$(".opt").forEach((o) => o.classList.toggle("cur", o === e)); return; }
+  if (e.classList.contains("look")) { showScene(+e.dataset.i); $("#setup .bgimg").src = P(SCENES[scene].id, ".jpg"); return step(7); }
+  if ("next" in e.dataset) {
+    if (cs === 3) offRows = new Set($$("#groups .row.on[data-pkg]").map((r) => r.dataset.pkg));
+    if (cs === 4) { topRow = picks.length ? picks.slice() : [APPS[0].pkg]; if (again) return endSetup(); }
+    if (again && cs === 3) return step(7);
+    return step(cs + 1);
+  }
+}
+function setupBack() {
+  if (cs === 7) return;
+  if (again && cs === enteredAt) return endSetup();
+  if (cs > 0) step(cs - 1);
+}
+/* What happens, in cleanyourtv's order: back up, disable in small batches with a pause, read the TV back, then Home */
+function applyRun() {
+  const off = offList(), T = $("#tasks"), ring = $("#ring"), prog = $("#prog"), batches = [];
+  for (let i = 0; i < off.length; i += 4) batches.push(off.slice(i, i + 4));
+  ring.classList.remove("done"); prog.style.strokeDashoffset = 578; $("#cleanTitle").textContent = "Cleaning Your TV";
+  const jobs = [["Backing up your TV", "app states, Home, settings"], ...batches.map((b, i) => [`Switching off, batch ${i + 1} of ${batches.length}`, b.join(", ")]),
+    ["Reading the TV back", `${off.length} confirmed off`], ["PureTV takes the Home button", "Google TV home stays on for profiles"]];
+  if (dns) jobs.splice(jobs.length - 1, 0, ["Ad-blocking DNS", "private_dns_specifier dns.adguard-dns.com"]);
+  T.innerHTML = jobs.map(([t, s]) => `<div class="task"><i></i>${t}<small>${s}</small></div>`).join("");
+  const rows = $$(".task", T); let i = 0;
+  const next = () => {
+    if (i > 0) rows[i - 1].className = "task ok";
+    prog.style.strokeDashoffset = 578 * (1 - i / rows.length);
+    if (i === rows.length) { ring.classList.add("done"); $("#cleanTitle").textContent = `${off.length} Apps Switched Off`; return setTimeout(endSetup, 1900); }
+    rows[i].className = "task run"; i++; setTimeout(next, i === 1 ? 1000 : 650);
+  };
+  next();
+}
+function endSetup() {
+  clearInterval(helloTimer); $("#setup").classList.remove("on"); buildHome();
+  const h = $("#home"); h.classList.remove("hidden", "deep"); stage.classList.remove("deep");
+  layers = [{ root: h }]; cur = null; setTimeout(() => focus($("#row1 .tile")), 120); tick();
+}
+
+
+/* ---------- input: remote keys (with hold OK and calm key repeat), plus the mouse ---------- */
+let okTimer = null, okLong = false, lastMove = 0;
+addEventListener("keydown", (e) => {
+  const k = e.key;
+  if (e.ctrlKey || e.metaKey || e.altKey || /^F\d+$/.test(k)) return;
+  e.preventDefault();
+  if (poweredOff) { poweredOff = false; return $("#off").classList.remove("on"); }
+  if (saver) return stopSaver();
+  if (full && !["m", "M"].includes(k)) return exitFull();
+  if (launched && !["Escape", "Backspace"].includes(k)) return;
+  if (k.startsWith("Arrow")) {
+    const now = performance.now();
+    if (e.repeat && now - lastMove < 120) return;   // a held arrow moves at a steady pace instead of racing
+    lastMove = now;
+    if (k === "ArrowLeft") move(-1, 0); else if (k === "ArrowRight") move(1, 0); else if (k === "ArrowUp") move(0, -1); else move(0, 1);
+    return;
+  }
+  if (k === "Enter" || k === " ") {
+    if (e.repeat) return;
+    if (editing) return endEdit();
+    okLong = false; clearTimeout(okTimer);
+    okTimer = setTimeout(() => { okLong = true; okTimer = null; longPress(); }, 520);   // hold OK
+    return;
+  }
+  if (k === "Escape" || k === "Backspace") { snd("back"); return back(); }
+  if (k === "m" || k === "M") { if (inScope("#cc")) closeCC(); else openCC(); return; }
+  if (k === "a" || k === "A") { if (inScope("#recents")) closeRecents(); else if (inScope("#home")) openRecents(); return; }
+  if (k === "r" || k === "R") { if (launched) closeApp(); runSetup(0); }
+});
+addEventListener("keyup", (e) => {
+  if ((e.key === "Enter" || e.key === " ") && okTimer) { clearTimeout(okTimer); okTimer = null; if (!okLong) { snd("ok"); select(); } }
+});
+stage.addEventListener("mousemove", (e) => {
+  if (saver || full || poweredOff || editing) return;
+  const t = e.target.closest("[data-f]");
+  if (!t || !items().includes(t)) return;
+  if (t !== cur) { focus(t); snd("nav"); }
+  if (t.classList.contains("tile")) {
+    const r = $(".face", t).getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+    t.style.setProperty("--ry", x * 10 + "deg"); t.style.setProperty("--rx", -y * 10 + "deg");
+    t.style.setProperty("--gx", (x + .5) * 100 + "%"); t.style.setProperty("--gy", (y + .5) * 100 + "%");
+    t.style.setProperty("--px", -x * 14 + "px"); t.style.setProperty("--py", -y * 8 + "px");
+  }
+});
+stage.addEventListener("click", (e) => {
+  if (poweredOff) { poweredOff = false; return $("#off").classList.remove("on"); }
+  if (saver) return stopSaver(); if (launched) return closeApp(); if (full) return exitFull(); if (editing) return endEdit();
+  const t = e.target.closest("[data-f]");
+  if (t && items().includes(t)) { focus(t); snd("ok"); select(); }
+  else if (inScope("#cc") && !e.target.closest("#ccPanel")) closeCC();
+  else if (inScope("#menu") && !e.target.closest("#menu")) closeMenu();
+  else if (inScope("#gtv") && !e.target.closest("#gtv")) back();
+});
+stage.addEventListener("contextmenu", (e) => {   // right click = hold OK
+  e.preventDefault(); const t = e.target.closest("[data-f]");
+  if (t && items().includes(t)) { focus(t); longPress(); }
+});
+let idle, idleA; const wake = () => {
+  clearTimeout(idle); clearTimeout(idleA);
+  idleA = setTimeout(() => { if (layers.length && inScope("#home") && !launched && !saver && !full && !editing) enterFull(true); }, 25000);
+  idle = setTimeout(() => { if (layers.length && inScope("#home") && !launched && !saver) startSaver(); }, 90000);
+};
+["keydown", "mousemove", "click"].forEach((ev) => addEventListener(ev, wake));
+
+document.fonts.ready.then(tick);
+$("#tvset .bigicon").innerHTML = gearSVG("metal"); $$('#bar [data-act="settings"]').forEach((b) => b.innerHTML = gearSVG("mono")); renderAvatar(); showScene(0); buildHome(); tick(); setInterval(tick, 5000); runSetup(0); wake();
+</script>
+</body>
+</html>

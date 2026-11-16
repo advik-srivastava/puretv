@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PureTV Home</string>
+    <string name="dream_name">PureTV Clock</string>
+    <string name="morning">Good morning</string>
+    <string name="afternoon">Good afternoon</string>
+    <string name="evening">Good evening</string>
+    <string name="night">Good night</string>
+    <string name="settings">Settings</string>
+    <string name="inputs">Inputs</string>
+    <string name="wifi">Wi-Fi</string>
+    <string name="ethernet">Ethernet</string>
+    <string name="offline">Offline</string>
+    <string name="move_front">Move to front</string>
+    <string name="move_left">Move left</string>
+    <string name="move_right">Move right</string>
+    <string name="hide">Hide from Home</string>
+    <string name="app_info">App info</string>
+    <string name="tv_settings">TV settings</string>
+    <string name="show_hidden">Show hidden apps (%d)</string>
+    <string name="home_app">Choose Home app</string>
+    <string name="no_apps">No apps to show yet</string>
+    <string name="hint">Hold OK on an app to move or hide it</string>
+    <!-- Software updates. Set update_repo to your GitHub repository, e.g. yourname/puretv. Empty = updates off. -->
+    <string name="update_repo" translatable="false">advik-srivastava/puretv</string>
+    <string name="update_check">Check for updates (version %s)</string>
+    <string name="update_auto_on">Automatic updates: On</string>
+    <string name="update_auto_off">Automatic updates: Off</string>
+    <string name="update_no_repo">Updates are not set up in this build (no GitHub repository given)</string>
+    <string name="update_busy">Already checking for updates</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_latest">PureTV %s is up to date</string>
+    <string name="update_available">PureTV %s is available</string>
+    <string name="update_no_apk">Release %s has no PureTV APK attached</string>
+    <string name="update_downloading">Downloading PureTV %s…</string>
+    <string name="update_installing">Installing PureTV %s…</string>
+    <string name="update_bad_signature">Update refused: it is not signed with PureTV\'s key</string>
+    <string name="update_failed">Update failed (%s)</string>
+</resources>
