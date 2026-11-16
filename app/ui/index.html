@@ -37,6 +37,16 @@
       <button type="button" class="ghost" id="findBtn">Find my TV automatically</button>
     </form>
     <div id="found" class="found" hidden></div>
+    <details class="pairbox">
+      <summary>My TV only offers <b>Wireless debugging</b> with a pairing code</summary>
+      <p class="hint">Chromecast with Google TV, Google TV Streamer and some Google TV sets. On the TV open Developer options › <b>Wireless debugging</b> › <b>Pair device with pairing code</b>, and type what it shows. PureTV downloads Google's own adb tool (about 7 MB) the first time.</p>
+      <form id="pairForm" class="pairgrid">
+        <label>Pairing address<input id="pAddr" placeholder="192.168.1.20:37099" autocomplete="off"></label>
+        <label>Pairing code<input id="pCode" placeholder="123456" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+        <label>Address on the Wireless debugging screen<input id="cAddr" placeholder="192.168.1.20:41235" autocomplete="off"></label>
+        <button class="primary" id="pairBtn">Pair and connect</button>
+      </form>
+    </details>
     <p class="hint">The TV will ask <b>“Allow USB debugging?”</b> — tick <i>Always allow</i> and press Allow.</p>
     <p id="connectErr" class="error" hidden></p>
     <button id="demoBtn" class="link">No TV nearby? Try it with a demo TV</button>
@@ -111,6 +121,7 @@
       <button class="ghost" id="againBtn">Clean more</button>
     </div>
   </section>
+  <footer class="madeby">Made with <span>❤️</span> by <a href="https://crazifiedstudios.com" target="_blank" rel="noopener">Crazified Studios</a> · Help: <a href="mailto:crazifiedstudios@gmail.com">crazifiedstudios@gmail.com</a></footer>
 </main>
 
 <div id="overlay" hidden>

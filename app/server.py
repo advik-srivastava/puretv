@@ -81,6 +81,8 @@ def api(path, body):
         return start_job("launcher", lambda log: core.install_launcher(tv(), bool(body.get("disableSetup")), log, bool(body.get("keepStock"))))
     if path == "/api/restore":
         return start_job("restore", lambda log: core.restore(tv(), log))
+    if path == "/api/pair":
+        return start_job("pair", lambda log: core.wireless_pair(str(body.get("pair", "")), str(body.get("code", "")), str(body.get("connect", "")), log))
     if path == "/api/discover":
         return core.discover()
     if path == "/api/check":

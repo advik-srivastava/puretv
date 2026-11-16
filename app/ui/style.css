@@ -57,6 +57,13 @@ button { font: inherit; cursor: pointer; }
 .ghost:hover { background: var(--surface); }
 .link { all: unset; color: var(--accent); cursor: pointer; margin-top: 22px; display: inline-block; font-size: 14px; }
 .link:hover { text-decoration: underline; }
+.pairbox { margin: 18px 0 4px; max-width: 64ch; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+.pairbox summary { cursor: pointer; color: var(--text); }
+.pairgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; align-items: end; }
+.pairgrid label { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.pairgrid label:nth-child(3) { grid-column: 1 / -1; }
+.pairgrid input { min-width: 0; }
+.pairgrid button { grid-column: 1 / -1; justify-self: start; }
 .found { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 6px; max-width: 64ch; }
 .found .muted { width: 100%; }
 .tvchip { background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: 14px; padding: 12px 16px; text-align: left; }
@@ -132,3 +139,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 17px; height: 17px; m
   .device { grid-template-columns: 1fr 1fr; }
   input:not([type=checkbox]) { min-width: 0; flex: 1; }
 }
+
+footer.madeby { grid-column: 1 / -1; text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
+footer.madeby a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line); }
+footer.madeby a:hover { border-color: var(--accent); }

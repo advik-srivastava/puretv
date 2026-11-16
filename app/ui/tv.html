@@ -451,6 +451,16 @@ html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; col
 #tvset h5 { margin: 28px 0 8px 34px; }
 #tvset .foot { margin: 22px 34px 0; }
 
+/* ============ credits ============ */
+.madeby { font-size: 21px; font-weight: 500; color: rgba(255,255,255,.62); letter-spacing: .1px; }
+.madeby b { color: rgba(255,255,255,.9); font-weight: 600; }
+.madeby .heart { color: #ff375f; display: inline-block; animation: beat 1.6s ease-in-out infinite; }
+@keyframes beat { 0%, 60%, 100% { transform: scale(1); } 30% { transform: scale(1.22); } }
+#s0 .madeby { position: absolute; left: 0; right: 0; bottom: 64px; }
+#s7 .madeby { margin-top: 26px; opacity: 0; animation: fadein .8s var(--ease) 1.2s forwards; }
+#tvset .about { margin: 6px 34px 0; }
+#tvset .about .big { font-size: 34px; font-weight: 650; color: #fff; margin-bottom: 6px; }
+
 /* greeting and weather over the date */
 #date .g { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 4px; font-size: 24px; font-weight: 500; opacity: .85; }
 #date .wx { font-weight: 400; opacity: .85; }
@@ -619,7 +629,7 @@ html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; col
   <div id="setup" class="on">
     <img class="bgimg" src="demo/scenes/scene-golden.jpg" alt="">
     <div id="dots"></div>
-    <div class="step on" id="s0"><div id="hello"></div><p>Let's make this TV quiet, fast and yours.<br>Nothing changes until the last step, and everything can be undone.</p><div class="btn glass" data-f data-next>Get Started</div></div>
+    <div class="step on" id="s0"><div id="hello"></div><p>Let's make this TV quiet, fast and yours.<br>Nothing changes until the last step, and everything can be undone.</p><div class="btn glass" data-f data-next>Get Started</div><div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div></div>
     <div class="step" id="s1">
       <div class="tvcard glass"><div class="tvicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8"/></svg></div>
         <div><small>Connected</small><b>Acer AR32HDIGU2841AT</b><i>Google TV 14 · Realtek RTD2841A · 1.5 GB RAM · build UKR1.260612</i></div></div>
@@ -638,7 +648,7 @@ html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; col
     <div class="step" id="s7">
       <svg id="ring" viewBox="0 0 210 210"><circle cx="105" cy="105" r="92" stroke="rgba(255,255,255,.15)"/><circle id="prog" cx="105" cy="105" r="92" stroke="#fff" stroke-dasharray="578" stroke-dashoffset="578"/>
         <g id="ringDone"><circle cx="105" cy="105" r="72"/><path d="M74 107l21 21 43-46" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g></svg>
-      <h1 id="cleanTitle">Cleaning Your TV</h1><div id="tasks"></div>
+      <h1 id="cleanTitle">Cleaning Your TV</h1><div id="tasks"></div><div class="madeby">Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div>
     </div>
   </div>
 
@@ -888,6 +898,7 @@ function renderSettings() {
     ["System", "Software Updates", upd.state === "available" ? "Update available" : `Version ${VERSION}`, "updates"], [null, "About", `PureTV ${VERSION}`, "about"],
   ];
   if (setLevel === "updates") return renderUpdates();
+  if (setLevel === "about") return renderAbout();
   const had = cur && cur.dataset.set; let d = 0;
   $("#setList").innerHTML = `<h2>Settings</h2>` + rows.map(([h, t, v, act, cls]) => `${h ? `<h5>${h}</h5>` : ""}<div class="sr ${cls || ""}" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("");
   if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
@@ -912,7 +923,10 @@ function setSelect(e) {
   if (a === "upd") return runUpdate();
   if (a === "auto") { autoUpdate = !autoUpdate; return renderSettings(); }
   if (a === "src") return toast("Updates come only from PureTV's own GitHub releases");
-  if (a === "about") return toast("PureTV Home 1.0 · lists from cleanyourtv · scenes from couch-tv");
+  if (a === "about") { setLevel = "about"; cur = null; renderSettings(); return focus($("#setList .sr")); }
+  if (a === "web") return toast("crazifiedstudios.com");
+  if (a === "help") return toast("Write to crazifiedstudios@gmail.com — we read every message");
+  if (a === "credits") return toast("Lists: cleanyourtv · Scenes and clock: couch-tv · Ideas: tvOS Launcher");
 }
 
 /* ---------- Google TV's own screens ---------- */
@@ -976,7 +990,7 @@ function back() {
   if (inScope("#recents")) return closeRecents();
   if (inScope("#wx")) return closeWx();
   if (inScope("#cc")) return ccPage ? closeCCPage() : closeCC();
-  if (inScope("#tvset") && setLevel === "updates") { setLevel = "root"; cur = null; renderSettings(); return focus($('[data-set="updates"]')); }
+  if (inScope("#tvset") && setLevel !== "root") { const was = setLevel; setLevel = "root"; cur = null; renderSettings(); return focus($(`[data-set="${was}"]`)); }
   if (inScope("#tvset")) return closeSettings();
   if (inScope("#setup")) return setupBack();
   if ($("#home").classList.contains("deep")) return focus($("#row1 .tile"));
@@ -1199,7 +1213,7 @@ function cwAction(act) {
 }
 
 /* ---------- Software Updates (the launcher checks PureTV's GitHub releases; see launcher Updater.java) ---------- */
-let VERSION = "1.0", setLevel = "root", autoUpdate = true, upd = { state: "idle", pct: 0, next: "1.1" };
+let VERSION = "1.1", setLevel = "root", autoUpdate = true, upd = { state: "idle", pct: 0, next: "1.2" };
 function renderUpdates() {
   const s = upd.state, val = s === "checking" ? '<span class="spin"></span>' : s === "latest" ? "Up to date" : s === "available" ? `Install PureTV ${upd.next}`
     : s === "downloading" ? `<span>${upd.pct}%</span><span class="pbar"><i style="width:${upd.pct}%"></i></span>` : s === "installing" ? 'Installing<span class="spin"></span>' : "";
@@ -1225,6 +1239,15 @@ function runUpdate() {
   }
   upd.state = "checking"; renderSettings();
   setTimeout(() => { upd.state = VERSION === upd.next ? "latest" : "available"; renderSettings(); }, 1400);   // demo: 1.1 is "on GitHub"
+}
+
+/* ---------- About ---------- */
+function renderAbout() {
+  const rows = [["Version", `PureTV ${VERSION}`, "ver"], ["Website", "crazifiedstudios.com", "web"], ["Help", "crazifiedstudios@gmail.com", "help"], ["Credits", "cleanyourtv · couch-tv · tvOS Launcher", "credits"]];
+  const had = cur && cur.dataset.set; let d = 0;
+  $("#setList").innerHTML = `<h2>About</h2><div class="about madeby"><div class="big">PureTV</div>Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div><h5>&nbsp;</h5>`
+    + rows.map(([t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("");
+  if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
 }
 /* ---------- setup: cleanyourtv's own checklist, applied to the tested list for this model ----------
    Source: cleanyourtv PROMPT.md (Back up first, Debloat, Launcher) and examples/acer-ar32hdigu2841at/debloat.txt */

@@ -6,6 +6,7 @@ build-and-install), MIT licensed: https://github.com/Gathin23/cleanyourtv. See N
 """
 import base64
 import hashlib
+import sys
 import ipaddress
 import socket
 import subprocess
@@ -465,7 +466,7 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
     switched off then, so there is nothing to roll back.
     """
     if not APK.exists():
-        raise TVError("The launcher has not been built yet (launcher/dist/purehome.apk is missing).")
+        fetch_apk(log)
     info = tv.info()
     if info["sdk"] and info["sdk"] < 23:
         raise TVError(f"This TV runs Android {info['android']}; the launcher needs Android 6 or newer. Cleaning still works.")
@@ -786,3 +787,119 @@ def adb_hello(host, port, timeout=2.0):
     except OSError:
         return False
     return reply[:4] in (b"AUTH", b"CNXN", b"STLS")
+
+
+# ---------------------------------------------------------------- the launcher APK from the latest release
+
+RELEASES = "https://github.com/advik-srivastava/puretv/releases/latest/download/purehome.apk"
+
+
+def fetch_apk(log=print):
+    """A copy of PureTV taken from GitHub's "Download ZIP" has no APK in it: take the latest release's."""
+    import urllib.request
+    log("Downloading the PureTV launcher from the latest GitHub release…")
+    APK.parent.mkdir(parents=True, exist_ok=True)
+    tmp = APK.with_suffix(".part")
+    try:
+        req = urllib.request.Request(RELEASES, headers={"User-Agent": "PureTV"})
+        with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as out:
+            total = 0
+            while True:
+                b = r.read(65536)
+                if not b:
+                    break
+                total += len(b)
+                if total > 64 * 1024 * 1024:
+                    raise TVError("The download was larger than any PureTV launcher; stopped.")
+                out.write(b)
+    except TVError:
+        raise
+    except Exception as e:
+        tmp.unlink(missing_ok=True)
+        raise TVError(f"Could not download the launcher from GitHub ({e.__class__.__name__}). "
+                      "Download purehome.apk from the Releases page into launcher/dist/ and try again.")
+    with open(tmp, "rb") as f:
+        if f.read(2) != b"PK":
+            tmp.unlink(missing_ok=True)
+            raise TVError("GitHub did not send an APK. Download purehome.apk from the Releases page into launcher/dist/.")
+    os.replace(tmp, APK)
+    log(f"Downloaded the launcher ({APK.stat().st_size // 1024} KB).")
+
+
+# ---------------------------------------------------------------- Wireless debugging (pairing code)
+# Some Google TV sets (Chromecast with Google TV, Google TV Streamer) keep port 5555 closed and only offer
+# Wireless debugging with a pairing code. cleanyourtv's way: pair once with Google's own adb, connect,
+# then `adb tcpip 5555` opens the usual port (until the TV restarts), and the rest works as normal.
+
+def _tools_url():
+    plat = {"win32": "windows", "darwin": "darwin"}.get(sys.platform, "linux")
+    return f"https://dl.google.com/android/repository/platform-tools-latest-{plat}.zip"
+
+
+def adb_binary(log=print, download=True):
+    """Google's adb: already installed, in PureTV's folder, or downloaded once from Google (about 7 MB)."""
+    import shutil
+    exe = "adb.exe" if os.name == "nt" else "adb"
+    mine = DATA / "platform-tools" / exe
+    if mine.exists():
+        return str(mine)
+    found = shutil.which("adb")
+    if found:
+        return found
+    if not download:
+        return None
+    import urllib.request, zipfile, io
+    log("Downloading Google's platform-tools (adb, about 7 MB) from dl.google.com, once…")
+    try:
+        with urllib.request.urlopen(urllib.request.Request(_tools_url(), headers={"User-Agent": "PureTV"}), timeout=120) as r:
+            data = r.read()
+        DATA.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            for m in z.namelist():
+                if m.startswith("platform-tools/") and ".." not in m:
+                    z.extract(m, DATA)
+    except Exception as e:
+        raise TVError(f"Could not download Google's platform-tools ({e.__class__.__name__}). Install them from "
+                      "developer.android.com/tools/releases/platform-tools and try again.")
+    if os.name != "nt":
+        mine.chmod(0o755)
+    log("platform-tools ready.")
+    return str(mine)
+
+
+ADDR_RE = re.compile(r"\d{1,3}(?:\.\d{1,3}){3}:\d{2,5}")
+
+
+def wireless_pair(pair_addr, code, connect_addr, log=print):
+    """Pair with the TV's Wireless debugging, connect, and open port 5555. Returns the TV's address."""
+    pair_addr, code, connect_addr = pair_addr.strip(), code.strip(), connect_addr.strip()
+    if not ADDR_RE.fullmatch(pair_addr) or not ADDR_RE.fullmatch(connect_addr):
+        raise TVError("Type both addresses the way the TV shows them, like 192.168.1.20:37099.")
+    if not re.fullmatch(r"\d{6}", code):
+        raise TVError("The pairing code is the six digits the TV shows.")
+    if pair_addr.split(":")[0] != connect_addr.split(":")[0]:
+        raise TVError("The two addresses should be the same TV (the same IP address before the colon).")
+    adb = adb_binary(log)
+
+    def run(*args, timeout=40):
+        r = subprocess.run([adb, *args], capture_output=True, text=True, timeout=timeout)
+        return (r.stdout + r.stderr).strip()
+
+    out = run("pair", pair_addr, code)
+    log(out[:200])
+    if "Successfully paired" not in out:
+        raise TVError("The TV did not accept the pairing. Open Wireless debugging › Pair device with pairing code "
+                      "again and use the new code and port it shows.")
+    out = run("connect", connect_addr)
+    log(out[:200])
+    if "connected" not in out or "cannot" in out or "failed" in out:
+        raise TVError("Paired, but could not connect. Use the IP address and port shown on the Wireless debugging "
+                      "screen itself (not the pairing one).")
+    out = run("-s", connect_addr, "tcpip", "5555")
+    log(out[:200])
+    time.sleep(3)
+    host = connect_addr.split(":")[0]
+    if not _port_open(host, 5555, 3):
+        raise TVError("The TV did not open port 5555. Try once more, or keep Wireless debugging open on the TV.")
+    log(f"Port 5555 is open on {host}. It closes again when the TV restarts; that is normal.")
+    return {"host": host}

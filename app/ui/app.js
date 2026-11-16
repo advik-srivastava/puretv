@@ -69,6 +69,12 @@ async function connect(body) {
 }
 $("connectForm").onsubmit = (e) => { e.preventDefault(); connect({ host: $("host").value }); };
 $("demoBtn").onclick = () => connect({ demo: true });
+/* Wireless debugging with a pairing code: pair, connect, open 5555 (cleanyourtv's way), then connect as usual */
+$("pairForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const r = await job("Pairing with your TV", "/api/pair", { pair: $("pAddr").value, code: $("pCode").value, connect: $("cAddr").value });
+  if (r && r.host) { $("host").value = r.host; connect({ host: r.host }); }
+};
 /* cleanyourtv's prompt finds the TV on the Wi-Fi first; so does this */
 $("findBtn").onclick = async () => {
   const b = $("findBtn"), f = $("found"); b.disabled = true; b.textContent = "Searching your Wi-Fi…"; f.hidden = false; f.replaceChildren(el("p", "muted", "Looking for TVs with network debugging on. This takes a few seconds."));

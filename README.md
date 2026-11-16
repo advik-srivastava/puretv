@@ -1,26 +1,36 @@
 # PureTV
 
+Made with ❤️ by **[Crazified Studios](https://crazifiedstudios.com)** · Help: [crazifiedstudios@gmail.com](mailto:crazifiedstudios@gmail.com)
+
 Clean up an Android TV / Google TV over Wi-Fi and give it a calm home screen.
 Nothing is uninstalled, nothing is rooted, and one button puts everything back.
 
 ## Install
 
-You need a Windows PC on the same Wi-Fi as the TV, with [Python 3](https://www.python.org/downloads/) installed.
+PureTV works on any **Android TV or Google TV** (TCL, Sony, Xiaomi, Hisense, Philips, Acer, OnePlus, Chromecast
+with Google TV, Google TV Streamer, Nvidia Shield and more). Samsung, LG, Roku and other non-Android TVs have no
+debugging port, so nothing can be installed on them (see cleanyour.tv/not-android for their privacy switches).
 
-1. **Get PureTV:** on GitHub press **Code › Download ZIP** and unzip it, or run
-   `git clone https://github.com/advik-srivastava/puretv`.
+You need a computer on the same Wi-Fi as the TV, with [Python 3](https://www.python.org/downloads/).
+
+1. **Download** `PureTV-<version>.zip` from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest)
+   and unzip it. (The ZIP already has the TV launcher inside. *Code › Download ZIP* works too: PureTV then fetches
+   the launcher from the latest release by itself.)
 2. **On the TV:** Settings › System › About › press OK on *Android TV OS build* seven times, then
    Settings › System › Developer options › turn on **USB debugging** (and *Network debugging* if shown).
-3. **On the PC:** double-click **Start PureTV.bat**. Press **Find my TV automatically**, accept
-   "Allow USB debugging?" on the TV, and follow the steps: Back up → Clean → Launcher → Finish.
-4. **When done:** turn debugging off on the TV again and press *Check debugging is off*.
+3. **Start PureTV:** double-click **Start PureTV.bat** on Windows, or run `sh start.sh` on macOS and Linux.
+   Press **Find my TV automatically** and accept "Allow USB debugging?" on the TV.
+   - *TV only offers Wireless debugging with a pairing code* (Chromecast with Google TV, Google TV Streamer):
+     open **My TV only offers Wireless debugging** and type the pairing address, code and address the TV shows.
+     PureTV pairs with Google's own adb tool, as cleanyourtv does.
+4. **Follow the steps:** Back up → Clean → Launcher → Finish. Nothing is uninstalled; *Restore TV* puts everything back.
+5. **When done:** turn debugging off on the TV again, reboot it, and press *Check debugging is off*.
 
-The TV launcher APK is also on the [Releases page](https://github.com/advik-srivastava/puretv/releases);
-the PC app installs it for you, and after that the launcher updates itself from new releases.
+After that the TV launcher updates itself from new releases (hold OK on Settings › *Check for updates*).
 
-**Try the TV design first:** run `Start PureTV.bat` and open <http://127.0.0.1:8765/tv.html>
-(arrow keys, Enter, Esc, M for Control Center). That page is a design demo; the launcher on the TV is
-still the simpler v1.0 until the tvOS-style launcher is built into the APK.
+**Try the TV design first:** start PureTV and open <http://127.0.0.1:8765/tv.html>
+(arrow keys, Enter, Esc, M for Control Center). That page is a design preview; the launcher installed on the TV
+is the simpler PureTV Home until the tvOS-style launcher is built into the APK.
 
 ## Use it
 
@@ -82,10 +92,9 @@ Credits and licence: see [NOTICE.md](NOTICE.md).
 PureTV Home updates itself from your GitHub releases (Hold OK on Settings › *Check for updates*, or
 *Automatic updates*, which checks once a day).
 
-1. Put your repository in `launcher/res/values/strings.xml` › `update_repo` (for example `yourname/puretv`)
-   once, and build and install that version on the TV.
-2. For each new version: `PURETV_VERSION=1.1 python launcher/build.py`, then create a GitHub release with
-   the tag `v1.1` and attach `launcher/dist/purehome.apk`.
+1. The update source is `launcher/res/values/strings.xml` › `update_repo` (`advik-srivastava/puretv`).
+2. For each new version: `PURETV_VERSION=1.2 python launcher/build.py`, then `python -I tools/make_release.py 1.2`,
+   and create a GitHub release tagged `v1.2` with `launcher/dist/purehome.apk` and `release/PureTV-1.2.zip` attached.
 3. The TV finds it, downloads it, refuses it unless it is signed with the same key
    (`~/.puretv/puretv.keystore` — keep it safe, a new key means updates are refused), and installs it with
    Android's own installer. The first update asks for confirmation on the TV.

@@ -21,6 +21,9 @@
     <string name="home_app">Choose Home app</string>
     <string name="no_apps">No apps to show yet</string>
     <string name="hint">Hold OK on an app to move or hide it</string>
+    <string name="made_by">Made with ❤️ by Crazified Studios · crazifiedstudios.com</string>
+    <string name="about">About PureTV</string>
+    <string name="about_text">PureTV Home %1$s\n\nMade with ❤️ by Crazified Studios\ncrazifiedstudios.com\n\nHelp: crazifiedstudios@gmail.com\n\nBuilt on cleanyourtv, couch-tv and tvOS Launcher (see NOTICE.md on GitHub).</string>
     <!-- Software updates. Set update_repo to your GitHub repository, e.g. yourname/puretv. Empty = updates off. -->
     <string name="update_repo" translatable="false">advik-srivastava/puretv</string>
     <string name="update_check">Check for updates (version %s)</string>

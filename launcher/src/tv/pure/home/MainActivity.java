@@ -356,6 +356,10 @@ public class MainActivity extends Activity {
         hint.setText(R.string.hint);
         hint.setPadding(0, unit, 0, 0);
         grid.addView(hint);
+        TextView made = text(unit * 0.95f, 0x598D95A8);
+        made.setText(R.string.made_by);
+        made.setPadding(0, unit / 2, 0, unit * 2);
+        grid.addView(made);
         if (target == null) target = firstTile();
         if (target != null) target.requestFocus();
     }
@@ -463,7 +467,8 @@ public class MainActivity extends Activity {
         final int hidden = prefs.getStringSet("hidden", Collections.<String>emptySet()).size();
         final boolean auto = Updater.auto(this);
         CharSequence[] items = {getString(R.string.tv_settings), getString(R.string.show_hidden, hidden), getString(R.string.home_app),
-                getString(R.string.update_check, Updater.installedVersion(this)), getString(auto ? R.string.update_auto_on : R.string.update_auto_off)};
+                getString(R.string.update_check, Updater.installedVersion(this)), getString(auto ? R.string.update_auto_on : R.string.update_auto_off),
+                getString(R.string.about)};
         new AlertDialog.Builder(this).setTitle(R.string.app_name).setItems(items, new android.content.DialogInterface.OnClickListener() {
             @Override public void onClick(android.content.DialogInterface d, int which) {
                 if (which == 0) open(new Intent(Settings.ACTION_SETTINGS));
@@ -472,6 +477,9 @@ public class MainActivity extends Activity {
                 else if (which == 3) Updater.check(MainActivity.this, true, new Updater.Listener() {
                     @Override public void onStatus(String m) { android.widget.Toast.makeText(MainActivity.this, m, android.widget.Toast.LENGTH_LONG).show(); }
                 });
+                else if (which == 5) new AlertDialog.Builder(MainActivity.this).setTitle(R.string.app_name)
+                        .setMessage(getString(R.string.about_text, Updater.installedVersion(MainActivity.this)))
+                        .setPositiveButton(android.R.string.ok, null).show();
                 else { Updater.setAuto(MainActivity.this, !auto);
                     android.widget.Toast.makeText(MainActivity.this, !auto ? R.string.update_auto_on : R.string.update_auto_off, android.widget.Toast.LENGTH_SHORT).show(); }
             }
