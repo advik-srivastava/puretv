@@ -41,3 +41,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
   platforms only. The tvOS-style look here is drawn from scratch.
 
 The PureTV app UI and the PureTV Home launcher are original to this project.
+
+## Design
+
+The TV design is inspired by Apple tvOS. Apple and tvOS are trademarks of Apple Inc. PureTV is an
+independent project and is not affiliated with, endorsed by or sponsored by Apple. No Apple artwork, fonts
+or sound files are used; the interface uses the Inter typeface (SIL Open Font License).

@@ -1,6 +1,14 @@
+<p align="center"><img src="assets/banner.png" alt="PureTV: clean your Android TV or Google TV, remove the ads, and give it a tvOS-inspired home. Install in four steps: unlock Developer options, turn on USB debugging, download and start PureTV, then find, back up and clean your TV." width="100%"></p>
+
 # PureTV
 
 Made with ❤️ by **[Crazified Studios](https://crazifiedstudios.com)** · Help: [crazifiedstudios@gmail.com](mailto:crazifiedstudios@gmail.com)
+
+**[⬇ Download the latest release](https://github.com/advik-srivastava/puretv/releases/latest)** · Design inspired by Apple tvOS (not affiliated with Apple)
+
+| Control Center | Settings | All apps |
+|---|---|---|
+| ![Control Center with Wi-Fi, Do Not Disturb, Audio, Sleep Timer and weather](assets/shots/cc.png) | ![Settings with Clean Up, Apps and Software Updates](assets/shots/settings.png) | ![All apps in a grid under the top row](assets/shots/grid.png) |
 
 Clean up an Android TV / Google TV over Wi-Fi and give it a calm home screen.
 Nothing is uninstalled, nothing is rooted, and one button puts everything back.

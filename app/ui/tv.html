@@ -461,6 +461,35 @@ html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; col
 #tvset .about { margin: 6px 34px 0; }
 #tvset .about .big { font-size: 34px; font-weight: 650; color: #fff; margin-bottom: 6px; }
 
+/* ============ Settings opens like Weather: Home steps back, the glass comes forward, then the content ============ */
+#stage.seton #home { opacity: 0; transform: scale(.94); filter: blur(6px); pointer-events: none; }
+#stage.seton #date { opacity: 0; transform: translateY(-20px); }
+#stage.seton #scenes { transform: scale(1.06); }
+#tvset { opacity: 1 !important; transition: visibility 0s linear .55s; }
+#tvset.on { transition-delay: 0s; }
+#tvset .wash { opacity: 0; transition: opacity .5s var(--ease); }
+#tvset.on .wash { opacity: 1; }
+#tvset .left { transition: transform .8s var(--ease), opacity .45s var(--ease); }
+#tvset.on .bigicon { animation: iconIn .9s var(--spring) .06s backwards; }
+@keyframes iconIn { from { opacity: 0; transform: translateY(40px) scale(.72); } }
+#tvset .list { opacity: 0; transition: opacity .3s var(--ease); }
+#tvset.on .list { opacity: 1; transition: opacity .4s var(--ease) .1s; }
+#tvset.on h2 { animation: riseIn .6s var(--ease) .1s backwards; }
+/* moving between Settings, Software Updates and About: the rows glide in again */
+#setList.swap h2, #setList.swap .about, #setList.swap .foot { animation: riseIn .5s var(--ease) backwards; }
+#setList.swap .sr { animation: rowIn .5s var(--ease) backwards; animation-delay: calc(var(--d) * 35ms + 40ms); }
+@keyframes rowIn { from { opacity: 0; transform: translateX(46px); } }
+/* the focused row's shadow stays soft and inside the list, so its edges never look boxy */
+#tvset .list { left: 846px; right: 96px; top: 54px; bottom: 20px; padding: 30px 58px 70px; }
+#tvset.on .sr.focus { box-shadow: inset 0 1px 0 #fff, 0 10px 28px rgba(0,0,0,.28); }
+#tvset .legal { margin: 26px 34px 0; font-size: 18px; line-height: 1.5; color: rgba(255,255,255,.42); }
+
+body.bare { background: #000; }
+body.bare #room, body.bare #help { display: none; }
+body.bare #tv { left: 0; top: 0; margin: 0; padding: 0; border-radius: 0; box-shadow: none; background: none; }
+body.bare #tv::after { display: none; }
+body.bare #stage { border-radius: 0; }
+body.bare #hint { display: none; }
 /* greeting and weather over the date */
 #date .g { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 4px; font-size: 24px; font-weight: 500; opacity: .85; }
 #date .wx { font-weight: 400; opacity: .85; }
@@ -919,14 +948,14 @@ function setSelect(e) {
   if (a === "gtv") return openGtv("settings");
   if (a === "hidden") { if (!hidden.size) return toast("Hold OK on an app to hide it from Home"); const n = hidden.size; hidden.clear(); buildHome(); renderSettings(); return toast(`${n} hidden app${n > 1 ? "s are" : " is"} back on Home`); }
   if (a === "sounds") { sounds = !sounds; $("#ccSnd").classList.toggle("on", sounds); return renderSettings(); }
-  if (a === "updates") { setLevel = "updates"; cur = null; renderSettings(); return focus($("#setList .sr")); }
+  if (a === "updates") { setLevel = "updates"; swapLevel(); cur = null; renderSettings(); return focus($("#setList .sr")); }
   if (a === "upd") return runUpdate();
   if (a === "auto") { autoUpdate = !autoUpdate; return renderSettings(); }
   if (a === "src") return toast("Updates come only from PureTV's own GitHub releases");
-  if (a === "about") { setLevel = "about"; cur = null; renderSettings(); return focus($("#setList .sr")); }
+  if (a === "about") { setLevel = "about"; swapLevel(); cur = null; renderSettings(); return focus($("#setList .sr")); }
   if (a === "web") return toast("crazifiedstudios.com");
   if (a === "help") return toast("Write to crazifiedstudios@gmail.com — we read every message");
-  if (a === "credits") return toast("Lists: cleanyourtv · Scenes and clock: couch-tv · Ideas: tvOS Launcher");
+  if (a === "design") return toast("Inspired by Apple tvOS. Not affiliated with Apple");
 }
 
 /* ---------- Google TV's own screens ---------- */
@@ -990,7 +1019,7 @@ function back() {
   if (inScope("#recents")) return closeRecents();
   if (inScope("#wx")) return closeWx();
   if (inScope("#cc")) return ccPage ? closeCCPage() : closeCC();
-  if (inScope("#tvset") && setLevel !== "root") { const was = setLevel; setLevel = "root"; cur = null; renderSettings(); return focus($(`[data-set="${was}"]`)); }
+  if (inScope("#tvset") && setLevel !== "root") { const was = setLevel; setLevel = "root"; swapLevel(); cur = null; renderSettings(); return focus($(`[data-set="${was}"]`)); }
   if (inScope("#tvset")) return closeSettings();
   if (inScope("#setup")) return setupBack();
   if ($("#home").classList.contains("deep")) return focus($("#row1 .tile"));
@@ -1243,12 +1272,14 @@ function runUpdate() {
 
 /* ---------- About ---------- */
 function renderAbout() {
-  const rows = [["Version", `PureTV ${VERSION}`, "ver"], ["Website", "crazifiedstudios.com", "web"], ["Help", "crazifiedstudios@gmail.com", "help"], ["Credits", "cleanyourtv · couch-tv · tvOS Launcher", "credits"]];
+  const rows = [["Version", `PureTV ${VERSION}`, "ver"], ["Website", "crazifiedstudios.com", "web"], ["Help", "crazifiedstudios@gmail.com", "help"], ["Design", "Inspired by Apple tvOS", "design"]];
   const had = cur && cur.dataset.set; let d = 0;
   $("#setList").innerHTML = `<h2>About</h2><div class="about madeby"><div class="big">PureTV</div>Made with <span class="heart">❤</span> by <b>Crazified Studios</b></div><h5>&nbsp;</h5>`
-    + rows.map(([t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("");
+    + rows.map(([t, v, act]) => `<div class="sr" data-f data-set="${act}" style="--d:${d++}"><span class="t">${t}</span><span class="v">${v}</span>${CHEV}</div>`).join("")
+    + `<p class="legal">Apple and tvOS are trademarks of Apple Inc. PureTV is an independent project, not affiliated with or endorsed by Apple.</p>`;
   if (had && inScope("#tvset")) { cur = null; focus($(`[data-set="${had}"]`)); }
 }
+function swapLevel() { const l = $("#setList"); l.classList.remove("swap"); void l.offsetWidth; l.classList.add("swap"); clearTimeout(swapLevel.t); swapLevel.t = setTimeout(() => l.classList.remove("swap"), 900); }
 /* ---------- setup: cleanyourtv's own checklist, applied to the tested list for this model ----------
    Source: cleanyourtv PROMPT.md (Back up first, Debloat, Launcher) and examples/acer-ar32hdigu2841at/debloat.txt */
 const I = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -1429,6 +1460,21 @@ let idle, idleA; const wake = () => {
 
 document.fonts.ready.then(tick);
 $("#tvset .bigicon").innerHTML = gearSVG("metal"); $$('#bar [data-act="settings"]').forEach((b) => b.innerHTML = gearSVG("mono")); renderAvatar(); showScene(0); buildHome(); tick(); setInterval(tick, 5000); runSetup(0); wake();
+(function shot() {
+  const q = new URLSearchParams(location.search), s = q.get("shot");
+  if (q.has("bare")) { document.body.classList.add("bare"); removeEventListener("resize", fit); tv.style.transform = "none"; }
+  if (q.has("scene")) showScene(+q.get("scene"));
+  if (!s) return;
+  sounds = false; clearTimeout(idle); clearTimeout(idleA);
+  if (s === "setup") return;
+  endSetup();
+  setTimeout(() => {
+    if (s === "settings" || s === "about") { openSettings(); if (s === "about") setTimeout(() => { focus($('[data-set="about"]')); select(); }, 300); }
+    if (s === "cc") openCC();
+    if (s === "grid") focus($("#grid .tile"));
+    if (s === "home") focus($("#row1 .tile:nth-child(2)"));
+  }, 1200);
+})();
 </script>
 </body>
 </html>
