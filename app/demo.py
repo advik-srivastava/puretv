@@ -118,10 +118,20 @@ class DemoTV:
         m = re.fullmatch(r"settings get (?:global|secure) (\S+)", cmd)
         if m:
             return self.settings.get(m.group(1), "null")
-        m = re.fullmatch(r"settings put (?:global|secure) (\S+) (\S+)", cmd)
+        m = re.fullmatch(r"settings put (?:global|secure) (\S+) '?([^']+?)'?", cmd)
         if m:
             self.settings[m.group(1)] = m.group(2)
             return ""
+        m = re.fullmatch(r"settings delete (?:global|secure) (\S+)", cmd)
+        if m:
+            self.settings.pop(m.group(1), None)
+            return ""
+        if cmd == "cat /proc/meminfo":   # fewer apps running = more memory free
+            used = 520 + 13 * len(self.installed - self.disabled)
+            return ("MemTotal:        1520000 kB\nMemFree:          200000 kB\n"
+                    f"MemAvailable:    {max(150, 1484 - used) * 1024} kB")
+        if cmd.startswith("ps -A"):
+            return str(60 + len(self.installed - self.disabled))
         if cmd.startswith("settings list"):
             return "\n".join(f"{k}={v}" for k, v in self.settings.items())
         if cmd.startswith("pm install"):

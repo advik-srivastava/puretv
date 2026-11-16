@@ -500,17 +500,18 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
         tv.sh(f"cmd package set-home-activity --user 0 {OUR_HOME}")
         now = tv.home() or ""
         log(f"Google TV's home ({stock}) stays on, so its profiles keep working.")
+        helper = False
         if now.startswith(OUR_PKG + "/"):
             log("PureTV is now the Home screen. Press Home on the remote.")
         else:
-            log("! On this TV Google's home still answers the Home button. PureTV opens from its own app tile; "
-                "the launcher's Home-button helper (cleanyourtv's HomeKeyService with stock_home_redirect) "
-                "is what hands the button over, and it comes with the launcher rebuild.")
+            log("Google's home still answers the Home button underneath; PureTV's Remote Helper hands it over.")
+            helper = enable_helper(tv, log)
         record = load_record(info["id"])
         if record:
             record["kept_stock"] = stock
             _write(record_path(record["id"]), record)
-        return {"home": now, "stock": stock, "kept": True, "homeOk": now.startswith(OUR_PKG + "/")}
+        return {"home": now, "stock": stock, "kept": True, "homeOk": now.startswith(OUR_PKG + "/"),
+                "helper": now.startswith(OUR_PKG + "/") or helper}
     if stock:
         tv.sh(f"pm disable-user --user 0 {stock}")
     tv.sh(f"cmd package set-home-activity --user 0 {OUR_HOME}")
@@ -534,6 +535,60 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
         tv.sh(f"settings put secure screensaver_components {OUR_PKG}/.ClockDream")
     log("PureTV is now the Home screen. Press Home on the remote.")
     return {"home": now, "stock": stock}
+
+
+# ---------------------------------------------------------------- Remote Helper (Home button, Google TV kept)
+
+HELPER = f"{OUR_PKG}/{OUR_PKG}.HomeHelper"
+
+
+def _a11y(tv):
+    v = tv.sh("settings get secure enabled_accessibility_services")
+    return [] if v in ("", "null") else [x for x in v.split(":") if x]
+
+
+def enable_helper(tv, log=print):
+    """Turn on PureTV's Remote Helper from the computer, so the Home button opens PureTV while Google TV's
+    own home stays installed and on. Android 13+ blocks this switch for apps installed from a file
+    ("restricted setting"); adb is allowed to lift that for PureTV alone."""
+    tv.sh(f"appops set {OUR_PKG} ACCESS_RESTRICTED_SETTINGS allow")
+    have = _a11y(tv)
+    if not any(x.lower() in (HELPER.lower(), f"{OUR_PKG}/.HomeHelper".lower()) for x in have):
+        new = ":".join(have + [HELPER])
+        if not re.fullmatch(r"[\w.$/:]+", new):
+            raise TVError("The TV's accessibility list looks unusual, so the Remote Helper was not switched on. "
+                          "Turn it on by hand: Settings › System › Accessibility › PureTV Remote Helper.")
+        tv.sh(f"settings put secure enabled_accessibility_services '{new}'")
+    tv.sh("settings put secure accessibility_enabled 1")
+    on = any(x.lower().startswith(OUR_PKG) for x in _a11y(tv))
+    log("Remote Helper is on: the Home button opens PureTV." if on else
+        "! The TV did not accept the Remote Helper. Turn it on by hand: Settings › System › Accessibility.")
+    return on
+
+
+def disable_helper(tv, log=print):
+    have = _a11y(tv)
+    keep = [x for x in have if not x.lower().startswith(OUR_PKG)]
+    if keep == have:
+        return False
+    if keep:
+        tv.sh(f"settings put secure enabled_accessibility_services '{':'.join(keep)}'")
+    else:
+        tv.sh("settings delete secure enabled_accessibility_services")
+        tv.sh("settings put secure accessibility_enabled 0")
+    log("Remote Helper switched off.")
+    return True
+
+
+def measure(tv):
+    """Before/after numbers: memory in use and processes running."""
+    mem = tv.sh("cat /proc/meminfo")
+    val = lambda k: int((re.search(rf"^{k}:\s+(\d+)", mem, re.M) or [0, 0])[1]) // 1024
+    total, avail = val("MemTotal"), val("MemAvailable")
+    procs = tv.sh("ps -A -o NAME 2>/dev/null | wc -l") or tv.sh("ps -A | wc -l")
+    third = len(tv.packages("-3"))
+    return {"memTotalMB": total, "memUsedMB": max(0, total - avail), "processes": int(re.sub(r"\D", "", procs) or 0) - 1,
+            "enabledApps": len(tv.packages("-e")), "disabledApps": len(tv.packages("-d")), "userApps": third}
 
 
 # ---------------------------------------------------------------- restore
@@ -564,6 +619,7 @@ def restore(tv, log=print):
     if re.fullmatch(r"[\w.]+/[\w.$]+(,[\w.]+/[\w.$]+)*", saver):
         tv.sh(f"settings put secure screensaver_components {saver}")
     put_dns_back(tv, record)
+    disable_helper(tv, log)
 
     still = [n for n in back if n in tv.packages("-d")]
     now = tv.home()
@@ -792,6 +848,23 @@ def adb_hello(host, port, timeout=2.0):
 # ---------------------------------------------------------------- the launcher APK from the latest release
 
 RELEASES = "https://github.com/advik-srivastava/puretv/releases/latest/download/purehome.apk"
+LATEST_API = "https://api.github.com/repos/advik-srivastava/puretv/releases/latest"
+
+
+def latest_apk_url():
+    """The download link of the newest release's APK, or the old fixed name if GitHub can't be asked."""
+    import urllib.request
+    try:
+        req = urllib.request.Request(LATEST_API, headers={"User-Agent": "PureTV", "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            rel = json.loads(r.read(2_000_000))
+        for a in rel.get("assets", []):
+            url = a.get("browser_download_url", "")
+            if a.get("name", "").endswith(".apk") and url.startswith("https://github.com/advik-srivastava/puretv/releases/download/"):
+                return url
+    except Exception:
+        pass
+    return RELEASES
 
 
 def fetch_apk(log=print):
@@ -801,7 +874,7 @@ def fetch_apk(log=print):
     APK.parent.mkdir(parents=True, exist_ok=True)
     tmp = APK.with_suffix(".part")
     try:
-        req = urllib.request.Request(RELEASES, headers={"User-Agent": "PureTV"})
+        req = urllib.request.Request(latest_apk_url(), headers={"User-Agent": "PureTV"})
         with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as out:
             total = 0
             while True:

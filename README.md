@@ -31,6 +31,25 @@ Your apps, accounts and sign-ins are never touched. Nothing is uninstalled.
 
 ## Install
 
+### The easy way: let Claude do it
+
+On a computer on the same Wi-Fi as your TV, open **Claude Code**: the *Code* tab in the [Claude desktop app](https://claude.ai/download), or `claude` in a terminal. Then paste:
+
+```
+Install PureTV on my TV. Follow https://github.com/advik-srivastava/puretv/blob/main/PROMPT.md
+```
+
+Claude will:
+- tell you how to turn on debugging on the TV, the one thing you do by hand;
+- find the TV, back it up, and ask before switching anything off;
+- install PureTV and show you the before-and-after numbers.
+
+To undo it later, paste: `Restore my TV with PureTV. Follow https://github.com/advik-srivastava/puretv/blob/main/PROMPT.md`
+
+> The claude.ai chat in a browser can't reach your TV. It has to be Claude Code, which runs on your computer.
+
+### By hand
+
 PureTV works on any **Android TV or Google TV**: TCL, Sony, Xiaomi, Hisense, Philips, Acer, OnePlus, Chromecast with Google TV, Nvidia Shield and others.
 
 **On the TV itself (no computer needed)**
