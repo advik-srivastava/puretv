@@ -756,6 +756,12 @@ body.bare #hint { display: none; }
 .look .mini { font-size: var(--ms, 56px); top: var(--mt, 22px); color: rgba(255,255,255,.92); }
 .look span { font-size: 20px; }
 
+/* Control Center has its own clock: the Home date steps aside while it is open */
+#date { transition: opacity .35s var(--ease), top .9s var(--ease); }
+#stage.ccon #date { opacity: 0; }
+/* the line under a setup button stays readable on glass */
+#setup .opt.glass:not(.focus) small { color: rgba(255,255,255,.66) !important; }
+
 /* ============ app launch, screen saver, power off, toast ============ */
 #launch { position: absolute; z-index: 20; border-radius: 24px; overflow: hidden; opacity: 0; pointer-events: none; background: var(--bg); }
 #launch img { position: absolute; left: 50%; top: 50%; height: 100%; transform: translate(-50%, -50%); transition: height .7s var(--ease);
@@ -1398,18 +1404,48 @@ function openWx() {
 }
 function closeWx() { $("#wx").classList.remove("on"); stage.classList.remove("wxon"); pop(); }
 
-/* ---------- UI sounds: our own, made on the fly (soft ticks, nothing recorded) ---------- */
-let sounds = true, actx = null;
+/* ---------- UI sounds: PureTV's own, made on the fly (nothing recorded, nothing copied).
+   Quiet, round and warm: pure tones in the middle register with a slow 8-12 ms swell (so there is no
+   click at the start), a gentle fade, everything above 2.6 kHz rolled off, and a faint room around it.
+   Moves are the softest; select and back are a touch fuller. Nothing is bright or hissy. ---------- */
+let sounds = true, actx = null, sfx = null, lastNav = 0;
+function sfxInit() {
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  if (sfx) return sfx;
+  const c = actx, soft = c.createBiquadFilter(), out = c.createDynamicsCompressor(), master = c.createGain(), room = c.createConvolver(), wet = c.createGain();
+  soft.type = "lowpass"; soft.frequency.value = 2600; soft.Q.value = .5;
+  out.threshold.value = -24; out.knee.value = 18; out.ratio.value = 4; master.gain.value = 2.4; wet.gain.value = .1;
+  const len = Math.floor(c.sampleRate * .45), ir = c.createBuffer(2, len, c.sampleRate);   // a soft, dark room
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); let lp = 0; for (let i = 0; i < len; i++) { lp += ((Math.random() * 2 - 1) - lp) * .18; d[i] = lp * Math.pow(1 - i / len, 3.5); } }
+  room.buffer = ir;
+  const bus = c.createGain(); bus.connect(soft); soft.connect(out); soft.connect(room); room.connect(wet); wet.connect(out); out.connect(master); master.connect(c.destination);
+  return (sfx = { bus });
+}
+function tone(t, freq, to, vol, dur, swell = .009) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(freq, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + swell); g.gain.setTargetAtTime(0, t + swell, dur / 4);
+  o.connect(g); g.connect(sfx.bus); o.start(t); o.stop(t + dur * 1.6 + .05);
+}
 function snd(kind) {
   if (!sounds) return;
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain(), f = actx.createBiquadFilter();
-    const [f0, f1, vol, dur, type] = { nav: [2400, 1700, .035, .045, "sine"], ok: [1500, 900, .06, .09, "triangle"], back: [900, 520, .05, .08, "triangle"], edge: [260, 180, .05, .07, "sine"] }[kind];
-    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
-    f.type = "lowpass"; f.frequency.value = 4200;
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o.connect(f); f.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + .02);
+    sfxInit(); if (actx.state === "suspended") actx.resume();
+    const t = actx.currentTime + .005, wob = 1 + (Math.random() - .5) * .016;
+    if (kind === "nav") {                       // focus moves: a quiet, rounded tap
+      if (t - lastNav < .045) return; lastNav = t;
+      tone(t, 1046.5 * wob, 1000 * wob, .022, .07, .006);
+      tone(t, 523.25 * wob, 0, .012, .06, .006);
+    } else if (kind === "ok") {                 // select: a soft two-note chime, G and D
+      tone(t, 783.99, 0, .032, .22, .01);
+      tone(t + .028, 1174.66, 0, .016, .2, .012);
+      tone(t, 392, 0, .012, .14, .012);
+    } else if (kind === "back") {               // back: one soft, falling note
+      tone(t, 698.46, 587.33, .03, .17, .01);
+      tone(t, 349.23, 293.66, .01, .12, .012);
+    } else if (kind === "edge") {               // the end of a row: a low, muffled nudge
+      tone(t, 233.08, 196, .04, .09, .008);
+    }
   } catch (err) { /* no audio here: stay silent */ }
 }
 
@@ -1550,12 +1586,12 @@ const CW = [
    { id: "a2", pkg: "com.amazon.amazonvideo.livingroom", title: "The Long Road", ep: "S1 · E7", at: "12:40", left: "41 min left", pct: 24, art: "flatirons" },
    { id: "a3", pkg: "com.google.android.youtube.tv", title: "Pasta Night, Slowly", ep: "Video", at: "8:05", left: "11 min left", pct: 42, art: "kathleen" },
    { id: "a4", pkg: "com.disney.disneyplus", title: "Starfall", ep: "Movie", at: "1:21:30", left: "18 min left", pct: 82, art: "louise" },
-   { id: "a5", pkg: "com.netflix.ninja", title: "The Quiet Valley", ep: "S1 · E2", at: "5:48", left: "44 min left", pct: 12, art: "tummel" }],
+   { id: "a5", pkg: "com.netflix.ninja", title: "The Quiet Valley", ep: "S1 · E2", at: "5:48", left: "44 min left", pct: 12, art: "luna" }],
   [{ id: "b1", pkg: "com.apple.atve.androidtv.appletv", title: "Quiet Harbour", ep: "S3 · E2", at: "20:15", left: "30 min left", pct: 40, art: "louise" },
    { id: "b2", pkg: "com.wbd.stream", title: "Glass City", ep: "S1 · E1", at: "44:02", left: "9 min left", pct: 84, art: "ossau" },
    { id: "b3", pkg: "com.crunchyroll.webapp", title: "Sky Blade", ep: "E12", at: "3:30", left: "20 min left", pct: 15, art: "flatirons" }],
   [{ id: "c1", pkg: "com.google.android.youtube.tv", title: "Counting Songs", ep: "Video", at: "2:10", left: "6 min left", pct: 30, art: "kathleen" },
-   { id: "c2", pkg: "com.disney.disneyplus", title: "Little Explorers", ep: "S1 · E3", at: "9:00", left: "13 min left", pct: 45, art: "tummel" }],
+   { id: "c2", pkg: "com.disney.disneyplus", title: "Little Explorers", ep: "S1 · E3", at: "9:00", left: "13 min left", pct: 45, art: "luna" }],
 ];
 const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>';
 let cwFilter = null;
@@ -1819,10 +1855,12 @@ setGlass("liquid"); applyLite(); $$('#bar [data-act="settings"]').forEach((b) =>
   if (q.has("scene")) showScene(+q.get("scene"));
   if (!s) return;
   sounds = false; clearTimeout(idle); clearTimeout(idleA);
+  if (q.has("nocw")) { cwOn = false; renderCW(); }
   if (s === "setup") return;
+  if (s === "looks") return step(4);
   endSetup();
   setTimeout(() => {
-    if (s === "settings" || s === "about") { openSettings(); if (s === "about") setTimeout(() => { focus($('[data-set="about"]')); select(); }, 300); }
+    if (s === "settings" || s === "about") { openSettings(q.get("page") || "homescreen"); if (s === "about") setTimeout(() => { focus($('[data-set="about"]')); select(); }, 300); }
     if (s === "cc") openCC();
     if (s === "grid") focus($("#grid .tile"));
     if (s === "home") focus($("#row1 .tile:nth-child(2)"));

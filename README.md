@@ -1,110 +1,89 @@
-<p align="center"><img src="assets/banner.png" alt="PureTV: clean your Android TV or Google TV, remove the ads, and give it a tvOS-inspired home. Install in four steps: unlock Developer options, turn on USB debugging, download and start PureTV, then find, back up and clean your TV." width="100%"></p>
+<p align="center"><img src="assets/banner.png" alt="PureTV: a calm, beautiful Home screen for Android TV and Google TV" width="100%"></p>
 
-# PureTV
+<p align="center">
+  <a href="https://github.com/advik-srivastava/puretv/releases/latest"><b>Download</b></a> ·
+  <a href="INSTALL-TV.md"><b>Install guide</b></a> ·
+  Made with ❤️ by <a href="https://crazifiedstudios.com"><b>Crazified Studios</b></a>
+</p>
 
-Made with ❤️ by **[Crazified Studios](https://crazifiedstudios.com)** · Help: [crazifiedstudios@gmail.com](mailto:crazifiedstudios@gmail.com)
+PureTV replaces the cluttered Google TV home with a quiet, tvOS-inspired one. You get your apps, a clock that sits behind real landscapes, and Liquid Glass menus. It can also switch off the ads and preloaded junk that slow your TV down, and it can put everything back.
 
-**[⬇ Download the latest release](https://github.com/advik-srivastava/puretv/releases/latest)** · Design inspired by Apple tvOS (not affiliated with Apple)
+Your apps, accounts and sign-ins are never touched. Nothing is uninstalled.
 
-| Control Center | Settings | All apps |
-|---|---|---|
-| ![Control Center with Wi-Fi, Do Not Disturb, Audio, Sleep Timer and weather](assets/shots/cc.png) | ![Settings with Clean Up, Apps and Software Updates](assets/shots/settings.png) | ![All apps in a grid under the top row](assets/shots/grid.png) |
+## A look around
 
-Clean up an Android TV / Google TV over Wi-Fi and give it a calm home screen.
-Nothing is uninstalled, nothing is rooted, and one button puts everything back.
+| | |
+|:---:|:---:|
+| ![Control Center: power, Wi-Fi, audio, sleep timer, memory and weather](assets/shots/cc.png) | ![All your apps in a grid under the top row](assets/shots/grid.png) |
+| **Control Center** | **All your apps** |
+| ![Settings with a sidebar and the Appearance page](assets/shots/settings.png) | ![Choose a wallpaper during setup](assets/shots/wallpapers.png) |
+| **Settings** | **Wallpapers** |
+
+## What you get
+
+- **A Home screen that stays out of the way.** Your apps, a big glass clock and a new landscape every 20 seconds.
+- **Liquid Glass.** Clear, Frosted or Dark, with smooth motion and soft sounds.
+- **Profiles.** Each one has its own name, emoji, top row and hidden apps.
+- **A Kids profile.** Approved apps only. YouTube opens YouTube Kids, and Settings stay behind a parent PIN.
+- **Control Center.** Inputs, sound, sleep timer, memory and weather in one place.
+- **Made for modest TVs.** It's tuned for HD Ready sets like the Acer V Pro 32", and switches to lighter effects on slower ones.
+- **Updates that ask first.** When the TV turns on, PureTV looks for a new version and asks you before installing it.
 
 ## Install
 
-**Just the Home screen, no computer needed:** download `PureTV-Home-2.0.apk` from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest) and follow [INSTALL-TV.md](INSTALL-TV.md). It updates itself from GitHub, asking you first.
+PureTV works on any **Android TV or Google TV**: TCL, Sony, Xiaomi, Hisense, Philips, Acer, OnePlus, Chromecast with Google TV, Nvidia Shield and others.
 
-PureTV works on any **Android TV or Google TV** (TCL, Sony, Xiaomi, Hisense, Philips, Acer, OnePlus, Chromecast
-with Google TV, Google TV Streamer, Nvidia Shield and more). Samsung, LG, Roku and other non-Android TVs have no
-debugging port, so nothing can be installed on them (see cleanyour.tv/not-android for their privacy switches).
+**On the TV itself (no computer needed)**
+1. Download `PureTV-Home-…apk` from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest). Put it on a USB stick, or use the *Downloader* app on the TV.
+2. Install it with a file manager on the TV, then open **PureTV Home** from your apps.
+3. Follow the short setup. At the end, turn on the **Remote Helper** so the Home button opens PureTV.
 
-You need a computer on the same Wi-Fi as the TV, with [Python 3](https://www.python.org/downloads/).
+The [install guide](INSTALL-TV.md) has every step, including what to do if Android 14 greys out the Remote Helper switch.
 
-1. **Download** `PureTV-<version>.zip` from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest)
-   and unzip it. (The ZIP already has the TV launcher inside. *Code › Download ZIP* works too: PureTV then fetches
-   the launcher from the latest release by itself.)
-2. **On the TV:** Settings › System › About › press OK on *Android TV OS build* seven times, then
-   Settings › System › Developer options › turn on **USB debugging** (and *Network debugging* if shown).
-3. **Start PureTV:** double-click **Start PureTV.bat** on Windows, or run `sh start.sh` on macOS and Linux.
-   Press **Find my TV automatically** and accept "Allow USB debugging?" on the TV.
-   - *TV only offers Wireless debugging with a pairing code* (Chromecast with Google TV, Google TV Streamer):
-     open **My TV only offers Wireless debugging** and type the pairing address, code and address the TV shows.
-     PureTV pairs with Google's own adb tool, as cleanyourtv does.
-4. **Follow the steps:** Back up → Clean → Launcher → Finish. Nothing is uninstalled; *Restore TV* puts everything back.
-5. **When done:** turn debugging off on the TV again, reboot it, and press *Check debugging is off*.
+**With a computer: clean up the TV as well**
 
-After that the TV launcher updates itself from new releases (hold OK on Settings › *Check for updates*).
+This also switches off ads, tracking and preloaded apps. You need a computer on the same Wi-Fi with [Python 3](https://www.python.org/downloads/).
 
-**Try the TV design first:** start PureTV and open <http://127.0.0.1:8765/tv.html>
-(arrow keys, Enter, Esc, M for Control Center). That page is a design preview; the launcher installed on the TV
-is the simpler PureTV Home until the tvOS-style launcher is built into the APK.
+1. Download this project (**Code › Download ZIP** at the top of this page) and unzip it.
+2. On the TV, open **Settings › System › About**, press OK on **Android TV OS build** seven times, then turn on **USB debugging** in **Developer options**.
+3. Open **Start PureTV.bat** (Windows) or run `sh start.sh` (macOS, Linux). Then follow **Back up → Clean → Launcher → Finish**.
+4. When it's done, turn USB debugging off again.
 
-## Use it
+## Safe by design
 
-1. Double-click **Start PureTV.bat** (first run sets itself up; needs Python 3).
-2. Follow the five steps in the browser page that opens:
-   **Connect → Back up → Clean → Launcher → Finish**.
-   No TV nearby? Click *Try it with a demo TV* on the first screen.
+- **It backs up first.** Before anything changes, every app's state and the TV's settings are saved. The first backup is kept forever.
+- **Nothing is deleted.** Apps are only switched off, never uninstalled, so their data stays.
+- **One press undoes it all.** *Restore TV* switches everything back on, and *Use Google TV's Home Again* takes you back to Google TV in a moment.
+- **Essentials are locked.** Core Android, Google Play, the keyboard, Bluetooth, Wi-Fi and HDMI inputs can never be switched off.
+- **Updates are signed.** The TV installs an update only if it carries PureTV's own signature, and only after you say yes.
 
-## What each step does
-
-| Step | On the TV |
-|---|---|
-| **Back up** | Records every app's on/off state, the Home app, animation and screensaver settings, plus a full settings dump, in `~/.puretv/backups/`. The first backup is the original and is never overwritten. |
-| **Clean** | `pm disable-user --user 0` on the apps you tick, in small batches, then reads the TV back to confirm. Suggestions come from 494 community-tested lists (`app/knowledge.json`). |
-| **Launcher** | Installs PureTV Home (24 KB, no internet permission), starts it, and only then switches the stock launcher off. If Home does not land on PureTV, the stock launcher is switched straight back on. |
-| **Restore** | Re-enables exactly what was on at backup time, returns Home and settings. What was already off before stays off. |
-
-## Following cleanyourtv's own steps
-
-| cleanyourtv (PROMPT.md) | PureTV |
-|---|---|
-| Find the TV on the Wi-Fi | **Find my TV automatically**: ARP table, then this computer's /24 network, keeping only devices that answer ADB's greeting (no prompt on the TV) |
-| Back up first | Every app's state, Home, animation, screensaver and Private DNS settings, plus a full settings dump |
-| Ask before touching what you use | The Clean list and the TV's own setup checklist |
-| Disable in small batches, read the TV back | Batches of 4 with a pause, then `pm list packages -e` |
-| Keep launcherx on Google TV where profiles need it | **Keep Google TV's home** option on the Launcher step |
-| Optional ad-blocking DNS | **Block ads inside apps** (AdGuard via Private DNS), undone by Restore |
-| After a firmware update (check.py) | **Check after an update**: finds what came back on and switches it off again |
-| Close network ADB (adb-closed.py) | **Check debugging is off**: only a refused connection counts as closed |
-
-## Safety guards (never overridable from the UI)
-
-- Core Android, Play services/Store, keyboard, Bluetooth, WebView and networking are locked.
-- Anything that answers the Home button is only touched by the Launcher step.
-- Apps that drive HDMI/AV/tuner inputs, or that open Settings or inputs, are kept on.
-- The setup wizard is never disabled while it owns the saved Wi-Fi network.
-- Package names are validated before they reach the TV's shell.
-
-## Layout
+<details>
+<summary><b>For developers</b></summary>
 
 ```
-app/core.py        the engine (ADB, backup, guards, clean, launcher handover, restore)
-app/server.py      local web server, this computer only (127.0.0.1:8765)
-app/demo.py        pretend TV for trying the app and for tests
-app/ui/            the interface
-launcher/          PureTV Home source (plain Java) and build.py (no Gradle)
-tests/test_core.py end-to-end test against the demo TV
-tools/build_knowledge.py  regenerates knowledge.json from a cleanyourtv checkout
+app/            the computer app: engine (core.py), local server, demo TV, the TV design (ui/tv.html)
+launcher/       PureTV Home for the TV: Java sources, ui-src (TV bridge), build.py (no Gradle)
+tools/          build_tv_ui.py, render.py (screenshots), make_scene.py (wallpaper cut-outs), make_release.py
+tests/          end-to-end test against the demo TV
 ```
 
-Rebuild the launcher after editing it: `python launcher/build.py`.
+- Preview the TV design: start PureTV and open <http://127.0.0.1:8765/tv.html>. Use the arrow keys, Enter, Esc, and M for Control Center.
+- Build the TV app:
+  ```bash
+  python tools/build_tv_ui.py
+  ```
+  ```bash
+  PURETV_VERSION=2.1 python launcher/build.py
+  ```
+- To release, attach the APK to a GitHub release tagged `v2.1`. TVs find it by themselves. Keep `~/.puretv/puretv.keystore` safe: updates signed with a different key are refused.
 
-On the TV: hold OK (or press Menu) on an app to move or hide it; hold OK on Settings for the launcher's own menu.
+</details>
 
-Credits and licence: see [NOTICE.md](NOTICE.md).
+## Credits
 
-## Releasing an update
+- Design inspired by Apple tvOS. Apple and tvOS are trademarks of Apple Inc.; PureTV is not affiliated with or endorsed by Apple.
+- The wallpaper photographs come from Wikimedia Commons under CC BY-SA; the photographers are listed in [CREDITS.md](app/ui/demo/wallpapers/CREDITS.md).
+- App logos belong to their owners.
+- Licences and acknowledgements are in [NOTICE.md](NOTICE.md).
 
-PureTV Home updates itself from your GitHub releases (Hold OK on Settings › *Check for updates*, or
-*Automatic updates*, which checks once a day).
-
-1. The update source is `launcher/res/values/strings.xml` › `update_repo` (`advik-srivastava/puretv`).
-2. For each new version: `PURETV_VERSION=1.2 python launcher/build.py`, then `python -I tools/make_release.py 1.2`,
-   and create a GitHub release tagged `v1.2` with `launcher/dist/purehome.apk` and `release/PureTV-1.2.zip` attached.
-3. The TV finds it, downloads it, refuses it unless it is signed with the same key
-   (`~/.puretv/puretv.keystore` — keep it safe, a new key means updates are refused), and installs it with
-   Android's own installer. The first update asks for confirmation on the TV.
+Help: [crazifiedstudios@gmail.com](mailto:crazifiedstudios@gmail.com) · [crazifiedstudios.com](https://crazifiedstudios.com)

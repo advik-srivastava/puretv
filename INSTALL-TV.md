@@ -4,12 +4,12 @@ Tested for the **Acer V Pro Series 32" QLED HD Ready Google TV** (AR32QDXGU2841A
 
 PureTV Home is an app like any other. Installing it doesn't change, clear or sign out of any app, account or setting on the TV. Google TV stays installed.
 
-The file to install is `PureTV-Home-2.0.apk` (about 4 MB).
+The file to install is `PureTV-Home-<version>.apk` (about 4 MB) from the [latest release](https://github.com/advik-srivastava/puretv/releases/latest).
 
 ## 1. Get the file onto the TV (pick one)
 
 **A. From a USB stick**
-1. Copy `PureTV-Home-2.0.apk` onto a USB stick and plug it into the TV.
+1. Copy the PureTV APK onto a USB stick and plug it into the TV.
 2. On the TV, install a file manager from the Play Store (for example *File Commander* or *X-plore*).
 3. Open the stick in the file manager and select the APK.
 4. If the TV asks, allow the file manager to install apps: **Settings › Apps › Security & restrictions › Unknown sources** › turn on the file manager.
@@ -23,11 +23,11 @@ The file to install is `PureTV-Home-2.0.apk` (about 4 MB).
    adb connect 192.168.1.14:5555
    ```
    ```bash
-   adb install -r PureTV-Home-2.0.apk
+   adb install -r PureTV-Home-2.1.apk
    ```
    Allow the prompt that appears on the TV. `192.168.1.14` is your TV's address on your Wi-Fi.
 
-**C. With the Downloader app** (once a release is published on GitHub)
+**C. With the Downloader app**
 1. Install *Downloader* from the Play Store.
 2. Enter this address: `github.com/advik-srivastava/puretv/releases/latest`
 3. Select the APK and install it.

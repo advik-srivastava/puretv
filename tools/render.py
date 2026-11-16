@@ -14,7 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = os.environ.get("PURETV_URL", "http://127.0.0.1:8765")
-SHOTS = {"home": "shot=home&scene=0", "cc": "shot=cc&scene=1", "settings": "shot=settings&scene=0", "setup": "shot=setup&scene=0", "grid": "shot=grid&scene=2"}
+SHOTS = {"home": "shot=home&scene=0&nocw", "grid": "shot=grid&scene=4&nocw", "cc": "shot=cc&scene=1&nocw",
+         "settings": "shot=settings&page=appearance&scene=3&nocw", "setup": "shot=setup&scene=0", "wallpapers": "shot=looks&scene=2"}
 
 
 def browser():
@@ -40,7 +41,7 @@ def main():
     for name, q in SHOTS.items():
         if not only or name in only or "shots" in only:
             shoot(f"{BASE}/tv.html?bare&{q}", shots / f"{name}.png", 1920, 1080)
-    for name, size in {"social-card": (1280, 640), "banner": (1600, 1330)}.items():
+    for name, size in {"social-card": (1280, 640), "banner": (1600, 900)}.items():
         if not only or name in only:
             shoot((ROOT / "assets" / "src" / f"{name}.html").as_uri(), ROOT / "assets" / f"{name}.png", *size, wait=3000)
 
