@@ -3,131 +3,117 @@ package tv.pure.home;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
-import android.graphics.LinearGradient;
-import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.SweepGradient;
 import android.view.View;
 import android.view.animation.PathInterpolator;
 
 /**
- * PureTV's start-up: a dark glass card in soft spectral light, the PureTV wordmark settling into it, then
- * the card opening into the Home screen. About 2.5 seconds, once per TV start; any button skips it.
- * The blurred light is painted once into a small bitmap, so each frame is only a few cheap draws.
+ * PureTV's start-up, "Clearing": the TV becoming clean, in one short moment.
+ *
+ *   wake      0.00–0.30 s  a hairline of soft light opens across the middle of a black screen
+ *   frosted   0.25–0.75 s  it opens top and bottom into your wallpaper, deeply frosted, with "PureTV" in it
+ *   clearing  0.75–1.70 s  the frost melts into the sharp photo; the wordmark gives way to the glass clock
+ *                          and the scenery; the date and apps rise into place: it becomes Home
+ *
+ * It draws only a full-screen bitmap and a few shapes each frame, plays once per TV start, any button
+ * skips it, and Reduce Motion turns it off. Nothing is advertised on launch.
  */
 final class IntroView extends View {
-    static boolean shown;                       // once per start of the TV (per process)
-    private static final int[] SPECTRUM = { 0xFF7FD8FF, 0xFFA9A2FF, 0xFFF59BD0, 0xFFFFD08A, 0xFF9AF0C8, 0xFF7FD8FF };
-    private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG), edge = new Paint(Paint.ANTI_ALIAS_FLAG),
-            word = new Paint(Paint.ANTI_ALIAS_FLAG), sub = new Paint(Paint.ANTI_ALIAS_FLAG), img = new Paint(Paint.FILTER_BITMAP_FLAG),
-            ring = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RectF card = new RectF(), dst = new RectF();
-    private final Matrix spin = new Matrix();
-    private Bitmap glow;
-    private SweepGradient sweep;
+    static boolean shown;
+    static final long LENGTH = 1700;
+    private static final PathInterpolator EASE = new PathInterpolator(.22f, 0f, 0f, 1f);       // Apple-like ease-out
+    private static final PathInterpolator INOUT = new PathInterpolator(.45f, 0f, .25f, 1f);
+    private final Paint img = new Paint(Paint.FILTER_BITMAP_FLAG), line = new Paint(Paint.ANTI_ALIAS_FLAG),
+            word = new Paint(Paint.ANTI_ALIAS_FLAG), black = new Paint();
+    private final Rect dst = new Rect();
+    private final RectF bar = new RectF();
+    private final Bitmap frost;
+    private final Runnable onClearing, done;
+    private boolean clearingStarted;
     private float t;
-    private final Runnable done;
     private ValueAnimator anim;
-    private static final PathInterpolator SOFT = new PathInterpolator(.3f, 0f, .2f, 1f);
 
-    IntroView(Context c, Runnable done) {
+    IntroView(Context c, Bitmap frost, Runnable onClearing, Runnable done) {
         super(c);
-        this.done = done;
+        this.frost = frost; this.onClearing = onClearing; this.done = done;
         setLayerType(LAYER_TYPE_HARDWARE, null);
-        setFocusable(true);
-        fill.setColor(0xFF0B0D14);
-        edge.setStyle(Paint.Style.STROKE);
-        edge.setStrokeWidth(Ui.fx(1.5f));
-        edge.setColor(0x40FFFFFF);
-        word.setTypeface(Ui.heavy);
+        black.setColor(0xFF000000);
+        line.setColor(0xFFFFFFFF);
+        word.setTypeface(Ui.semibold);
         word.setTextAlign(Paint.Align.CENTER);
-        word.setTextSize(Ui.fx(112));
-        sub.setTypeface(Ui.regular);
-        sub.setTextAlign(Paint.Align.CENTER);
-        sub.setTextSize(Ui.fx(22));
-        sub.setColor(0x99FFFFFF);
-        ring.setStyle(Paint.Style.STROKE);
-        ring.setStrokeWidth(Ui.fx(2.5f));
+        word.setTextSize(Ui.fx(54));
+        word.setLetterSpacing(.02f);
+        word.setColor(0xFFFFFFFF);
+        word.setShadowLayer(Ui.fx(18), 0, Ui.fx(2), 0x40000000);
     }
 
     void start() {
-        anim = ValueAnimator.ofFloat(0, 1).setDuration(2600);
+        anim = ValueAnimator.ofFloat(0, 1).setDuration(LENGTH);
         anim.setInterpolator(null);
-        anim.addUpdateListener(a -> { t = (float) a.getAnimatedValue(); invalidate(); });
+        anim.addUpdateListener(a -> {
+            t = (float) a.getAnimatedValue();
+            if (!clearingStarted && t >= .44f) { clearingStarted = true; if (onClearing != null) onClearing.run(); }
+            invalidate();
+        });
         anim.addListener(new android.animation.AnimatorListenerAdapter() {
             @Override public void onAnimationEnd(android.animation.Animator a) { finish(); }
         });
         anim.start();
     }
 
-    /** Any button: straight to Home. */
-    void skip() { if (anim != null && t < .78f) anim.setCurrentPlayTime(Math.round(2600 * .78f)); }
+    /** Any button: jump to the clearing, which settles in a moment. */
+    void skip() { if (anim != null && t < .44f) anim.setCurrentPlayTime(Math.round(LENGTH * .44f)); }
 
     private void finish() {
-        if (getParent() == null) return;
-        ((android.view.ViewGroup) getParent()).removeView(this);
-        if (glow != null) { glow.recycle(); glow = null; }
+        if (getParent() != null) ((android.view.ViewGroup) getParent()).removeView(this);
         if (done != null) done.run();
-    }
-
-    @Override protected void onSizeChanged(int w, int h, int ow, int oh) {
-        float cw = Ui.fx(620), ch = Ui.fx(360);
-        card.set((w - cw) / 2, (h - ch) / 2, (w + cw) / 2, (h + ch) / 2);
-        sweep = new SweepGradient(card.centerX(), card.centerY(), SPECTRUM, null);
-        word.setShader(new LinearGradient(0, card.centerY() - Ui.fx(70), 0, card.centerY() + Ui.fx(30), 0xFFFFFFFF, 0xFFC9CCD8, Shader.TileMode.CLAMP));
-        // the soft light around the card, painted once at half size with a real blur
-        int pad = Math.round(Ui.fx(140)), gw = Math.round((cw + 2 * pad) / 2), gh = Math.round((ch + 2 * pad) / 2);
-        glow = Bitmap.createBitmap(Math.max(1, gw), Math.max(1, gh), Bitmap.Config.ARGB_8888);
-        Canvas g = new Canvas(glow);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(Ui.fx(46) / 2);
-        p.setShader(new SweepGradient(gw / 2f, gh / 2f, SPECTRUM, null));
-        p.setMaskFilter(new BlurMaskFilter(Ui.fx(44) / 2, BlurMaskFilter.Blur.NORMAL));
-        float r = Ui.fx(64) / 2;
-        g.drawRoundRect(pad / 2f, pad / 2f, gw - pad / 2f, gh - pad / 2f, r, r, p);
-        g.drawRoundRect(pad / 2f, pad / 2f, gw - pad / 2f, gh - pad / 2f, r, r, p);   // twice: a fuller, softer light
-        dst.set(card.left - pad, card.top - pad, card.right + pad, card.bottom + pad);
     }
 
     private static float span(float t, float a, float b) { return Math.max(0, Math.min(1, (t - a) / (b - a))); }
 
     @Override protected void onDraw(Canvas c) {
-        float in = SOFT.getInterpolation(span(t, 0f, .32f));          // the card and its light arrive
-        float txt = SOFT.getInterpolation(span(t, .18f, .5f));        // the wordmark settles
-        float out = SOFT.getInterpolation(span(t, .76f, 1f));         // everything opens into Home
-        c.drawColor(((int) (255 * (1 - out)) << 24));
-        c.save();
-        float s = (.94f + .06f * in) * (1 + .18f * out);
-        c.scale(s, s, card.centerX(), card.centerY());
-        int alpha = Math.round(255 * in * (1 - out));
-        if (glow != null) {
-            float breathe = .82f + .18f * (float) Math.sin(t * Math.PI * 2.2);
-            img.setAlpha(Math.round(alpha * breathe));
-            c.drawBitmap(glow, null, dst, img);
+        int w = getWidth(), h = getHeight();
+        float wake = EASE.getInterpolation(span(t, 0f, .18f));      // the hairline grows across
+        float open = INOUT.getInterpolation(span(t, .15f, .44f));   // and opens top and bottom
+        float clear = INOUT.getInterpolation(span(t, .44f, 1f));    // the frost melts away
+        float wordIn = EASE.getInterpolation(span(t, .26f, .44f)), wordOut = EASE.getInterpolation(span(t, .46f, .66f));
+
+        // black, except for the opening window
+        float half = (h / 2f) * open, cy = h / 2f;
+        if (open < 1) {
+            c.drawRect(0, 0, w, cy - half, black);
+            c.drawRect(0, cy + half, w, h, black);
         }
-        fill.setAlpha(Math.round(242 * in * (1 - out)));
-        float r = Ui.fx(64);
-        c.drawRoundRect(card, r, r, fill);
-        if (sweep != null) {   // a thin bright edge whose colours turn slowly around the card
-            spin.setRotate(t * 140, card.centerX(), card.centerY());
-            sweep.setLocalMatrix(spin);
-            ring.setShader(sweep);
-            ring.setAlpha(Math.round(alpha * .9f));
-            float k = ring.getStrokeWidth() / 2;
-            c.drawRoundRect(card.left + k, card.top + k, card.right - k, card.bottom - k, r, r, ring);
+        // the frosted wallpaper inside the window, melting away to reveal Home underneath
+        if (frost != null && clear < 1) {
+            c.save();
+            c.clipRect(0, cy - half, w, cy + half);
+            img.setAlpha(Math.round(255 * (1 - clear)));
+            dst.set(0, 0, w, h);
+            c.drawBitmap(frost, null, dst, img);
+            c.restore();
+        } else if (frost == null && open < 1) {
+            c.drawRect(0, cy - half, w, cy + half, black);
         }
-        edge.setAlpha(Math.round(64 * in * (1 - out)));
-        c.drawRoundRect(card, r, r, edge);
-        word.setAlpha(Math.round(255 * txt * (1 - out)));
-        word.setLetterSpacing(.12f * (1 - txt) - .01f);
-        c.drawText("PureTV", card.centerX(), card.centerY() + Ui.fx(38) + Ui.fx(10) * (1 - txt), word);
-        c.restore();
-        sub.setAlpha(Math.round(153 * span(t, .4f, .6f) * (1 - out)));
-        c.drawText("Made with ❤ by Crazified Studios", getWidth() / 2f, card.bottom + Ui.fx(110), sub);
+        // the hairline of light at the opening's edges
+        if (open < 1) {
+            float lw = w * (.12f + .88f * wake), a = (1 - open * .85f);
+            for (int i = 0; i < 3; i++) {   // a core and two soft halos: light, not a stroke
+                float th = Ui.fx(1.5f + i * 4), al = i == 0 ? 1f : i == 1 ? .28f : .1f;
+                line.setAlpha(Math.round(255 * al * a * Math.min(1, wake * 1.4f)));
+                bar.set((w - lw) / 2, cy - half - th / 2, (w + lw) / 2, cy - half + th / 2);
+                c.drawRoundRect(bar, th, th, line);
+                if (half > 1) { bar.offset(0, half * 2); c.drawRoundRect(bar, th, th, line); }
+            }
+        }
+        // the wordmark, quiet, inside the frost
+        float wa = wordIn * (1 - wordOut);
+        if (wa > 0) {
+            word.setAlpha(Math.round(235 * wa));
+            c.drawText("PureTV", w / 2f, cy + Ui.fx(18) - Ui.fx(10) * wordOut, word);
+        }
     }
 }
