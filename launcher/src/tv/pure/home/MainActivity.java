@@ -149,17 +149,15 @@ public class MainActivity extends Activity {
         updateTime();
         placeDate();
         if (!store.setupDone) new Setup(this).show();   // straight away: no glimpse of Home behind it
-        if (!IntroView.shown && !store.reduceMotion) {   // "Clearing", PureTV's start-up, once per TV start
+        if (!IntroView.shown && !store.reduceMotion) {   // PureTV's start-up, once per TV start
             IntroView.shown = true;
-            android.graphics.Bitmap frost;
-            synchronized (scenes.cur()) { frost = scenes.cur().glass; }
             content.setAlpha(0f); content.setTranslationY(Ui.fx(70));
             dateBox.setAlpha(0f);
-            intro = new IntroView(this, frost, () -> {
-                // as the frost melts, the date and the apps rise into place: the intro becomes Home
-                content.animate().alpha(1f).translationY(0).setStartDelay(260).setDuration(820).setInterpolator(Ui.EASE)
+            intro = new IntroView(this, () -> {
+                // as the mark fades, Home appears and the apps rise into place
+                content.animate().alpha(1f).translationY(0).setStartDelay(120).setDuration(820).setInterpolator(Ui.EASE)
                         .setUpdateListener(v -> band.invalidate()).start();
-                dateBox.animate().alpha(1f).setStartDelay(120).setDuration(700).setInterpolator(Ui.EASE).start();
+                dateBox.animate().alpha(1f).setStartDelay(60).setDuration(700).setInterpolator(Ui.EASE).start();
             }, () -> intro = null);
             root.addView(intro, new FrameLayout.LayoutParams(-1, -1));
             intro.start();
