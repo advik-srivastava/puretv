@@ -104,7 +104,7 @@ tests/          end-to-end test against the demo TV
   ```bash
   PURETV_VERSION=3.0 python launcher/build.py
   ```
-- To release, attach the APK to a GitHub release tagged `v3.0`. TVs find it by themselves. Keep `~/.puretv/puretv.keystore` safe: updates signed with a different key are refused.
+- To release, attach the APK twice to a GitHub release tagged `v3.1`: as `PureTV-Home-3.1.apk` and as `purehome.apk` (the fixed name the setup tool falls back to). TVs find it by themselves. Keep `~/.puretv/puretv.keystore` safe: updates signed with a different key are refused.
 
 </details>
 
