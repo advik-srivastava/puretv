@@ -8,8 +8,11 @@
     python puretv.py backup                     record the TV as it is now (first backup is kept forever)
     python puretv.py suggest                    what can be switched off, with reasons
     python puretv.py clean PKG [PKG ...]        switch those apps off (never uninstalled, safety guards on)
-    python puretv.py install [--replace-google-home]
-                                                install PureTV Home and make the Home button open it
+    python puretv.py install [--keep-google-home]
+                                                install PureTV Home as the TV's only Home screen (Google TV's
+                                                home is switched off, not uninstalled); --keep-google-home keeps
+                                                it running underneath and uses the Remote Helper instead
+    python puretv.py reboot                     restart the TV, wait for it, reconnect and check Home
     python puretv.py check                      after a TV update: switch off what came back on
     python puretv.py dns on|off                 ad-blocking Private DNS (AdGuard), undone by restore
     python puretv.py report                     before/after numbers
@@ -128,6 +131,9 @@ def cmd_info(args):
         say(f"PureTV Home: {'installed ' + ver if has else 'not installed'}"
             + (f" · Remote Helper {'on' if has and any(x.lower().startswith(core.OUR_PKG) for x in core._a11y(tv)) else 'off'}" if has else ""))
         say(f"Apps: {len(pk)} installed, {len(tv.packages('-d'))} switched off")
+        if core.SETUP in pk and core.SETUP not in tv.packages("-d"):
+            say("Wi-Fi saved by Google's setup wizard: " + ("YES (forget and re-join the network on the TV before install)"
+                                                            if tv.setup_owns_wifi() else "no"))
         say(f"Backup on this computer: {rec['created'] + ' · ' + str(core.record_path(i['id'])) if rec else 'none yet'}")
     finally:
         close_tv(tv)
@@ -200,11 +206,57 @@ def cmd_clean(args):
 def cmd_install(args):
     tv = open_tv(args)
     try:
-        r = core.install_launcher(tv, disable_setup=args.replace_google_home, log=say, keep_stock=not args.replace_google_home)
+        keep = args.keep_google_home and not args.replace_google_home
+        r = core.install_launcher(tv, disable_setup=not keep, log=say, keep_stock=keep)
         ok = r.get("helper") if r.get("kept") else (r.get("home") or "").startswith(core.OUR_PKG)
         say("RESULT: the Home button opens PureTV." if ok else "RESULT: PureTV is installed; open it from the Apps row.")
     finally:
         close_tv(tv)
+
+
+def cmd_reboot(args):
+    import time
+    tv = open_tv(args)
+    host = tv.host
+    try:
+        tv.sh("reboot", timeout=5)
+    except core.TVError:
+        pass   # the connection drops as the TV goes down
+    close_tv(tv)
+    if tv.demo:
+        say("Restarted (pretend TV).")
+        return
+    say("The TV is restarting. Waiting for it to come back (up to 4 minutes)…")
+    h, port = core.split_host(host)
+    time.sleep(20)
+    deadline = time.time() + 240
+    while time.time() < deadline and not core._port_open(h, port, 2):
+        time.sleep(5)
+    if not core._port_open(h, port, 2):
+        raise core.TVError("The TV restarted but debugging did not come back on the network. That is normal on some TVs: "
+                           "turn USB/Network debugging on again in Developer options (or use Wireless debugging pairing), "
+                           "then run connect again.")
+    tv = None
+    for _ in range(24):   # adb answers before Android has finished starting
+        try:
+            t = core.TV.connect(host, timeout=20)
+            if t.prop("sys.boot_completed") == "1":
+                tv = t
+                break
+            t.close()
+        except core.TVError:
+            pass
+        time.sleep(5)
+    if tv is None:
+        raise core.TVError("The TV is back on the network but has not finished starting. Wait a minute, then run info.")
+    try:
+        time.sleep(8)
+        home = tv.home() or ""
+        say("The TV is back. Home app: " + home)
+        say("RESULT: PureTV is the Home app." if home.startswith(core.OUR_PKG) else
+            "RESULT: Home is not PureTV after the restart. Run: install (it will repair it)")
+    finally:
+        tv.close()
 
 
 def cmd_check(args):
@@ -277,8 +329,10 @@ def main():
     sub.add_parser("backup")
     c = sub.add_parser("suggest"); c.add_argument("--json", action="store_true")
     c = sub.add_parser("clean"); c.add_argument("packages", nargs="+"); c.add_argument("--faster", action="store_true", help="also set animations to 0.5x")
-    c = sub.add_parser("install"); c.add_argument("--replace-google-home", action="store_true",
-                                                  help="switch Google TV's home off (not uninstalled) instead of using the Remote Helper")
+    c = sub.add_parser("install")
+    c.add_argument("--keep-google-home", action="store_true", help="keep Google TV's home running underneath (Remote Helper)")
+    c.add_argument("--replace-google-home", action="store_true", help="the default: PureTV is the only Home screen")
+    sub.add_parser("reboot")
     sub.add_parser("check")
     c = sub.add_parser("dns"); c.add_argument("state", choices=["on", "off"])
     sub.add_parser("report")

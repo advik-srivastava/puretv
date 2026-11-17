@@ -59,7 +59,11 @@ class DemoTV:
         return c
 
     def _resolve_home(self):
-        # Like a real Google TV: the stock launcher wins Home while it is enabled.
+        # Like a real Google TV: with the stock launcher off, the setup wizard's Home has a higher
+        # priority than any downloaded launcher, so it wins until it is switched off too.
+        if self._on("com.google.android.tungsten.setupwraith") and not self._on("com.google.android.apps.tv.launcherx"):
+            return "com.google.android.tungsten.setupwraith/.RecoveryActivity"
+        # The stock launcher wins Home while it is enabled.
         if self._on(self.home.split("/")[0]) and not (
                 self.home.startswith("tv.pure.home") and self._on("com.google.android.apps.tv.launcherx")):
             return self.home
@@ -139,8 +143,8 @@ class DemoTV:
             return "Success"
         if cmd.startswith("am start"):
             return "Starting: Intent { ... }\nStatus: ok\nActivity: tv.pure.home/.MainActivity"
-        if cmd.startswith("dumpsys wifi"):
-            return "cname=android.uid.system:1000"
+        if cmd.startswith("dumpsys wifi"):   # who saved the Wi-Fi (tests set demo_wifi_owner)
+            return "cname=" + self.settings.get("demo_wifi_owner", "android.uid.system:1000")
         if cmd.startswith("df "):
             free = 2400000 if any("trim-caches" in c for c in self.log[:-1]) else 1650000
             return f"Filesystem 1K-blocks Used Available Use% Mounted on\n/dev/block/dm-9 11800000 9000000 {free} 80% /data"

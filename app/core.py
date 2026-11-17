@@ -208,9 +208,14 @@ class TV:
         return inputs, settings
 
     def setup_owns_wifi(self):
-        """True when disabling the setup wizard would delete the saved Wi-Fi (or we cannot tell)."""
-        wifi = self.sh("dumpsys wifi | grep -o 'cname=[^ ]*'")
-        return "cname=" not in wifi or "setupwraith" in wifi
+        """True when disabling the setup wizard would delete the saved Wi-Fi (or we cannot tell).
+        Google TV's setup wizard saves the Wi-Fi itself when the TV is first set up; once the network is
+        forgotten and joined again in Settings, the system owns it and the wizard can go off safely.
+        A TV on Ethernet has nothing to lose."""
+        if "ethernet" in self.sh("dumpsys connectivity | grep -m1 -oiE 'NetworkAgentInfo.*(WIFI|ETHERNET)'").lower():
+            return False
+        wifi = self.sh("dumpsys wifi | grep -oE '(cname|creatorName|creator name)[=:] ?[^ ,]*'")
+        return not wifi or "setupwraith" in wifi
 
 
 # ---------------------------------------------------------------- scan
@@ -489,13 +494,25 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
         raise TVError("The new launcher did not start, so the stock Home was left enabled.")
     tv.sh(f"cmd package compile -m speed -f {OUR_PKG}", timeout=300.0)
 
-    if disable_setup and SETUP in tv.packages() and SETUP not in tv.packages("-d"):
+    # Replacing Google TV's home: its setup wizard answers Home too, and Android always prefers it to a
+    # downloaded launcher, so it has to go off as well. It is checked before anything is switched off.
+    replacing = bool(stock) and not keep_stock
+    setup_on = SETUP in tv.packages() and SETUP not in tv.packages("-d")
+    setup_off = False
+    if (disable_setup or replacing) and setup_on:
         if tv.setup_owns_wifi():
+            if replacing:
+                raise TVError("WIFI_OWNER: Google's setup wizard saved this TV's Wi-Fi network, so it can't be switched "
+                              "off yet (the TV would lose Wi-Fi), and without that the Home button can't go to PureTV. "
+                              "Fix, once: on the TV open Settings › Network & Internet › your Wi-Fi network › Forget network, "
+                              "then join the same network again with its password. Then connect again and run "
+                              "install --replace-google-home. PureTV Home is installed; nothing else was changed.")
             log("- kept the setup wizard: it owns the saved Wi-Fi network (disabling it would take the TV "
                 "offline). Forget and re-join the network in Settings, then run this again.")
         else:
             tv.sh(f"pm disable-user --user 0 {SETUP}")
-            log("Setup wizard switched off (phone casting may stop working on Chromecast devices).")
+            setup_off = True
+            log("Google's setup wizard switched off (not uninstalled), so it can't take over the Home button.")
     if stock and keep_stock:
         tv.sh(f"cmd package set-home-activity --user 0 {OUR_HOME}")
         now = tv.home() or ""
@@ -519,6 +536,8 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
     now = tv.home() or ""
     if not now.startswith(OUR_PKG + "/"):
         restored = False
+        if setup_off:
+            tv.sh(f"pm enable --user 0 {SETUP}")
         if stock:
             tv.sh(f"pm enable --user 0 {stock}")
             tv.sh(f"cmd package set-home-activity --user 0 $({HOME_QUERY} {stock} | tail -n 1)")
@@ -529,7 +548,13 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
                       + (f"{stock} was switched back on, so the TV is as before." if restored
                          else "Press Restore to put the stock Home back.") + hint)
     if stock:
-        log(f"Stock launcher {stock} switched off.")
+        log(f"Google TV's home ({stock}) switched off (not uninstalled). Only PureTV runs as Home now.")
+    disable_helper(tv, log)   # not needed once PureTV is the TV's own Home app
+    record = load_record(info["id"])
+    if record:   # what "check after an update" switches off again if a firmware update turns it back on
+        record.pop("kept_stock", None)
+        record["replaced"] = [p for p in (stock, SETUP) if p and p in tv.packages("-d")]
+        _write(record_path(record["id"]), record)
     saver = tv.sh("settings get secure screensaver_components")
     if saver and saver.split("/")[0] in tv.packages("-d"):
         tv.sh(f"settings put secure screensaver_components {OUR_PKG}/.ClockDream")
@@ -654,9 +679,9 @@ def check_update(tv, fix=True, log=print):
     the stock launcher. With fix, the packages go off again through the same guards as the first run.
     """
     record = load_record(tv.info()["id"])
-    if not record or not record.get("puretv_disabled"):
+    if not record or not (record.get("puretv_disabled") or record.get("replaced")):
         raise TVError("Nothing to check: this computer has no record of PureTV switching anything off on this TV.")
-    mine = record["puretv_disabled"]
+    mine = record.get("puretv_disabled", [])
     enabled = tv.packages("-e")
     if not enabled:
         raise TVError("The TV listed no packages. Reconnect and try again.")
@@ -680,6 +705,12 @@ def check_update(tv, fix=True, log=print):
         log("Switching them off again, with the same safety checks as the first time...")
         r = clean(tv, back_on, log=log)
         result["fixed"] = r["disabled"]
+    for p in record.get("replaced", []) if fix else []:
+        if p in tv.packages("-e") and not (p == SETUP and tv.setup_owns_wifi()):
+            tv.sh(f"pm disable-user --user 0 {p}")
+            log(f"off  {p} (came back with the update; PureTV is the Home app)")
+            result["fixed"].append(p)
+            home_ok = False
     if fix and not home_ok and has_launcher:
         tv.sh(f"cmd package set-home-activity --user 0 {OUR_HOME}")
         result["homeOk"] = (tv.home() or "").startswith(OUR_PKG + "/")

@@ -14,7 +14,7 @@ You work through one tool: `puretv.py` in this repository. It talks to the TV ov
 
 ## Rules (always)
 
-1. **Ask before every change to the TV.** Read-only steps need no permission: `find`, `info`, `measure`, `suggest`, `report`. Changing steps need a clear yes from the person first: `clean`, `install`, `dns`, `restore`, `check`.
+1. **Ask before every change to the TV.** Read-only steps need no permission: `find`, `info`, `measure`, `suggest`, `report`. Changing steps need a clear yes from the person first: `clean`, `install`, `dns`, `restore`, `check`, `reboot`.
 2. **Back up first.** Never run `clean` or `install` before `backup` has succeeded.
 3. **Never uninstall anything.** PureTV only switches apps off (`pm disable-user`), and they can always be switched back on. Don't run your own `adb`/`pm`/`settings` commands on the TV. Use only `puretv.py`, which has the safety guards: core Android, Play, the keyboard, network, HDMI inputs and Home are protected.
 4. **Never touch accounts, sign-ins or app data.** No `pm clear`, no `pm uninstall`, nothing in Accounts.
@@ -133,23 +133,50 @@ If they want menus to feel snappier, ask first, then add `--faster` (animations 
 
 ## Step 6: Install the PureTV Home screen
 
-Explain the choice and ask which they want:
+By default, PureTV becomes the TV's **only** Home screen:
+- Google TV's own home is switched off (never uninstalled), and so is Google's setup wizard, which would otherwise grab the Home button.
+- Only one Home screen runs, which is what makes the TV fast. Running PureTV on top of Google TV costs about 200 MB of memory and feels laggy on 2 GB TVs.
+- Restore undoes it completely.
 
-- **A. Keep Google TV underneath (recommended).** PureTV becomes what the Home button opens, through its Remote Helper. Google TV's own home stays on, so Google TV profiles and everything else keep working. It's the easiest to undo.
-- **B. Replace Google TV's home.** Google TV's home is switched off (not uninstalled), and the TV opens PureTV directly. This is the cleanest option, and it can be undone with restore.
+Tell them that in one or two sentences and ask for a yes. Then check one thing:
 
-- **A:**
-  ```bash
-  PT install
-  ```
-- **B:**
-  ```bash
-  PT install --replace-google-home
-  ```
+```bash
+PT info
+```
 
-This downloads the newest PureTV Home from GitHub, installs it, and checks where the Home button lands. It ends with a `RESULT:` line.
+If it shows **`Wi-Fi saved by Google's setup wizard: YES`**, the setup wizard can't go off yet, or the TV would lose Wi-Fi. Send them this, word for word:
 
-Then ask them to **press Home on the remote**. PureTV's setup should appear: profile, glass style, weather and wallpaper. Ask them to go through it, and to tell you if Home doesn't open PureTV.
+> One quick thing on the TV first. Google's setup wizard is holding your Wi-Fi, and it has to let go:
+> 1. Open **Settings › Network & Internet**, select your Wi-Fi network, and choose **Forget network**.
+> 2. Select the **same network** again and type its password.
+>
+> Tell me when the TV is back on Wi-Fi. It only takes a minute, and none of your apps or sign-ins are affected.
+
+Afterwards, run `PT connect <IP>` again (run `PT find` if the address changed). The TV already trusts this computer, so it won't ask again. Then run `PT info` to confirm it now says `no`.
+
+Then install:
+
+```bash
+PT install
+```
+
+It downloads the newest PureTV Home from GitHub, installs it, switches the two Google homes off, and checks that the Home button lands on PureTV. If it doesn't, it switches them straight back on. It ends with a `RESULT:` line. If you get `ERROR: WIFI_OWNER`, do the Wi-Fi step above.
+
+**Only if** they want to keep Google TV's home running (for Google TV profiles), or the Wi-Fi step isn't possible (for example, they don't know the Wi-Fi password), use:
+
+```bash
+PT install --keep-google-home
+```
+
+PureTV then opens through its Remote Helper, with Google TV underneath. Tell them it uses more memory and can feel slower on small TVs.
+
+Then ask them to **press Home on the remote**. PureTV's setup should appear: profile, glass style, weather and wallpaper. Ask them to go through it.
+
+### Already installed with Google TV underneath?
+
+If `PT info` shows PureTV installed with the `Remote Helper on`, and they want the faster PureTV-only setup:
+1. Do the Wi-Fi step above if `info` asks for it.
+2. Run `PT install`. It switches the helper off by itself.
 
 ## Step 7 (optional): Block ads inside apps
 
@@ -161,7 +188,19 @@ PT dns on
 
 This sets Private DNS to AdGuard, which blocks many ads and trackers in apps. Restore undoes it.
 
-## Step 8: Show the difference
+## Step 8: Restart and show the difference
+
+A restart lets the switched-off apps really go, which is when the TV gets fast. Ask first, then:
+
+```bash
+PT reboot
+```
+
+It restarts the TV, waits for it, reconnects and checks that Home is still PureTV.
+- If debugging doesn't come back after the restart (some TVs turn network debugging off), ask them to turn it on again (Step 2), then run `connect`.
+- If the restart is skipped, say that the numbers will look better after the next restart.
+
+Give it a minute to settle, then:
 
 ```bash
 PT measure after
@@ -175,7 +214,8 @@ Tell them the numbers in a friendly way: memory freed, fewer things running, how
 
 - **Nothing was uninstalled.** Their apps, sign-ins and watch history are as they were.
 - **Updates come by themselves.** PureTV checks GitHub for updates when the TV turns on, and asks before installing.
-- **Getting Google TV back:** on the TV, **Settings › Google TV › Use Google TV's Home Again**, or ask you to restore it.
+- **Getting Google TV back:** ask you to restore it (Step 2, Step 3, then `PT restore`).
+- **Making PureTV lighter or prettier:** on 2 GB TVs, PureTV starts in **Low-End TV Mode** (lighter glass, smoother motion). They can change it in **Settings › Appearance**.
 
 ## Step 9: Close debugging
 
@@ -212,8 +252,10 @@ It should say the port refuses connections. If it still answers, ask them to che
 | `find` finds nothing | Ask for the TV's IP (Step 3). Check they're on the same Wi-Fi, and that USB debugging (and Network debugging, if shown) is on. Some TVs need a restart after turning it on. |
 | `ERROR: The TV refused the connection` | Debugging is off, or this TV only offers Wireless debugging. Use the pairing route in Step 2. |
 | `ERROR: The TV did not allow this computer` | The Allow prompt was missed or declined. Ask them to watch the TV, then run `connect` again. |
-| Home still opens Google TV after option A | Ask them to check **Settings › System › Accessibility › PureTV Remote Helper** is on, then run `PT install` again. Or offer option B. |
-| `ERROR: Home went to …` (option B) | PureTV already rolled back, so the TV is as before. Run `PT install --replace-google-home` once more. If it happens again, use option A. |
+| `ERROR: WIFI_OWNER` | Google's setup wizard holds the Wi-Fi. Do the Forget network / join again step in Step 6, reconnect, then `PT install`. |
+| `ERROR: Home went to …` | PureTV already rolled back, so the TV is as before. Run `PT info` and send the output to the makers. Meanwhile, offer `PT install --keep-google-home`. |
+| Home opens Google TV (with `--keep-google-home`) | Ask them to check **Settings › System › Accessibility › PureTV Remote Helper** is on, then run `PT install --keep-google-home` again. |
+| The TV feels slow | Check `PT info`. If the Remote Helper is on, PureTV is running on top of Google TV: offer the PureTV-only setup (Step 6). Then `PT reboot`. |
 | Anything else with `ERROR:` | Read it to them in plain words and follow its advice. Never work around a guard. |
 
 Help from the makers: crazifiedstudios@gmail.com · crazifiedstudios.com

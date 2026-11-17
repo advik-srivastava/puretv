@@ -27,7 +27,7 @@ EDITS = [
     ('<title>PureTV Home — TV demo</title>', '<title>PureTV Home</title>'),
     ('const artHTML = (a) =>', 'let artHTML = (a) =>'),
     ('const autoLite = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 2;',
-     'const autoLite = window.PureTV ? JSON.parse(PureTV.mem()).total < 1200 : (navigator.hardwareConcurrency || 8) <= 4;'),
+     'const autoLite = window.PureTV ? JSON.parse(PureTV.mem()).total < 2600 : (navigator.hardwareConcurrency || 8) <= 4;'),
     ('setInterval(tick, 5000)', 'setInterval(() => tick(), 5000)'),
     ('document.fonts.ready.then(tick);', 'document.fonts.ready.then(() => tick());'),
     ('runSetup(0); wake();', 'if (!window.PureTV) runSetup(0); wake();'),

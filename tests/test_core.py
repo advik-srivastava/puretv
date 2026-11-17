@@ -73,7 +73,11 @@ finally:
 fake2 = DemoTV()
 tv2 = core.TV("demo2", fake2, demo=True)
 orig = fake2.shell
-fake2.shell = lambda c, **k: "Success" if c.startswith("cmd package set-home-activity --user 0 tv.pure") else orig(c, **k)
+def stubborn(c, **k):   # a TV where Home goes to the chooser instead of PureTV
+    if "resolve-activity" in c and "com.google.android.apps.tv.launcherx" in fake2.disabled:
+        return "priority=0 preferredOrder=0\nandroid/com.android.internal.app.ResolverActivity"
+    return orig(c, **k)
+fake2.shell = stubborn
 core.APK.parent.mkdir(parents=True, exist_ok=True)
 made = not core.APK.exists()
 if made:
@@ -84,6 +88,30 @@ try:
 except core.TVError as e:
     assert "switched back on" in str(e), e
     assert "com.google.android.apps.tv.launcherx" not in fake2.disabled
+finally:
+    if made:
+        core.APK.unlink()
+
+# Google's setup wizard saved the Wi-Fi: replacing Home stops before switching anything off.
+fake3 = DemoTV()
+fake3.settings["demo_wifi_owner"] = "com.google.android.tungsten.setupwraith"
+tv3 = core.TV("demo3", fake3, demo=True)
+made = not core.APK.exists()
+if made:
+    core.APK.write_bytes(b"test")
+try:
+    core.install_launcher(tv3, log=log.append)
+    raise AssertionError("must stop while the wizard owns the Wi-Fi")
+except core.TVError as e:
+    assert str(e).startswith("WIFI_OWNER"), e
+    assert not ({"com.google.android.apps.tv.launcherx", core.SETUP} & fake3.disabled), fake3.disabled
+# ...after the network is forgotten and joined again in Settings, it goes through and the wizard is off.
+fake3.settings["demo_wifi_owner"] = "android.uid.system:1000"
+try:
+    out = core.install_launcher(tv3, log=log.append)
+    assert out["home"].startswith("tv.pure.home/") and core.SETUP in fake3.disabled, out
+    rec3 = core.load_record("DEMO-TV-0001")
+    assert set(rec3.get("replaced", [])) == {"com.google.android.apps.tv.launcherx", core.SETUP}, rec3.get("replaced")
 finally:
     if made:
         core.APK.unlink()

@@ -89,7 +89,8 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         js("window.tvPause && tvPause()");
-        web.onPause();       // timers keep their state; animations stop while an app is on screen
+        web.onPause();       // animations stop while an app is on screen ...
+        web.pauseTimers();   // ... and so do the clock, wallpaper and weather timers: no CPU used in the background
         super.onPause();
     }
 
@@ -106,7 +107,10 @@ public class MainActivity extends Activity {
 
     @Override public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        if (level >= TRIM_MEMORY_RUNNING_LOW) js("window.tvLowMemory && tvLowMemory()");
+        // An app is on screen (UI hidden) or memory is short: let go of the wallpapers so the app gets the memory.
+        if (level >= TRIM_MEMORY_UI_HIDDEN || level == TRIM_MEMORY_RUNNING_LOW || level == TRIM_MEMORY_RUNNING_CRITICAL) {
+            js("window.tvLowMemory && tvLowMemory()");
+        }
     }
 
     /** Remote keys: OK becomes Enter (hold for the app menu), Back and Menu go to the page. */
