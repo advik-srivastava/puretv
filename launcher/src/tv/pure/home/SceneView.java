@@ -32,7 +32,7 @@ final class SceneView extends View {
         setLayerType(LAYER_TYPE_HARDWARE, null);   // kept as one texture between redraws
         for (Paint p : new Paint[] { fill, rim }) { p.setTypeface(Ui.clock); p.setTextAlign(Paint.Align.CENTER); }
         ColorMatrix cm = new ColorMatrix();
-        cm.setScale(1.18f, 1.18f, 1.18f, 1f);           // the glass inside the digits is a little brighter than the sky
+        cm.setScale(1.3f, 1.3f, 1.3f, 1f);           // the glass inside the digits is a little brighter than the sky
         ColorMatrix sat = new ColorMatrix(); sat.setSaturation(1.15f); cm.postConcat(sat);
         fill.setColorFilter(new ColorMatrixColorFilter(cm));
         rim.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -60,7 +60,7 @@ final class SceneView extends View {
         img.setAlpha(alpha);
         c.drawBitmap(photo, null, dst, img);
         if (!time.isEmpty()) {
-            float size = Ui.fx(s.clockSize), top = Ui.fx(s.clockTop), base = top + size * .86f, cx = w / 2f;
+            float size = Ui.fx(s.clockSize), top = Ui.fx(s.clockTop), base = top + size * .9175f, cx = w / 2f;
             for (Paint p : new Paint[] { fill, rim }) { p.setTextSize(size); p.setLetterSpacing(.01f); }
             if (glass != null) {
                 BitmapShader sh = new BitmapShader(glass, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
@@ -71,7 +71,7 @@ final class SceneView extends View {
                 c.drawText(time, cx, base, fill);              // the digits are made of the blurred wallpaper
             }
             rim.setColor(0xFFFFFFFF);
-            rim.setAlpha(Math.round(alpha * .34f));
+            rim.setAlpha(Math.round(alpha * .5f));   // bright enough to read on a pale sky
             rim.setStyle(Paint.Style.FILL);
             rim.setShadowLayer(Ui.fx(26), 0, Ui.fx(4), 0xFF001A2D);   // a soft shadow lifts the clock off bright skies
             c.drawText(time, cx, base, rim);

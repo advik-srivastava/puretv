@@ -159,6 +159,110 @@ final class Icons {
                 c.drawLine(x + 9 * u, y + 5 * u, x + 16 * u, y + 12 * u, p);
                 c.drawLine(x + 16 * u, y + 12 * u, x + 9 * u, y + 19 * u, p);
                 break;
+            case "cc":   // Control Center: two switches
+                r.set(x + 3 * u, y + 4 * u, x + 21 * u, y + 11 * u); c.drawRoundRect(r, 3.5f * u, 3.5f * u, p);
+                r.set(x + 3 * u, y + 13 * u, x + 21 * u, y + 20 * u); c.drawRoundRect(r, 3.5f * u, 3.5f * u, p);
+                c.drawCircle(x + 16.5f * u, y + 7.5f * u, 1.7f * u, f); c.drawCircle(x + 7.5f * u, y + 16.5f * u, 1.7f * u, f);
+                break;
+            case "gearmono": {
+                Path g = new Path();
+                for (int i = 0; i < 8; i++) {
+                    double a0 = Math.PI * 2 * i / 8;
+                    float cx = x + 12 * u, cy = y + 12 * u;
+                    r.set(cx + (float) Math.cos(a0) * 8.6f * u - 1.9f * u, cy + (float) Math.sin(a0) * 8.6f * u - 1.9f * u,
+                          cx + (float) Math.cos(a0) * 8.6f * u + 1.9f * u, cy + (float) Math.sin(a0) * 8.6f * u + 1.9f * u);
+                    Path tooth = new Path(); tooth.addOval(r, Path.Direction.CW);
+                    g.op(tooth, Path.Op.UNION);
+                }
+                Path ring = new Path(); ring.addCircle(x + 12 * u, y + 12 * u, 7.6f * u, Path.Direction.CW);
+                g.op(ring, Path.Op.UNION);
+                Path hole = new Path(); hole.addCircle(x + 12 * u, y + 12 * u, 3.2f * u, Path.Direction.CW);
+                g.op(hole, Path.Op.DIFFERENCE);
+                c.drawPath(g, f);
+                break;
+            }
+            case "power":
+                c.drawLine(x + 12 * u, y + 3 * u, x + 12 * u, y + 11 * u, p);
+                r.set(x + 4 * u, y + 5 * u, x + 20 * u, y + 21 * u); c.drawArc(r, -55, 290, false, p);
+                break;
+            case "moon": {
+                Path m = new Path();
+                r.set(x + 3.5f * u, y + 3.5f * u, x + 20.5f * u, y + 20.5f * u);
+                m.addOval(r, Path.Direction.CW);
+                Path cut = new Path(); cut.addCircle(x + 16 * u, y + 7.5f * u, 7.5f * u, Path.Direction.CW);
+                m.op(cut, Path.Op.DIFFERENCE);
+                c.drawPath(m, f);
+                break;
+            }
+            case "audio":
+                r.set(x + 4 * u, y + 4.5f * u, x + 20 * u, y + 20.5f * u); c.drawArc(r, 135, 270, false, p);
+                r.set(x + 7.5f * u, y + 8 * u, x + 16.5f * u, y + 17 * u); c.drawArc(r, 135, 270, false, p);
+                { Path t = new Path(); t.moveTo(x + 12 * u, y + 14 * u); t.lineTo(x + 16.5f * u, y + 20 * u); t.lineTo(x + 7.5f * u, y + 20 * u); t.close(); c.drawPath(t, f); }
+                break;
+            case "sleep":
+                c.drawCircle(x + 12 * u, y + 13 * u, 8 * u, p);
+                c.drawLine(x + 12 * u, y + 13 * u, x + 15.5f * u, y + 9.5f * u, p);
+                c.drawLine(x + 12 * u, y + 3 * u, x + 12 * u, y + 5 * u, p);
+                break;
+            case "memory":
+                r.set(x + 5 * u, y + 5 * u, x + 19 * u, y + 19 * u); c.drawRoundRect(r, 2 * u, 2 * u, p);
+                r.set(x + 9 * u, y + 9 * u, x + 15 * u, y + 15 * u); c.drawRoundRect(r, 1 * u, 1 * u, p);
+                for (int i = 0; i < 2; i++) {
+                    float o = (i == 0 ? 9 : 15) * u;
+                    c.drawLine(x + o, y + 2 * u, x + o, y + 5 * u, p); c.drawLine(x + o, y + 19 * u, x + o, y + 22 * u, p);
+                    c.drawLine(x + 2 * u, y + o, x + 5 * u, y + o, p); c.drawLine(x + 19 * u, y + o, x + 22 * u, y + o, p);
+                }
+                break;
+            case "saver": {
+                Path m = new Path();
+                m.moveTo(x + 3 * u, y + 18 * u); m.lineTo(x + 8.5f * u, y + 11 * u); m.lineTo(x + 12.5f * u, y + 16 * u);
+                m.lineTo(x + 15.5f * u, y + 12.5f * u); m.lineTo(x + 21 * u, y + 18 * u); m.close();
+                c.drawPath(m, f);
+                c.drawCircle(x + 16.5f * u, y + 7 * u, 2 * u, p);
+                break;
+            }
+            case "sound": {
+                Path sp = new Path();
+                sp.moveTo(x + 4 * u, y + 9 * u); sp.lineTo(x + 8 * u, y + 9 * u); sp.lineTo(x + 13 * u, y + 5 * u);
+                sp.lineTo(x + 13 * u, y + 19 * u); sp.lineTo(x + 8 * u, y + 15 * u); sp.lineTo(x + 4 * u, y + 15 * u); sp.close();
+                c.drawPath(sp, f);
+                r.set(x + 11.5f * u, y + 7 * u, x + 21.5f * u, y + 17 * u); c.drawArc(r, -50, 100, false, p);
+                break;
+            }
+            case "access":
+                c.drawCircle(x + 12 * u, y + 12 * u, 9.5f * u, p);
+                c.drawCircle(x + 12 * u, y + 7.3f * u, 1.4f * u, f);
+                c.drawLine(x + 7.5f * u, y + 10 * u, x + 16.5f * u, y + 10 * u, p);
+                c.drawLine(x + 12 * u, y + 10.5f * u, x + 12 * u, y + 14.5f * u, p);
+                c.drawLine(x + 12 * u, y + 14.5f * u, x + 9.8f * u, y + 18.5f * u, p);
+                c.drawLine(x + 12 * u, y + 14.5f * u, x + 14.2f * u, y + 18.5f * u, p);
+                break;
+            case "sun": {
+                Paint y2 = new Paint(Paint.ANTI_ALIAS_FLAG); y2.setColor(0xFFFFD60A);
+                Paint ys = stroke(s * .075f, 0xFFFFD60A);
+                c.drawCircle(x + 12 * u, y + 12 * u, 4.2f * u, y2);
+                for (int i = 0; i < 8; i++) {
+                    double a = Math.PI * i / 4;
+                    c.drawLine(x + 12 * u + (float) Math.cos(a) * 7 * u, y + 12 * u + (float) Math.sin(a) * 7 * u,
+                               x + 12 * u + (float) Math.cos(a) * 9.6f * u, y + 12 * u + (float) Math.sin(a) * 9.6f * u, ys);
+                }
+                break;
+            }
+            case "cloud": case "rain": case "partly": case "snow": {
+                if (name.equals("partly")) draw(c, "sun", x - 4 * u, y - 4 * u, s * .8f, color);
+                Paint w = new Paint(Paint.ANTI_ALIAS_FLAG); w.setColor(0xFFE5E7EE);
+                float oy = name.equals("rain") || name.equals("snow") ? -3 * u : 0;
+                c.drawCircle(x + 8.5f * u, y + 15 * u + oy, 3.6f * u, w);
+                c.drawCircle(x + 13 * u, y + 12 * u + oy, 5.5f * u, w);
+                r.set(x + 5 * u, y + 14 * u + oy, x + 21 * u, y + 18.6f * u + oy); c.drawRoundRect(r, 2.3f * u, 2.3f * u, w);
+                if (name.equals("rain")) { Paint b = stroke(s * .075f, 0xFF64D2FF); for (int i = 0; i < 3; i++) c.drawLine(x + (9 + 4 * i) * u, y + 18 * u, x + (8 + 4 * i) * u, y + 21 * u, b); }
+                if (name.equals("snow")) { Paint b = new Paint(Paint.ANTI_ALIAS_FLAG); b.setColor(0xFFFFFFFF); for (int i = 0; i < 3; i++) c.drawCircle(x + (9 + 4 * i) * u, y + 19.5f * u, 1.1f * u, b); }
+                break;
+            }
+            case "up":
+                c.drawLine(x + 4 * u, y + 16 * u, x + 12 * u, y + 8 * u, p);
+                c.drawLine(x + 12 * u, y + 8 * u, x + 20 * u, y + 16 * u, p);
+                break;
             default:
                 c.drawCircle(x + 12 * u, y + 12 * u, 3 * u, f);
         }

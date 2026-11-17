@@ -112,6 +112,12 @@ PT measure before
 ```
 
 ```bash
+PT smooth before
+```
+
+Before it runs, tell them: *"Now move around your TV's Home screen with the remote for 20 seconds: left, right, down and back up."* It counts how many frames Google TV's home draws late.
+
+```bash
 PT backup
 ```
 
@@ -211,11 +217,17 @@ Ask them to press **Home** and go through PureTV's short setup on the TV: profil
 PT measure after
 ```
 
+Then ask them to move around PureTV for 20 seconds while this counts:
+
+```bash
+PT smooth after
+```
+
 ```bash
 PT report
 ```
 
-Show the **report card**: Home-screen memory before and after, the percentage saved, and Home-screen CPU before and after. If you can show visuals (cards or a widget), show each number big, before → after, with "73% less memory"-style headlines. Otherwise use a small table. Then add, in a line or two:
+Show the **report card**: Home-screen memory before and after with the percentage saved, Home-screen CPU before and after, and smoothness (frames drawn late, before and after; under 5% feels smooth). If you can show visuals (cards or a widget), show each number big, before → after, with "73% less memory"-style headlines. Otherwise use a small table. Then add, in a line or two:
 
 - **Nothing was uninstalled.** Their apps, sign-ins and watch history are as they were.
 - **PureTV updates itself.** It checks GitHub when the TV turns on and asks before installing.

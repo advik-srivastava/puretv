@@ -72,6 +72,17 @@ final class Tv {
         start(c, new Intent(Intent.ACTION_VIEW, u));
     }
 
+    /** "Wi-Fi", "Ethernet" or "Offline", for Control Center. */
+    @SuppressWarnings("deprecation")
+    static String wifiName(Context c) {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+            android.net.NetworkInfo n = cm.getActiveNetworkInfo();
+            if (n == null || !n.isConnected()) return "Offline";
+            return n.getType() == android.net.ConnectivityManager.TYPE_ETHERNET ? "Ethernet" : "Connected";
+        } catch (Exception e) { return "Wi-Fi"; }
+    }
+
     /** Is Google TV's own home still switched on (PureTV runs on top of it through the Remote Helper)? */
     static String googleHome(Context c) {
         PackageManager pm = c.getPackageManager();

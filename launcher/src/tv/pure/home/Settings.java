@@ -27,11 +27,16 @@ final class Settings {
     private String current = "";
     private final List<View> sideItems = new ArrayList<>();
 
+    // the PureTV 2 sidebar
     private static final String[][] SIDE = {
+        { "network", "Wi-Fi", "wifi", "#5AA8FF", "#1C64D6" }, { "bluetooth", "Bluetooth", "bluetooth", "#57A8FF", "#1C64D6" },
+        { "display", "Display & Sound", "display", "#5AA8FF", "#2A6FE6" },
+        { "", "", "", "", "" },
         { "homescreen", "Home Screen", "home", "#5AA8FF", "#1C64D6" }, { "appearance", "Appearance", "appearance", "#7FD8FF", "#2AA4E6" },
         { "wallpaper", "Wallpaper", "wallpaper", "#5FE0C8", "#1AA58E" }, { "weather", "Weather", "weather", "#6FC3FF", "#2A86E6" },
+        { "saverpg", "Screen Saver", "moon", "#7D86FF", "#4B4FE0" },
         { "", "", "", "", "" },
-        { "tv", "TV Settings", "display", "#7D86FF", "#4B4FE0" }, { "googletv", "Google TV", "googletv", "#8E98AB", "#4F5869" },
+        { "switched", "Clean Up", "clean", "#6AE087", "#27A446" }, { "googletv", "Google TV", "googletv", "#8E98AB", "#4F5869" },
         { "updates", "Software Updates", "updates", "#9AA0AB", "#5F6571" }, { "about", "About", "about", "#9AA0AB", "#5F6571" },
     };
 
@@ -83,13 +88,20 @@ final class Settings {
         side.removeAllViews();
         sideItems.clear();
         Store.Profile me = a.store.me();
-        Row card = new Row(a, new Row.Spec("profile", possessive(me.name) + " PureTV").sub("Profiles and Parent PIN").emoji(me.emoji, me.bg), 500);
+        Btn search = new Btn(a, 30, 1.03f);   // the search field at the top of the sidebar
+        search.setPadding(Ui.px(22), 0, Ui.px(22), 0);
+        search.icon(a, "search", 26, 14);
+        search.addView(search.text(a, "Search", 24, true));
+        search.action = () -> a.toast("Type or say what you are looking for, like \"wallpaper\" or \"Wi-Fi\"");
+        LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(-1, Ui.px(62)); sl.bottomMargin = Ui.px(14);
+        side.addView(search, sl);
+        Row card = new Row(a, new Row.Spec("profile", possessive(me.name) + " PureTV").sub("Profile & Backup").emoji(me.emoji, me.bg), 500);
         card.setTag("profile");
         addSide(card);
         View gap = new View(a);
-        side.addView(gap, new LinearLayout.LayoutParams(1, Ui.px(18)));
+        side.addView(gap, new LinearLayout.LayoutParams(1, Ui.px(10)));
         for (String[] s : SIDE) {
-            if (s[0].isEmpty()) { side.addView(new View(a), new LinearLayout.LayoutParams(1, Ui.px(18))); continue; }
+            if (s[0].isEmpty()) { side.addView(new View(a), new LinearLayout.LayoutParams(1, Ui.px(14))); continue; }
             GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[] { Ui.parse(s[3], 0), Ui.parse(s[4], 0) });
             g.setCornerRadius(Ui.fx(11));
             Row r = new Row(a, new Row.Spec(s[0], s[1]).icon(s[2], 0), 500);
@@ -101,7 +113,9 @@ final class Settings {
 
     private void addSide(Row r) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.topMargin = Ui.px(6);
+        lp.topMargin = Ui.px(4);
+        r.setMinimumHeight(Ui.px(62));
+        r.setPadding(r.getPaddingLeft(), Ui.px(10), r.getPaddingRight(), Ui.px(10));
         side.addView(r, lp);
         sideItems.add(r);
         final String key = (String) r.getTag();
@@ -148,10 +162,20 @@ final class Settings {
                     p.name = "Profile " + (s.profiles.size() + 1); p.emoji = Store.EMOJIS[i]; p.bg = Store.EMOJI_BG[i];
                     s.profiles.add(p); s.save(); render(); a.toast(p.name + " added");
                 }));
+                head("Backup");
+                long when = new java.io.File(a.getFilesDir(), "backup.json").lastModified();
+                row(new Row.Spec("bnow", "Back Up Now").value(when == 0 ? "Never" : new java.text.SimpleDateFormat("d MMM, h:mm a", java.util.Locale.getDefault()).format(new java.util.Date(when)))
+                        .on(() -> { if (backup(a)) { render(); a.toast("Backed up: profiles, top row, hidden apps and settings"); } else a.toast("The backup could not be saved"); }));
+                row(new Row.Spec("brestore", "Restore from Backup").on(() -> {
+                    String j = readBackup(a);
+                    if (j == null) { a.toast("There is no backup yet"); return; }
+                    a.store.restore(j); Glass.style = a.store.glass; a.scenes.show(a.store.scene, false); a.profileChanged(); buildSide(); render();
+                    a.toast("Restored from your backup");
+                }));
                 head("Kids");
                 row(new Row.Spec("pin", "Parent PIN").sub("Needed to leave the Kids profile or open Settings from it").value("Change")
                         .on(() -> Menus.pin(a, true, null)));
-                foot("Each profile has its own name, avatar, top row and hidden apps.");
+                foot("Each profile has its own name, avatar, top row and hidden apps. Backups hold your profiles, top row, hidden apps and settings, and stay on this TV.");
                 break;
             }
             case "homescreen": {
@@ -210,6 +234,54 @@ final class Settings {
                         }));
                 row(new Row.Spec("wo", "Don't Show Weather").checked("off".equals(s.weather)).on(() -> { s.weather = "off"; s.save(); render(); a.updateTime(); }));
                 foot("Weather comes from open-meteo.com. No account, and nothing about you is stored.");
+                break;
+            }
+            case "network": {
+                title.setText("Wi-Fi");
+                row(new Row.Spec("wifi", "Wi-Fi").value(Tv.wifiName(a)).go().on(() -> Tv.settings(a, "network")));
+                row(new Row.Spec("other", "Other Networks…").go().on(() -> Tv.settings(a, "network")));
+                foot("These open the TV's own network settings.");
+                break;
+            }
+            case "bluetooth": {
+                title.setText("Bluetooth");
+                row(new Row.Spec("remote", "Remotes and Accessories").sub("Your remote, keyboards, headphones").go().on(() -> Tv.settings(a, "bluetooth")));
+                row(new Row.Spec("pair", "Pair a Remote or Accessory").go().on(() -> Tv.settings(a, "bluetooth")));
+                break;
+            }
+            case "display": {
+                title.setText("Display & Sound");
+                row(new Row.Spec("pic", "Picture").go().on(() -> Tv.settings(a, "display")));
+                row(new Row.Spec("snd", "Sound").value("TV Speakers").go().on(() -> Tv.settings(a, "sound")));
+                row(new Row.Spec("tvapps", "Apps").go().on(() -> Tv.settings(a, "apps")));
+                row(new Row.Spec("all", "All TV Settings").go().on(() -> Tv.settings(a, "")));
+                break;
+            }
+            case "saverpg": {
+                title.setText("Screen Saver");
+                row(new Row.Spec("start", "Start Screen Saver").on(() -> { a.closeAll(); a.startSaver(); }));
+                int[] opts = { 60, 90, 180, 300, 0 };
+                String[] names = { "1 minute", "90 seconds", "3 minutes", "5 minutes", "Never" };
+                int cur = 1;
+                for (int i = 0; i < opts.length; i++) if (opts[i] == s.saverAfter) cur = i;
+                final int ci = cur;
+                row(new Row.Spec("after", "Start After").value(names[cur]).on(() -> { s.saverAfter = opts[(ci + 1) % opts.length]; s.save(); render(); }));
+                foot("On the Home screen, the wallpapers and the clock fill the screen after this long. Any button brings Home back.");
+                break;
+            }
+            case "switched": {
+                title.setText("Clean Up");
+                java.util.List<String[]> off = disabledApps(a);
+                head("This TV");
+                row(new Row.Spec("hoff", "Apps switched off").value(String.valueOf(off.size())));
+                row(new Row.Spec("hmem", "Memory in use").value(Panels.memLine(a).replace("RAM ", "")));
+                row(new Row.Spec("recheck", "Check After an Update").on(() -> a.toast("After a TV update, ask Claude to check: paste the PureTV link and say \"check my TV\"")));
+                if (!off.isEmpty()) {
+                    head("Switched Off");
+                    for (String[] x : off) row(new Row.Spec("x" + x[0], x[1]).sub(x[0]).value("Off")
+                            .on(() -> a.toast("Switched off, not uninstalled. Restore turns it back on")));
+                }
+                foot("Apps are switched off by the PureTV agent on your computer. Nothing is uninstalled, and their data stays on the TV.");
                 break;
             }
             case "tv": {
@@ -294,6 +366,35 @@ final class Settings {
         f.setLineSpacing(0, 1.3f);
         f.setPadding(Ui.px(14), Ui.px(22), Ui.px(14), 0);
         page.addView(f);
+    }
+
+    static java.util.List<String[]> disabledApps(MainActivity a) {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        android.content.pm.PackageManager pm = a.getPackageManager();
+        int flags = android.os.Build.VERSION.SDK_INT >= 24 ? android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS : 0;
+        for (android.content.pm.ApplicationInfo ai : pm.getInstalledApplications(flags)) {
+            if (!ai.enabled) out.add(new String[] { ai.packageName, String.valueOf(ai.loadLabel(pm)) });
+        }
+        java.util.Collections.sort(out, (x, y) -> x[1].compareToIgnoreCase(y[1]));
+        return out;
+    }
+
+    static boolean backup(MainActivity a) {
+        try (java.io.FileOutputStream f = new java.io.FileOutputStream(new java.io.File(a.getFilesDir(), "backup.json"))) {
+            f.write(a.store.json().getBytes("UTF-8"));
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    static String readBackup(MainActivity a) {
+        java.io.File f = new java.io.File(a.getFilesDir(), "backup.json");
+        if (!f.exists()) return null;
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            byte[] b = new byte[(int) f.length()];
+            int n = 0;
+            while (n < b.length) { int r = in.read(b, n, b.length - n); if (r < 0) break; n += r; }
+            return new String(b, 0, n, "UTF-8");
+        } catch (Exception e) { return null; }
     }
 
     static String possessive(String n) { return n.endsWith("s") || n.endsWith("S") ? n + "'" : n + "'s"; }

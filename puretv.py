@@ -19,7 +19,8 @@
     python puretv.py reboot                     restart the TV, wait for it, reconnect and check Home
     python puretv.py check                      after a TV update: switch off what came back on
     python puretv.py dns on|off                 ad-blocking Private DNS (AdGuard), undone by restore
-    python puretv.py report                     the report card: Home-screen memory and CPU, before and after
+    python puretv.py smooth before|after        move around Home for 20 s; Android counts the frames drawn late
+    python puretv.py report                     the report card: Home-screen memory, CPU and smoothness, before and after
     python puretv.py restore                    put everything back from the backup
     python puretv.py closed                     is debugging closed again? (run after turning it off)
 
@@ -308,6 +309,33 @@ def cmd_reboot(args):
         tv.close()
 
 
+def cmd_smooth(args):
+    import time
+    tv = open_tv(args)
+    try:
+        pkg = core.smooth_start(tv)
+        if not pkg:
+            raise core.TVError("Couldn't tell which app is the Home screen. Press Home on the remote and try again.")
+        secs = 0 if tv.demo else args.seconds
+        say(f"Now move around the Home screen with the remote for {args.seconds} seconds: left, right, down into the apps and back up.")
+        for left in range(secs, 0, -5):
+            say(f"  {left} s…")
+            time.sleep(min(5, left))
+        r = core.smooth_read(tv, pkg)
+        if not r.get("frames"):
+            say("No frames were drawn: nothing moved on the Home screen. Run it again and press the arrows while it counts.")
+            return
+        say(f"Home screen ({pkg}): {r['frames']} frames drawn, {r['jankPct']}% late" + (f", 90% within {r['p90ms']} ms" if r.get("p90ms") else ""))
+        p = measures_path(tv.info()["id"])
+        p.parent.mkdir(parents=True, exist_ok=True)
+        data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        data.setdefault(args.label, {}).update(r)
+        p.write_text(json.dumps(data, indent=1), encoding="utf-8")
+        say(f"Saved with '{args.label}'.")
+    finally:
+        close_tv(tv)
+
+
 def cmd_check(args):
     tv = open_tv(args)
     try:
@@ -346,6 +374,9 @@ def cmd_report(args):
         if cb is not None and ca is not None:
             pct = f"{round(100 * (cb - ca) / cb)}% less" if cb > 0 else ""
             say(f"Home-screen CPU: {cb:g}% → {'under 1' if ca < 1 else f'{ca:g}'}% · {pct} (share of one core, Home idle on screen)")
+        jb, ja = before.get("jankPct"), after.get("jankPct")
+        if jb is not None and ja is not None:
+            say(f"Smoothness: {jb:g}% of frames late → {ja:g}% (moving around Home; under 5% feels smooth)")
         say("")
     elif hb:
         say(f"Home screen before: {hb} MB. Run 'measure after' once PureTV is the Home screen for the comparison.")
@@ -397,6 +428,7 @@ def main():
     c.add_argument("--keep-google-home", action="store_true", help="keep Google TV's home running underneath (Remote Helper)")
     c.add_argument("--replace-google-home", action="store_true", help="the default: PureTV is the only Home screen")
     sub.add_parser("reboot")
+    c = sub.add_parser("smooth"); c.add_argument("label", choices=["before", "after"]); c.add_argument("--seconds", type=int, default=20)
     sub.add_parser("check")
     c = sub.add_parser("dns"); c.add_argument("state", choices=["on", "off"])
     sub.add_parser("report")

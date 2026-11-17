@@ -680,6 +680,28 @@ def home_cost(tv, settle=6):
     return {"homePkg": pkg, "homeMB": mb, "homeCPU": cpu}
 
 
+def smooth_start(tv):
+    """Reset Android's frame counter for the Home screen, before the owner moves around it."""
+    home = (tv.home() or "").split("/")[0]
+    if not PACKAGE_RE.fullmatch(home or "x"):
+        return None
+    tv.sh("input keyevent KEYCODE_HOME")
+    tv.sh(f"dumpsys gfxinfo {home} reset")
+    return home
+
+
+def smooth_read(tv, pkg):
+    """Frames drawn and how many were late (janky), from Android's own frame counter (dumpsys gfxinfo)."""
+    out = tv.sh(f"dumpsys gfxinfo {pkg}")
+    num = lambda rx: (re.search(rx, out) or [None, None])[1]
+    frames, janky = num(r"Total frames rendered:\s*(\d+)"), num(r"Janky frames:\s*(\d+)")
+    p90 = num(r"90th percentile:\s*(\d+)ms")
+    if not frames or int(frames) == 0:
+        return {"smoothPkg": pkg, "frames": 0}
+    pct = round(100 * int(janky or 0) / int(frames), 1)
+    return {"smoothPkg": pkg, "frames": int(frames), "jankPct": pct, "p90ms": int(p90) if p90 else None}
+
+
 # ---------------------------------------------------------------- restore
 
 def restore(tv, log=print):

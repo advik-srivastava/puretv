@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PureTV 3 native demo</title>
+<!-- A browser stand-in for the native Android Home screen (launcher/src/tv/pure/home): same assets, layout
+     numbers, glass method (a slice of the pre-blurred wallpaper, never a live blur), focus, sounds and screens. -->
+<style>
+@font-face { font-family: "Antonio"; font-weight: 300; src: url(demo/fonts/antonio-latin-300.woff2) format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 100 900; src: url(demo/fonts/inter-latin-wght-normal.woff2) format("woff2"); }
+:root { --ease: cubic-bezier(.2,.8,.2,1); --lift: cubic-bezier(.25,1.35,.4,1); }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0b0e; color: #fff; overflow: hidden; font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; margin: -540px 0 0 -960px; overflow: hidden; background: #000; transform-origin: center; border-radius: 6px; }
+#help { position: fixed; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 13px; color: #ffffff70; }
+#help b { color: #ffffffb0; }
+
+.scene { position: absolute; inset: 0; opacity: 0; transition: opacity 2.4s var(--ease); }
+.scene.on { opacity: 1; }
+.scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gclock { position: absolute; left: 0; width: 1920px; text-align: center; font-family: "Antonio"; font-weight: 300; line-height: 1; letter-spacing: .01em; }
+.gclock span { position: absolute; left: 0; right: 0; top: 0; }
+.gclock .fill { color: transparent; -webkit-background-clip: text; background-clip: text; background-size: 1920px 1080px; filter: brightness(1.3) saturate(1.15); opacity: .92; }
+.gclock .rim { color: rgba(255,255,255,.5); -webkit-text-stroke: 2.5px rgba(255,255,255,.9); text-shadow: 0 4px 26px rgba(0,26,45,.5); }
+#dim { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .45s var(--ease); pointer-events: none; }
+#date { position: absolute; left: 0; right: 0; text-align: center; transition: top .9s var(--ease), opacity .3s; text-shadow: 0 1px 10px rgba(0,0,0,.4); }
+#date .g { font: 600 22px "Inter"; color: rgba(255,255,255,.85); }
+#date .d { font: 600 34px "Inter"; margin-top: 8px; }
+
+.glass { position: absolute; background-repeat: no-repeat; background-size: 1920px 1080px; overflow: visible; }
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: var(--sheen), var(--tint); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3), inset 0 1.5px 0 rgba(255,255,255,.55); }
+#stage.g-liquid { --tint: rgba(24,24,32,.22); --sheen: linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.06)); }
+#stage.g-frosted { --tint: rgba(70,72,84,.38); --sheen: linear-gradient(160deg, rgba(255,255,255,.34), rgba(255,255,255,.18)); }
+#stage.g-dark { --tint: rgba(14,14,18,.8); --sheen: linear-gradient(0deg, transparent, transparent); }
+
+#content { position: absolute; inset: 0; transition: transform .56s var(--ease), opacity .9s var(--ease); }
+#content.ambient { transform: translateY(var(--amb)); opacity: 0; }
+#band { border-radius: 46px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.row { position: absolute; display: flex; gap: 36px; }
+.tile { position: relative; flex: none; transition: transform .38s var(--lift); }
+.tile .face { position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: box-shadow .38s var(--ease); }
+.tile .face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tile .face .gloss { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.2), transparent 60%); opacity: 0; transition: opacity .3s; }
+.tile .name { position: absolute; left: -40px; right: -40px; text-align: center; font: 600 22px "Inter"; opacity: 0; transition: opacity .25s; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+.tile.focus { transform: scale(1.12); z-index: 2; }
+.tile.focus .face { box-shadow: 0 24px 48px rgba(0,0,0,.45); }
+.tile.focus .face .gloss, .tile.focus .name { opacity: 1; }
+.tile.held .face { outline: 4px solid #fff; outline-offset: -4px; }
+.tile .kb { position: absolute; right: 10px; bottom: 9px; padding: 3px 13px; border-radius: 99px; background: #ffd60a; color: #1a1400; font: 600 15px "Inter"; }
+.sysface { display: grid; place-items: center; width: 100%; height: 100%; }
+.sysface svg { width: 50%; height: 50%; }
+
+#bar { position: absolute; left: 60px; right: 60px; top: 40px; display: flex; justify-content: space-between; opacity: 0; visibility: hidden; transition: opacity .3s; }
+#bar.on { opacity: 1; visibility: visible; }
+.pill { font: 600 24px "Inter"; padding: 8px 26px 8px 14px; border-radius: 40px; background: rgba(255,255,255,.2); transition: background .2s, color .2s, transform .3s var(--lift); }
+.pill.focus { background: rgba(255,255,255,.95); color: #1c1c1e; transform: scale(1.06); }
+
+#overlay > .hold { position: absolute; inset: 0; transition: opacity .32s var(--ease), transform .32s var(--ease); }
+#overlay > .hold.out { opacity: 0; transform: scale(.98); }
+.card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 28px 30px 26px; border-radius: 40px; box-shadow: 0 30px 70px rgba(0,0,0,.4); }
+.card h2 { margin: 0 0 18px; font: 800 32px "Inter"; text-align: center; }
+.card p { margin: -8px 0 20px; font: 400 22px/1.3 "Inter"; color: rgba(255,255,255,.8); text-align: center; white-space: pre-line; }
+.r { display: flex; align-items: center; gap: 20px; min-height: 76px; padding: 18px 28px; margin-top: 10px; border-radius: 22px; background: rgba(255,255,255,.09); transition: background .2s, transform .22s var(--ease), color .2s; }
+.r.two { padding: 14px 28px; }
+.r.focus { background: rgba(255,255,255,.95); color: #1c1c1e; transform: scale(1.02); box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+.r .t { flex: 1; font: 600 28px "Inter"; }
+.r .t small { display: block; font: 400 19px "Inter"; opacity: .7; margin-top: 4px; }
+.r .v { font: 400 26px "Inter"; opacity: .7; }
+.r .ck { width: 30px; height: 30px; color: #0a84ff; }
+.r.focus .ck { color: #1c1c1e; }
+.r .ic { width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+.r .ic svg { width: 26px; height: 26px; }
+.r .em { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; flex: none; }
+.r .th { width: 72px; height: 44px; border-radius: 8px; object-fit: cover; flex: none; }
+.r.center { justify-content: center; text-align: center; }
+.r.danger .t { color: #ff6961; }
+.r.danger.focus .t { color: #1c1c1e; }
+
+#set { position: absolute; inset: 0; background: rgba(0,0,0,.3); }
+#side { position: absolute; left: 48px; top: 48px; bottom: 48px; width: 560px; padding: 30px 24px; border-radius: 44px; }
+#page { position: absolute; left: 660px; top: 40px; width: 1180px; bottom: 0; padding: 20px 40px 60px 20px; overflow: hidden; }
+#page h1 { margin: 10px 0 8px 14px; font: 800 52px "Inter"; }
+#page h5 { margin: 26px 0 0 14px; font: 600 20px "Inter"; color: rgba(255,255,255,.5); }
+#page .foot { margin: 22px 14px 0; font: 400 19px/1.3 "Inter"; color: rgba(255,255,255,.55); }
+#pagein { transition: transform .35s var(--ease); }
+
+.setup { position: absolute; inset: 0; background-size: cover; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.setup::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.64); }
+.setup > * { position: relative; }
+.setup h1 { margin: 0; font: 800 64px "Inter"; }
+.setup .hello { font: 800 150px/190px "Inter"; transition: opacity .4s; }
+.setup .line { margin: 14px 300px 0; font: 400 26px/1.3 "Inter"; color: rgba(255,255,255,.8); }
+.setup .btn { width: 620px; }
+.setup .madeby { margin-top: 90px; font: 400 20px "Inter"; color: rgba(255,255,255,.6); }
+.setup .emos { display: flex; gap: 20px; margin: 22px 0 8px; }
+.setup .emo { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; transition: transform .26s var(--lift); }
+.setup .emo.on { box-shadow: inset 0 0 0 4px #fff; }
+.setup .emo.focus { transform: scale(1.22); }
+.setup .looks { display: flex; gap: 26px; margin-top: 26px; }
+.setup .look { transition: transform .32s var(--lift); }
+.setup .look img { width: 256px; height: 144px; border-radius: 24px; object-fit: cover; display: block; }
+.setup .look span { display: block; margin-top: 16px; font: 600 20px "Inter"; color: rgba(255,255,255,.8); }
+.setup .look.focus { transform: scale(1.12); }
+.setup .look.focus img { box-shadow: 0 20px 44px rgba(0,0,0,.5); }
+.setup .dots { position: absolute; bottom: 54px; display: flex; gap: 12px; }
+.setup .dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.35); }
+.setup .dots i.on { background: #fff; width: 10px; height: 10px; }
+#nameIn { width: 620px; margin-top: 24px; padding: 16px 24px; border: 0; border-radius: 22px; font: 600 30px "Inter"; color: #1c1c1e; background: rgba(255,255,255,.95); outline: none; text-align: center; }
+
+.pinpad { display: grid; grid-template-columns: repeat(3, 110px); gap: 12px; justify-content: center; }
+.pk { height: 72px; border-radius: 22px; display: grid; place-items: center; font: 600 30px "Inter"; background: rgba(255,255,255,.12); transition: transform .2s, background .2s, color .2s; }
+.pk.focus { background: rgba(255,255,255,.95); color: #1c1c1e; transform: scale(1.08); }
+.dots4 { display: flex; justify-content: center; gap: 18px; margin: 4px 0 20px; }
+.dots4 i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
+.dots4 i.on { background: #fff; }
+.dots4.shake { animation: shake .35s; }
+@keyframes shake { 25%, 75% { transform: translateX(-12px); } 50% { transform: translateX(12px); } }
+.hint { margin-top: 12px; font: 400 18px "Inter"; color: rgba(255,255,255,.5); text-align: center; }
+
+#toast { position: absolute; left: 50%; bottom: 70px; transform: translate(-50%, 20px); max-width: 1100px; padding: 18px 34px; border-radius: 40px; background: rgba(44,44,48,.9); font: 600 24px "Inter"; text-align: center; opacity: 0; transition: opacity .3s, transform .3s var(--ease); pointer-events: none; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+#app { position: absolute; inset: 0; background: #000; display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .35s; }
+#app.on { opacity: 1; }
+#app div { text-align: center; font: 600 30px "Inter"; color: rgba(255,255,255,.75); }
+#app img { width: 400px; border-radius: 30px; display: block; margin: 0 auto 30px; }
+</style>
+</head>
+<body>
+<div id="stage" class="g-liquid">
+  <div id="scenes"></div>
+  <div id="dim"></div>
+  <div id="date"><div class="g"></div><div class="d"></div></div>
+  <div id="content">
+    <div id="band" class="glass"></div>
+    <div id="row1" class="row"></div>
+    <div id="grid"></div>
+  </div>
+  <div id="bar"><div class="pill" id="chip" data-f data-act="profiles"></div><div class="pill" data-f data-act="settings" style="padding-left:26px">Settings</div></div>
+  <div id="overlay"></div>
+  <div id="app"><div><img alt=""><span></span><br><small style="font-weight:400;font-size:22px;opacity:.6">Demo · on the TV the app opens here · press Back</small></div></div>
+  <div id="toast"></div>
+</div>
+<div id="help"><b>← ↑ → ↓</b> move · <b>Enter</b> select · <b>hold Enter</b> app menu · <b>Esc</b> back · <b>H</b> Home button · <b>M</b> Settings · <b>R</b> run setup again · mouse works too</div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const stage = $("#stage");
+function fit() { const k = Math.min(innerWidth / 1940, (innerHeight - 40) / 1100); stage.style.transform = `scale(${k})`; }
+addEventListener("resize", fit); fit();
+
+/* ---------- the same data as Scenes.java, Apps.java and Store.java ---------- */
+const SCENES = [["ossau", "Ossau", 154, 400], ["flatirons", "Flatirons", 150, 352], ["luna", "Valle de la Luna", 246, 400],
+  ["kathleen", "Kathleen Lake", 174, 400], ["titicaca", "Titicaca Sunrise", 246, 400], ["louise", "Lake Louise", 114, 400]]
+  .map(([id, name, top, size]) => ({ id, name, top, size }));
+const W = (id, k) => `native/wall/${id}${k}`;
+const APPS = [["com.google.android.youtube.tv", "YouTube"], ["com.netflix.ninja", "Netflix"], ["com.amazon.amazonvideo.livingroom", "Prime Video"],
+  ["com.disney.disneyplus", "Disney+"], ["com.apple.atve.androidtv.appletv", "Apple TV"], ["com.spotify.tv.android", "Spotify"], ["com.wbd.stream", "Max"],
+  ["com.cbs.ca", "Paramount+"], ["com.crunchyroll.webapp", "Crunchyroll"], ["tv.twitch.android.app", "Twitch"], ["dazn", "DAZN"]].map(([pkg, name]) => ({ pkg, name }));
+const app = (p) => APPS.find((a) => a.pkg === p);
+const KIDS = [["com.google.android.youtube.tv", "YouTube Kids"], ["com.netflix.ninja", "Netflix"], ["com.disney.disneyplus", "Disney+"], ["com.amazon.amazonvideo.livingroom", "Prime Video"]];
+const EMOJIS = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐨", "🐙", "🦄", "🐶", "🐱"], EMO_BG = ["#ff9f0a", "#d1d1d6", "#ff9500", "#ffcc00", "#34c759", "#8e8e93", "#ff2d55", "#bf5af2", "#a2845e", "#ffd60a"];
+const CITIES = ["New Delhi", "Mumbai", "London", "New York", "Tokyo", "Sydney"];
+const S = { profiles: [{ name: "Advik", emoji: "🦊", bg: "#ff9f0a", top: [], hidden: [] }, { name: "Kids", emoji: "🐯", bg: "#ff9500", kids: true, top: [], hidden: [] }],
+  current: 0, scene: 0, dock: 5, rotate: true, sounds: true, motion: false, glass: "liquid", weather: "auto", city: 0, pin: "1234" };
+const me = () => S.profiles[S.current];
+
+/* ---------- sounds: the same pre-rendered WAVs SoundPool plays ---------- */
+const SFX = {}; ["nav", "ok", "back", "edge"].forEach((n) => SFX[n] = new Audio(`native/sfx/${n}.wav`));
+let lastNav = 0;
+function snd(n) {
+  if (!S.sounds) return;
+  if (n === "nav") { const t = performance.now(); if (t - lastNav < 45) return; lastNav = t; }
+  const a = SFX[n].cloneNode(); a.volume = 1; if (n === "nav") a.playbackRate = 1 + (Math.random() - .5) * .016; a.play().catch(() => {});
+}
+
+/* ---------- icons: Icons.java's shapes as SVG ---------- */
+const SVG = (inner, sw = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+const IC = {
+  home: '<rect x="4" y="4" width="7" height="7" rx="2" fill="#fff" stroke="none"/><rect x="13" y="4" width="7" height="7" rx="2" fill="#fff" stroke="none"/><rect x="4" y="13" width="7" height="7" rx="2" fill="#fff" stroke="none"/><rect x="13" y="13" width="7" height="7" rx="2" fill="#fff" stroke="none"/>',
+  appearance: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="#fff"/>',
+  wallpaper: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M5 17l5-6 3.5 4 2-2 3.5 4"/><circle cx="16" cy="9" r="1.6" fill="#fff" stroke="none"/>',
+  weather: '<path d="M7 18h10a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.5A3.3 3.3 0 0 0 7 18z" fill="#fff" stroke="none"/>',
+  display: '<rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8"/>',
+  googletv: '<rect x="3.5" y="5" width="17" height="11.5" rx="2.2"/><path d="M8.5 20h7M10 8.5L8 11l2 2.5M8 11h6"/>',
+  updates: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  about: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="1.2" fill="#fff" stroke="none"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3L20 20"/>',
+  inputs: '<rect x="3" y="5" width="18" height="11" rx="2"/><path d="M8 20h8M9 10.5h6M12.5 8l2.5 2.5-2.5 2.5"/>',
+  lock: '<rect x="5" y="10" width="14" height="11" rx="1.5" fill="#fff" stroke="none"/><path d="M7.5 10.5V9a4.5 4.5 0 0 1 9 0v1.5"/>',
+};
+function gearSVG() {
+  let d = ""; const n = 36, r = 45, ri = 40.5;
+  for (let i = 0; i < n; i++) {
+    const a0 = 2 * Math.PI * i / n, pt = (a, rr) => `${(50 + Math.cos(a) * rr).toFixed(2)},${(50 + Math.sin(a) * rr).toFixed(2)}`;
+    d += (i ? "L" : "M") + pt(a0, r) + "L" + pt(a0 + Math.PI / n * .6, r) + "L" + pt(a0 + Math.PI / n, ri) + "L" + pt(a0 + Math.PI / n * 1.6, ri);
+  }
+  const sp = (a) => { const t = a * Math.PI / 180; return `M50,50L${(50 + 25 * Math.cos(t)).toFixed(1)},${(50 + 25 * Math.sin(t)).toFixed(1)}`; };
+  return `<svg viewBox="0 0 100 100" style="width:62%;height:62%"><defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70747c"/><stop offset="1" stop-color="#33363c"/></linearGradient>
+    <linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9ebee"/><stop offset="1" stop-color="#b9bdc4"/></linearGradient></defs>
+    <path d="${d}Z" fill="url(#gd)"/><circle cx="50" cy="50" r="33.5" fill="url(#gf)"/><circle cx="50" cy="50" r="26" fill="none" stroke="#4a4e56" stroke-width="4.2"/>
+    <path d="${sp(-90)}${sp(30)}${sp(150)}" stroke="#4a4e56" stroke-width="5.2" stroke-linecap="round"/><circle cx="50" cy="50" r="8" fill="#4a4e56"/></svg>`;
+}
+const CHECK = SVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.6), CHEV = SVG('<path d="M9 5l7 7-7 7"/>', 2.4);
+
+/* ---------- the wallpaper and the glass clock (SceneView.java) ---------- */
+let scene = 0, sceneTimer;
+$("#scenes").innerHTML = SCENES.map((s) => `<div class="scene" data-id="${s.id}"><img src="${W(s.id, ".jpg")}" alt="">
+  <div class="gclock" style="top:${s.top}px;font-size:${s.size}px;height:${s.size}px"><span class="fill" style="background-image:url(${W(s.id, "-glass.jpg")});background-position:0 -${s.top}px"></span><span class="rim"></span></div>
+  <img src="${W(s.id, "-fg.webp")}" alt=""></div>`).join("");
+function showScene(i, animate = true) {
+  scene = (i + SCENES.length) % SCENES.length; S.scene = scene;
+  $$(".scene").forEach((e, k) => { e.style.transitionDuration = animate && !S.motion ? "2.4s" : "0s"; e.classList.toggle("on", k === scene); });
+  placeDate();
+  setTimeout(glassAll, animate ? 1200 : 0);   // the glass takes the new wallpaper's blurred copy mid-fade
+}
+function placeDate() {
+  const s = SCENES[scene], d = $("#date");
+  d.style.top = Math.max(s.top - 24 - d.offsetHeight, 64) + "px";
+}
+function tick() {
+  const n = new Date(), h = n.getHours(), t = `${h % 12 || 12}:${String(n.getMinutes()).padStart(2, "0")}`;
+  $$(".gclock span").forEach((e) => e.textContent = t);
+  const hello = h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 22 ? "Good evening" : "Good night";
+  $("#date .g").textContent = `${hello}, ${me().name}`;
+  const wx = S.weather === "off" ? "" : "   ☁︎ 24° Cloudy";
+  $("#date .d").textContent = n.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }).replace(",", "") + wx;
+}
+
+/* ---------- Liquid Glass (Glass.java): the matching slice of the pre-blurred wallpaper ---------- */
+function glassAll() {
+  const sb = stage.getBoundingClientRect(), k = sb.width / 1920, g = `url(${W(SCENES[scene].id, "-glass.jpg")})`;
+  $$(".glass").forEach((e) => {
+    const r = e.getBoundingClientRect();
+    e.style.backgroundImage = g;
+    e.style.backgroundPosition = `${-(r.left - sb.left) / k}px ${-(r.top - sb.top) / k}px`;
+  });
+}
+function glassFollow(ms) { const end = performance.now() + ms; (function f() { glassAll(); if (performance.now() < end) setTimeout(f, 16); })(); }
+
+/* ---------- Home (MainActivity.buildHome) ---------- */
+let deep = false, ambient = false;
+function topRow(p) {
+  const out = [];
+  for (const k of p.top) { const a = app(k); if (a && !p.hidden.includes(k) && out.length < S.dock) out.push(a); }
+  for (const a of APPS) { if (out.length >= S.dock) break; if (!out.includes(a) && !p.hidden.includes(a.pkg) && !p.top.includes("-" + a.pkg)) out.push(a); }
+  return out;
+}
+function tileHTML(a, sys, label, kids) {
+  const face = a ? `<img src="native/art/${a.pkg}.jpg" alt="">` : sys === "settings"
+    ? `<div class="sysface" style="background:linear-gradient(#e4e6ea,#a9adb5)">${gearSVG()}</div>`
+    : `<div class="sysface" style="background:${sys === "parents" ? "linear-gradient(#ffd36a,#f0a020)" : "linear-gradient(#9aa0ab,#5f6571)"};color:#fff">${SVG(IC[sys === "parents" ? "lock" : sys])}</div>`;
+  return `<div class="tile" data-f ${a ? `data-app="${a.pkg}"` : `data-sys="${sys}"`}><div class="face" style="width:var(--tw);height:var(--th)">${face}<div class="gloss"></div>${kids ? '<span class="kb">Kids</span>' : ""}</div><div class="name" style="top:calc(var(--th) + 22px)">${label}</div></div>`;
+}
+function buildHome() {
+  const p = me(), kids = !!p.kids, cols = S.dock + 1, gap = 36, tw = (1792 - gap * (cols - 1)) / cols, th = tw * .6;
+  const bandH = th + 52, bandTop = 1080 - 64 - bandH, gridTop = bandTop + bandH + 58;
+  const c = $("#content");
+  c.style.setProperty("--tw", tw + "px"); c.style.setProperty("--th", th + "px"); c.style.setProperty("--amb", bandH + 130 + "px");
+  c.dataset.deep = -(gridTop - 330);
+  Object.assign($("#band").style, { left: "32px", top: bandTop + "px", width: "1856px", height: bandH + "px" });
+  const r1 = $("#row1"); Object.assign(r1.style, { left: "64px", top: bandTop + 26 + "px" });
+  const first = kids ? KIDS.map(([pk, n]) => ({ a: app(pk), n })) : topRow(p).map((a) => ({ a, n: a.name }));
+  r1.innerHTML = first.map(({ a, n }) => tileHTML(a, null, n, kids)).join("") + tileHTML(null, kids ? "parents" : "settings", kids ? "Parents" : "Settings");
+  const g = $("#grid"); Object.assign(g.style, { position: "absolute", left: "64px", top: gridTop + "px" });
+  let rest = [];
+  if (!kids) {
+    rest = APPS.filter((a) => !first.some((f) => f.a === a) && !p.hidden.includes(a.pkg)).map((a) => tileHTML(a, null, a.name));
+    rest.push(tileHTML(null, "search", "Search"), tileHTML(null, "inputs", "Inputs"));
+  }
+  let html = "";
+  for (let i = 0; i < rest.length; i += cols) html += `<div class="row" style="position:relative;margin-bottom:${74 + th - th}px;height:${th + 74}px;margin:0">${rest.slice(i, i + cols).join("")}</div>`;
+  g.innerHTML = html;
+  $("#chip").textContent = `${p.emoji}  ${p.name}`;
+  tick();
+  setTimeout(glassAll, 16);
+}
+function setDeep(on) {
+  if (on === deep) return; deep = on;
+  $("#content").style.transform = on ? `translateY(${$("#content").dataset.deep}px)` : "";
+  $("#date").style.opacity = on ? 0 : 1;
+  $("#dim").style.opacity = on ? .59 : 0;
+  glassFollow(650);
+}
+function setAmbient(on) {
+  if (on === ambient) return; ambient = on;
+  $("#content").classList.toggle("ambient", on);
+  if (on && cur) cur.classList.remove("focus"); else if (cur) cur.classList.add("focus");
+}
+
+/* ---------- focus: the nearest item in the pressed direction, in the top layer ---------- */
+let layers = [{ root: $("#stage"), home: true }], cur = null;
+const topL = () => layers[layers.length - 1];
+function items() {
+  const t = topL();
+  if (t.home) return $$("[data-f]", $("#content")).concat($("#bar").classList.contains("on") ? $$("[data-f]", $("#bar")) : []);
+  return $$("[data-f]", t.root);
+}
+function focus(el, quiet) {
+  if (!el) return;
+  if (cur && cur !== el) cur.classList.remove("focus");
+  if (cur !== el && !quiet) snd("nav");
+  cur = el; el.classList.add("focus");
+  if (topL().home) {
+    setDeep(!!el.closest("#grid"));
+    if (!el.closest("#bar")) $("#bar").classList.remove("on");
+  }
+  if (el.dataset.side) showPage(el.dataset.side);
+  el.scrollIntoView && el.closest("#page") && keepVisible(el);
+}
+function move(dx, dy) {
+  if (!cur) return focus(items()[0]);
+  if (topL().home && dy < 0 && cur.closest("#row1")) { $("#bar").classList.add("on"); return focus($("#chip")); }
+  const a = cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  let best = null, bd = Infinity;
+  for (const e of items()) {
+    if (e === cur) continue;
+    const b = e.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2, ddx = bx - ax, ddy = by - ay;
+    const along = dx ? ddx * dx : ddy * dy, across = dx ? Math.abs(ddy) : Math.abs(ddx);
+    if (along <= 4) continue;
+    const d = along + across * 2.2;
+    if (d < bd) { bd = d; best = e; }
+  }
+  if (best) focus(best); else snd("edge");
+}
+
+/* ---------- panels (MainActivity.open / close) ---------- */
+function open(el, onBack) {
+  const h = document.createElement("div"); h.className = "hold out"; h.appendChild(el);
+  $("#overlay").appendChild(h); setTimeout(() => h.classList.remove("out"));
+  layers.push({ root: h, back: onBack, last: cur });
+  if (cur) cur.classList.remove("focus"); cur = null;
+  $("#dim").style.opacity = .41;
+  setTimeout(() => { glassAll(); focus(items()[0], true); });
+  return h;
+}
+function close(h) {
+  const i = layers.findIndex((l) => l.root === h); if (i < 1) return;
+  const l = layers.splice(i, 1)[0];
+  h.classList.add("out"); setTimeout(() => h.remove(), 320);
+  if (cur) cur.classList.remove("focus"); cur = null;
+  if (topL().home) { $("#dim").style.opacity = deep ? .59 : 0; focus(l.last && document.contains(l.last) ? l.last : $("#row1 .tile"), true); }
+  else focus(items()[0], true);
+}
+function closeAll() { while (layers.length > 1) close(topL().root); }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 3400); }
+
+/* rows (Row.java) */
+function rowHTML(o) {
+  const lead = o.emoji ? `<div class="em" style="background:${o.bg}">${o.emoji}</div>` : o.icon ? `<div class="ic" style="background:${o.icbg}">${SVG(IC[o.icon])}</div>` : o.thumb ? `<img class="th" src="${o.thumb}" alt="">` : "";
+  const tail = o.check !== undefined ? (o.check ? `<div class="ck">${CHECK}</div>` : "") : `${o.v !== undefined ? `<div class="v">${o.v}</div>` : ""}${o.go ? `<div class="ck" style="color:inherit;opacity:.6">${CHEV}</div>` : ""}`;
+  return `<div class="r${o.sub ? " two" : ""}${o.center ? " center" : ""}${o.danger ? " danger" : ""}" data-f data-k="${o.k}">${lead}<div class="t">${o.t}${o.sub ? `<small>${o.sub}</small>` : ""}</div>${tail}</div>`;
+}
+function card(title, body, rows, width = 640) {
+  const c = document.createElement("div"); c.className = "card glass"; c.style.width = width + "px";
+  c.innerHTML = (title ? `<h2>${title}</h2>` : "") + (body ? `<p>${body}</p>` : "") + rows.map(rowHTML).join("");
+  c.actions = Object.fromEntries(rows.map((r) => [r.k, r.on]));
+  return c;
+}
+function menu(title, body, rows, width, onBack) { const c = card(title, body, rows, width); const h = open(c, onBack); c.hold = h; return c; }
+
+/* ---------- Home actions ---------- */
+function selectHome(el) {
+  if (el.dataset.app) {
+    const a = app(el.dataset.app), kidsName = me().kids && KIDS.find((k) => k[0] === a.pkg);
+    el.style.transform = "scale(1.04)"; setTimeout(() => el.style.transform = "", 120);
+    const L = $("#app"); $("img", L).src = `native/art/${a.pkg}.jpg`; $("span", L).textContent = kidsName ? (kidsName[1] === "YouTube Kids" ? "YouTube Kids" : `${a.name} (kids profile)`) : a.name;
+    setTimeout(() => { L.classList.add("on"); appOpen = true; }, 140);
+    return;
+  }
+  const s = el.dataset.sys || el.dataset.act;
+  if (s === "settings") return me().kids ? pinPad(false, () => settings()) : settings();
+  if (s === "parents") return pinPad(false, () => settings());
+  if (s === "search") return toast("Opens the TV's voice search, like the mic button");
+  if (s === "inputs") return menu("Inputs", null, [["HDMI 1", "hdmi1"], ["HDMI 2", "hdmi2"], ["Live TV", "tuner"]].map(([t, k]) => ({ k, t, icon: "inputs", icbg: "#4b5563", on: () => { closeAll(); toast(`Switching to ${t}`); } })));
+  if (s === "profiles") return profiles();
+}
+let appOpen = false;
+function appMenu(t) {
+  if (me().kids) return toast("Ask a parent to change the apps");
+  const p = me(), pkg = t.dataset.app, a = app(pkg), topList = topRow(p).map((x) => x.pkg), inTop = topList.includes(pkg), i = topList.indexOf(pkg);
+  t.classList.add("held"); snd("ok");
+  const done = () => { t.classList.remove("held"); close(c.hold); };
+  const save = (list) => { p.top = list.concat(p.top.filter((x) => x.startsWith("-"))); };
+  const mv = (by) => { const l = topList.slice(), j = Math.max(0, Math.min(l.length - 1, i + by)); l.splice(i, 1); l.splice(j, 0, pkg); save(l); done(); buildHome(); focus($(`#row1 [data-app="${pkg}"]`), true); };
+  const rows = [];
+  if (inTop) {
+    if (i > 0) rows.push({ k: "l", t: "Move Left", on: () => mv(-1) });
+    if (i < topList.length - 1) rows.push({ k: "r", t: "Move Right", on: () => mv(1) });
+    rows.push({ k: "d", t: "Move to All Apps", on: () => { p.top = topList.filter((x) => x !== pkg).concat(["-" + pkg]); done(); buildHome(); toast(`${a.name} moved to All Apps`); } });
+  } else rows.push({ k: "u", t: "Move to Top Row", on: () => { p.top = p.top.filter((x) => x !== "-" + pkg); const l = [pkg, ...topList].slice(0, S.dock); save(l); done(); buildHome(); toast(`${a.name} is in your top row`); } });
+  rows.push({ k: "h", t: "Hide from Home", on: () => { p.hidden.push(pkg); done(); buildHome(); toast(`${a.name} is hidden. Settings › Home Screen brings it back`); } });
+  rows.push({ k: "i", t: "App Info", sub: "The TV's own page for this app", on: () => { done(); toast("Opens the TV's App info page"); } });
+  const c = menu(a.name, null, rows, 560, done);
+}
+function profiles() {
+  menu("Who's Watching?", null, S.profiles.map((p, i) => ({ k: "p" + i, t: p.name, emoji: p.emoji, bg: p.bg, sub: p.kids ? "Kids: approved apps only" : undefined, check: i === S.current,
+    on: () => { const go = () => { S.current = i; closeAll(); buildHome(); focus($("#row1 .tile"), true); toast(`Switched to ${p.name}`); }; if (me().kids && !p.kids) pinPad(false, go); else go(); } })));
+}
+function pinPad(setting, ok) {
+  const c = document.createElement("div"); c.className = "card glass"; c.style.width = "430px";
+  c.innerHTML = `<h2>${setting ? "New Parent PIN" : "Parent PIN"}</h2><div class="dots4">${"<i></i>".repeat(4)}</div><div class="pinpad">`
+    + ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((k) => k ? `<div class="pk" data-f data-pin="${k}">${k}</div>` : "<span></span>").join("")
+    + `</div><div class="hint">${setting ? "Choose four numbers" : S.pin === "1234" ? "The PIN is 1234 until you change it in Settings › Profiles" : "Enter the parent PIN"}</div>`;
+  let typed = "";
+  c.actions = {};
+  c.pin = (k) => {
+    typed = k === "⌫" ? typed.slice(0, -1) : (typed + k).slice(0, 4);
+    $$(".dots4 i", c).forEach((d, i) => d.classList.toggle("on", i < typed.length));
+    if (typed.length < 4) return;
+    if (setting) { S.pin = typed; close(h); toast("Parent PIN changed"); ok && ok(); }
+    else if (typed === S.pin) { close(h); ok && ok(); }
+    else { snd("edge"); const d = $(".dots4", c); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); typed = ""; setTimeout(() => $$(".dots4 i", c).forEach((x) => x.classList.remove("on")), 300); }
+  };
+  const h = open(c);
+  setTimeout(() => focus($('[data-pin="5"]', c), true));
+}
+
+/* ---------- Settings (Settings.java) ---------- */
+const SIDE = [["homescreen", "Home Screen", "home", "#5AA8FF,#1C64D6"], ["appearance", "Appearance", "appearance", "#7FD8FF,#2AA4E6"], ["wallpaper", "Wallpaper", "wallpaper", "#5FE0C8,#1AA58E"],
+  ["weather", "Weather", "weather", "#6FC3FF,#2A86E6"], null, ["tv", "TV Settings", "display", "#7D86FF,#4B4FE0"], ["googletv", "Google TV", "googletv", "#8E98AB,#4F5869"],
+  ["updates", "Software Updates", "updates", "#9AA0AB,#5F6571"], ["about", "About", "about", "#9AA0AB,#5F6571"]];
+let setRoot = null, curPage = "", upd = "idle";
+const poss = (n) => /s$/i.test(n) ? n + "'" : n + "'s";
+function settings(at = "homescreen") {
+  const el = document.createElement("div"); el.id = "set";
+  el.innerHTML = `<div id="side" class="glass"></div><div id="page"><div id="pagein"></div></div>`;
+  setRoot = el; curPage = "";
+  open(el, setBack);
+  $("#dim").style.opacity = .32;
+  renderSide();
+  setTimeout(() => { glassAll(); focus($(`[data-side="${at}"]`, el), true); showPage(at); });
+}
+function renderSide() {
+  const p = me();
+  $("#side", setRoot).innerHTML = rowHTML({ k: "profile", t: `${poss(p.name)} PureTV`, sub: "Profiles and Parent PIN", emoji: p.emoji, bg: p.bg }).replace("data-f", 'data-f data-side="profile"')
+    + '<div style="height:18px"></div>'
+    + SIDE.map((s) => s ? rowHTML({ k: s[0], t: s[1], icon: s[2], icbg: `linear-gradient(${s[3]})` }).replace("data-f", `data-f data-side="${s[0]}"`) : '<div style="height:18px"></div>').join("");
+}
+function setBack() {
+  if (cur && cur.closest("#page")) return focus($(`[data-side="${curPage}"]`, setRoot));
+  close(setRoot.parentNode); setRoot = null;
+}
+function keepVisible(el) {
+  const pin = $("#pagein", setRoot), r = el.offsetTop + el.offsetHeight + 80, h = $("#page", setRoot).clientHeight;
+  pin.style.transform = r > h ? `translateY(${h - r}px)` : "";
+}
+function showPage(k, keep) {
+  if (k === curPage && !keep) return; curPage = k;
+  const p = me(), rows = [], pg = $("#pagein", setRoot), H = (t) => rows.push(`<h5>${t}</h5>`), R = (o) => rows.push(rowHTML(o)), F = (t) => rows.push(`<p class="foot">${t}</p>`);
+  const acts = {};
+  const r = (o) => { acts[o.k] = o.on; R(o); };
+  let title = "";
+  if (k === "profile") {
+    title = "Profiles"; H("Who's Watching");
+    S.profiles.forEach((x, i) => r({ k: "p" + i, t: x.name, emoji: x.emoji, bg: x.bg, sub: x.kids ? "Kids: approved apps only, Settings need the parent PIN" : undefined, check: i === S.current, on: () => { S.current = i; buildHome(); renderSide(); showPage(k, 1); } }));
+    H("This Profile");
+    r({ k: "name", t: "Name", v: p.name, go: 1, on: () => editName(() => { renderSide(); showPage(k, 1); }) });
+    r({ k: "emoji", t: "Avatar", emoji: p.emoji, bg: p.bg, v: "Change", on: () => { const i = (EMOJIS.indexOf(p.emoji) + 1) % EMOJIS.length; p.emoji = EMOJIS[i]; p.bg = EMO_BG[i]; buildHome(); renderSide(); showPage(k, 1); } });
+    if (S.profiles.length < 5) r({ k: "add", t: "Add Profile", on: () => { const n = S.profiles.length, i = (n * 3) % EMOJIS.length; S.profiles.push({ name: `Profile ${n + 1}`, emoji: EMOJIS[i], bg: EMO_BG[i], top: [], hidden: [] }); showPage(k, 1); toast(`Profile ${n + 1} added`); } });
+    H("Kids"); r({ k: "pin", t: "Parent PIN", sub: "Needed to leave the Kids profile or open Settings from it", v: "Change", on: () => pinPad(true) });
+    F("Each profile has its own name, avatar, top row and hidden apps.");
+  } else if (k === "homescreen") {
+    title = "Home Screen"; H("Apps");
+    r({ k: "dock", t: "Apps in the Top Row", v: S.dock, on: () => { S.dock = S.dock >= 7 ? 4 : S.dock + 1; buildHome(); showPage(k, 1); } });
+    r({ k: "arr", t: "Move or Hide Apps", v: "Hold OK on an app", on: () => toast("On the Home screen, hold OK on any app to move or hide it") });
+    r({ k: "hid", t: "Hidden Apps", v: p.hidden.length ? p.hidden.length : "None", on: () => { if (!p.hidden.length) return toast("Hold OK on an app to hide it from Home"); const n = p.hidden.length; p.hidden = []; buildHome(); showPage(k, 1); toast(`${n} hidden app${n > 1 ? "s are" : " is"} back on Home`); } });
+    H("Home Button"); r({ k: "hb", t: "Home Button Opens PureTV", sub: "PureTV is this TV's only Home screen", v: "Yes" });
+    H("Setup"); r({ k: "setup", t: "Run Setup Again", on: () => { closeAll(); runSetup(); } });
+  } else if (k === "appearance") {
+    title = "Appearance"; H("Glass");
+    [["liquid", "Liquid Glass", "Clear glass that shows the wallpaper through"], ["frosted", "Frosted Glass", "Softer, brighter panels"], ["dark", "Dark", "Deep, dark panels for a dark room"]]
+      .forEach(([id, t, sub]) => r({ k: "g" + id, t, sub, check: S.glass === id, on: () => { S.glass = id; stage.className = "g-" + id; showPage(k, 1); } }));
+    H("Motion and Sound");
+    r({ k: "snd", t: "UI Sounds", sub: "Soft clicks as you move and select", v: S.sounds ? "On" : "Off", on: () => { S.sounds = !S.sounds; showPage(k, 1); } });
+    r({ k: "mot", t: "Reduce Motion", sub: "Wallpapers change without a crossfade", v: S.motion ? "On" : "Off", on: () => { S.motion = !S.motion; showPage(k, 1); } });
+  } else if (k === "wallpaper") {
+    title = "Wallpaper";
+    SCENES.forEach((s, i) => r({ k: "w" + i, t: s.name, thumb: W(s.id, "-t.jpg"), check: scene === i, on: () => { showScene(i); showPage(k, 1); } }));
+    H("Options"); r({ k: "rot", t: "Change Every 20 Seconds", v: S.rotate ? "On" : "Off", on: () => { S.rotate = !S.rotate; showPage(k, 1); } });
+    F("Photographs from Wikimedia Commons (CC BY-SA): Myrabella, Tyler Cipriani, Diego Delso, Jakub Fryš and Chensiyuan.");
+  } else if (k === "weather") {
+    title = "Weather";
+    r({ k: "wa", t: "Use My Location", sub: "Found from your internet connection", check: S.weather === "auto", on: () => { S.weather = "auto"; tick(); showPage(k, 1); } });
+    r({ k: "wc", t: "Choose a City", sub: S.weather === "city" ? `${CITIES[S.city]} · press OK for the next city` : "Press OK to pick", check: S.weather === "city", on: () => { if (S.weather === "city") S.city = (S.city + 1) % CITIES.length; S.weather = "city"; tick(); showPage(k, 1); } });
+    r({ k: "wo", t: "Don't Show Weather", check: S.weather === "off", on: () => { S.weather = "off"; tick(); showPage(k, 1); } });
+    F("Weather comes from open-meteo.com. No account, and nothing about you is stored.");
+  } else if (k === "tv") {
+    title = "TV Settings";
+    [["Wi-Fi and Network", "display"], ["Remotes and Accessories", "display"], ["Picture and Display", "display"], ["Sound", "display"], ["Apps", "home"], ["Accessibility", "about"], ["Date and Time", "about"], ["All TV Settings", "display"]]
+      .forEach(([t, ic], i) => r({ k: "t" + i, t, icon: ic, icbg: "#5f6571", go: 1, on: () => toast(`Opens the TV's own ${t} screen`) }));
+    F("These open the TV's own Settings. PureTV doesn't change them.");
+  } else if (k === "googletv") {
+    title = "Google TV";
+    r({ k: "rest", t: "Restore Original TV", sub: "Google TV's home is switched off. The PureTV agent turns it back on", on: () => menu("Restore Original TV", "On your computer, open Claude Code and paste:\n\nRestore my TV with https://github.com/advik-srivastava/puretv\n\nEverything comes back on exactly as the backup recorded it.", [{ k: "ok", t: "OK", center: 1, on: () => close(topL().root) }]) });
+    H("Always Kept"); r({ k: "k1", t: "Apps, accounts and sign-ins", v: "Kept" }); r({ k: "k2", t: "Watch history", v: "Kept" });
+    F("Nothing is ever uninstalled. Apps are only switched off, so restoring is one step.");
+  } else if (k === "updates") {
+    title = "Software Updates";
+    const t = upd === "checking" ? "Checking…" : upd === "latest" ? "PureTV 3.0.1 is up to date" : "Check for Updates";
+    r({ k: "upd", t, go: 1, on: () => { if (upd === "checking") return; upd = "checking"; showPage(k, 1); setTimeout(() => { upd = "latest"; if (curPage === "updates") showPage(k, 1); }, 1300); } });
+    r({ k: "auto", t: "Look for Updates Automatically", v: "On" });
+    r({ k: "src", t: "Update Source", v: "GitHub Releases" });
+    F("When the TV is switched on, PureTV looks for a new version and asks you before installing it. Android then shows its own confirmation. Your profiles and settings stay as they are.");
+  } else if (k === "about") {
+    title = "About";
+    rows.push('<div style="margin:12px 14px 10px"><div style="font:800 64px Inter">PureTV</div><div style="font:400 24px Inter;opacity:.8;margin-top:6px">Made with ❤️ by Crazified Studios</div></div>');
+    r({ k: "ver", t: "Version", v: "PureTV 3.0.1" }); r({ k: "web", t: "Website", v: "crazifiedstudios.com" });
+    r({ k: "help", t: "Help", v: "crazifiedstudios@gmail.com" }); r({ k: "des", t: "Design", v: "Inspired by Apple tvOS" });
+    F("Apple and tvOS are trademarks of Apple Inc. PureTV is an independent project, not affiliated with or endorsed by Apple.");
+  }
+  const keepKey = keep && cur && cur.closest("#page") ? cur.dataset.k : null;
+  pg.innerHTML = `<h1>${title}</h1>` + rows.join("");
+  pg.style.transform = "";
+  setRoot.pageActs = acts;
+  if (keepKey) { const e = $(`#pagein [data-k="${keepKey}"]`, setRoot); cur = null; focus(e || $("#pagein .r", setRoot), true); }
+}
+function editName(after) {
+  const c = document.createElement("div"); c.className = "card glass"; c.style.width = "680px";
+  c.innerHTML = `<h2>Your Name</h2><input id="nameIn" maxlength="24" value="${me().name}" style="margin-top:0;width:100%">`;
+  const h = open(c, () => { done(); });
+  const i = $("input", c); setTimeout(() => { i.focus(); i.select(); }, 60);
+  const done = () => { const v = i.value.trim(); if (v) me().name = v.slice(0, 24); i.blur(); close(h); buildHome(); after && after(); };
+  i.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); done(); } });
+}
+
+/* ---------- first-run setup (Setup.java) ---------- */
+const HELLOS = ["Welcome", "नमस्ते", "Hola", "Bonjour", "こんにちは", "Ciao", "Hallo"];
+let setupEl = null, helloT;
+function runSetup() {
+  setupEl = document.createElement("div"); setupEl.className = "setup";
+  setupEl.style.backgroundImage = `url(${W(SCENES[scene].id, "-glass.jpg")})`;
+  open(setupEl, () => step > 0 && step < 5 ? go(step - 1) : 0);
+  let step = 0, hi = 0;
+  const go = (n) => {
+    step = n; clearInterval(helloT);
+    const p = me();
+    const dots = n > 0 && n < 5 ? `<div class="dots">${[1, 2, 3, 4].map((i) => `<i class="${i === n ? "on" : ""}"></i>`).join("")}</div>` : "";
+    const btn = (k, t, sub, ex = {}) => rowHTML(Object.assign({ k, t, sub, center: !ex.check && ex.v === undefined && !ex.go }, ex)).replace('class="r', 'class="btn r');
+    let h = "";
+    if (n === 0) h = `<div class="hello">${HELLOS[0]}</div><div class="line">Welcome to PureTV for your TV.</div><div style="margin-top:24px">${btn("next", "Get Started", "Set up your Home screen")}</div><div class="madeby">Made with ❤️ by Crazified Studios</div>`;
+    if (n === 1) h = `<h1>Create Your Profile</h1><div class="line">Your name and avatar appear on the Home screen and in Settings.</div><div style="margin-top:24px">${btn("name", "Name", null, { v: p.name, go: 1, center: 0 })}</div>
+      <div class="emos">${EMOJIS.map((e, i) => `<div class="emo${p.emoji === e ? " on" : ""}" data-f data-emo="${i}" style="background:${EMO_BG[i]}">${e}</div>`).join("")}</div><div style="margin-top:14px">${btn("next", "Continue")}</div>`;
+    if (n === 2) h = `<h1>Look and Style</h1><div class="line">Choose the glass for menus, panels and Settings.</div><div style="margin-top:12px">`
+      + [["liquid", "Liquid Glass", "Clear glass that shows the wallpaper through"], ["frosted", "Frosted Glass", "Softer, brighter panels"], ["dark", "Dark", "Deep, dark panels for a dark room"]].map(([id, t, s]) => btn("g" + id, t, s, { check: S.glass === id })).join("") + `<div style="margin-top:12px">${btn("next", "Continue")}</div></div>`;
+    if (n === 3) h = `<h1>Choose a Wallpaper</h1><div class="line">Your clock sits behind the scenery. Wallpapers change every 20 seconds.</div><div class="looks">${SCENES.map((s, i) => `<div class="look" data-f data-look="${i}"><img src="${W(s.id, "-t.jpg")}" alt=""><span>${s.name}</span></div>`).join("")}</div>`;
+    if (n === 4) h = `<h1>Home Button</h1><div class="line">PureTV is this TV's Home screen. Google TV's home is switched off (not deleted), so the TV runs one Home screen and stays fast.</div><div style="margin-top:26px">${btn("next", "Continue")}</div>`;
+    if (n === 5) h = `<div style="font:800 64px Inter;color:#30d158">✓</div><h1>You're All Set</h1><div class="line">Change any of this in Settings, or run setup again from there.</div><div style="margin-top:24px">${btn("done", "Go to Home Screen")}</div><div class="madeby">Made with ❤️ by Crazified Studios</div>`;
+    setupEl.style.backgroundImage = `url(${W(SCENES[scene].id, "-glass.jpg")})`;
+    setupEl.innerHTML = h + dots;
+    setupEl.go = go; setupEl.step = () => step;
+    cur = null;
+    focus(n === 3 ? $$(".look", setupEl)[scene] : n === 2 ? $(`[data-k="g${S.glass}"]`, setupEl) : $("[data-f]", setupEl), true);
+    if (n === 0) helloT = setInterval(() => { const e = $(".hello", setupEl); if (!e) return; e.style.opacity = 0; setTimeout(() => { hi = (hi + 1) % HELLOS.length; e.textContent = HELLOS[hi]; e.style.opacity = 1; }, 400); }, 2600);
+  };
+  go(0);
+}
+function setupSelect(e) {
+  const n = setupEl.step();
+  if (e.dataset.emo) { const i = +e.dataset.emo; me().emoji = EMOJIS[i]; me().bg = EMO_BG[i]; buildHome(); return setupEl.go(1); }
+  if (e.dataset.look) { showScene(+e.dataset.look, false); return setupEl.go(4); }
+  const k = e.dataset.k;
+  if (k === "name") return editName(() => setupEl.go(1));
+  if (k && k.startsWith("g")) { S.glass = k.slice(1); stage.className = "g-" + S.glass; return setupEl.go(2); }
+  if (k === "done") { clearInterval(helloT); close(setupEl.parentNode); setupEl = null; try { localStorage.setItem("puretv.native.setup", "1"); } catch (x) { } return; }
+  if (k === "next") return setupEl.go(n + 1);
+}
+
+/* ---------- select, back, keys ---------- */
+function select() {
+  const e = cur; if (!e) return;
+  snd("ok");
+  if (setupEl && e.closest(".setup")) return setupSelect(e);
+  if (e.dataset.pin) return e.closest(".card").pin(e.dataset.pin);
+  if (setRoot && e.closest("#set")) {
+    if (e.dataset.side) { const f = $("#pagein .r", setRoot); return f && focus(f); }
+    const a = setRoot.pageActs[e.dataset.k]; return a && a();
+  }
+  const c = e.closest(".card"); if (c && c.actions && c.actions[e.dataset.k]) return c.actions[e.dataset.k]();
+  if (topL().home) return selectHome(e);
+}
+function back() {
+  snd("back");
+  if (appOpen) { $("#app").classList.remove("on"); appOpen = false; return; }
+  if (ambient) return setAmbient(false);
+  const t = topL();
+  if (!t.home) { if (t.back) return t.back(); return close(t.root); }
+  if (deep || (cur && cur.closest("#bar"))) focus($("#row1 .tile"));
+}
+function homeButton() {
+  if (appOpen) { $("#app").classList.remove("on"); appOpen = false; }
+  if (setupEl) return;
+  closeAll(); setAmbient(false); setDeep(false); focus($("#row1 .tile"));
+}
+let idleT, okT = null, okLong = false;
+function wake() { clearTimeout(idleT); idleT = setTimeout(() => { if (topL().home && !appOpen) setAmbient(true); }, 25000); }
+addEventListener("keydown", (e) => {
+  if (e.target.id === "nameIn") return;
+  const k = e.key; wake();
+  if (ambient) { e.preventDefault(); return setAmbient(false); }
+  if (k.startsWith("Arrow")) { e.preventDefault(); if (appOpen) return; if (e.repeat && performance.now() - (move.t || 0) < 110) return; move.t = performance.now();
+    return move(k === "ArrowLeft" ? -1 : k === "ArrowRight" ? 1 : 0, k === "ArrowUp" ? -1 : k === "ArrowDown" ? 1 : 0); }
+  if (k === "Enter" || k === " ") { e.preventDefault(); if (e.repeat || appOpen) return; okLong = false; clearTimeout(okT);
+    okT = setTimeout(() => { okLong = true; okT = null; if (cur && cur.dataset.app && topL().home) appMenu(cur); else select(); }, 520); return; }
+  if (k === "Escape" || k === "Backspace") { e.preventDefault(); return back(); }
+  if (k === "h" || k === "H") return homeButton();
+  if (k === "m" || k === "M") { if (topL().home && !me().kids) settings(); return; }
+  if (k === "r" || k === "R") { closeAll(); runSetup(); }
+});
+addEventListener("keyup", (e) => { if ((e.key === "Enter" || e.key === " ") && okT) { clearTimeout(okT); okT = null; if (!okLong) select(); } });
+stage.addEventListener("mousemove", (e) => { const t = e.target.closest("[data-f]"); if (t && items().includes(t) && t !== cur) focus(t); wake(); });
+stage.addEventListener("click", (e) => { wake(); if (ambient) return setAmbient(false); if (appOpen) return back(); const t = e.target.closest("[data-f]"); if (t && items().includes(t)) { focus(t, true); select(); } });
+stage.addEventListener("contextmenu", (e) => { e.preventDefault(); const t = e.target.closest("[data-app]"); if (t && topL().home) { focus(t, true); appMenu(t); } });
+
+/* ---------- start ---------- */
+buildHome(); showScene(0, false); tick();
+setInterval(tick, 5000);
+setInterval(() => { if (S.rotate && topL().home && !appOpen) showScene(scene + 1); }, 20000);
+document.fonts.ready.then(() => { placeDate(); glassAll(); });
+let seen = false; try { seen = localStorage.getItem("puretv.native.setup") === "1"; } catch (x) { }
+if (!seen || location.search.includes("setup")) runSetup(); else focus($("#row1 .tile"), true);
+wake();
+</script>
+</body>
+</html>

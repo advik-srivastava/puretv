@@ -24,7 +24,7 @@ final class Scenes {
     static final Scene[] ALL = {
         new Scene("ossau", "Ossau", 154, 400), new Scene("flatirons", "Flatirons", 150, 352),
         new Scene("luna", "Valle de la Luna", 246, 400), new Scene("kathleen", "Kathleen Lake", 174, 400),
-        new Scene("titicaca", "Titicaca Sunrise", 246, 400), new Scene("louise", "Lake Louise", 114, 400),
+        new Scene("titicaca", "Titicaca Sunrise", 246, 400), new Scene("louise", "Lake Louise", 150, 400),
     };
 
     interface Listener { void onScene(); }

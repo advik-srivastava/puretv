@@ -898,7 +898,7 @@ addEventListener("resize", fit); fit();
 const SCENES = [
   { id: "ossau", name: "Ossau", fg: true, top: 154, size: 400 }, { id: "flatirons", name: "Flatirons", fg: true, top: 150, size: 352 },
   { id: "luna", name: "Valle de la Luna", fg: true, top: 246, size: 400 }, { id: "kathleen", name: "Kathleen Lake", fg: true, top: 174, size: 400 },
-  { id: "titicaca", name: "Titicaca Sunrise", fg: true, top: 246, size: 400 }, { id: "louise", name: "Lake Louise", fg: true, top: 114, size: 400 },
+  { id: "titicaca", name: "Titicaca Sunrise", fg: true, top: 246, size: 400 }, { id: "louise", name: "Lake Louise", fg: true, top: 150, size: 400 },
 ];
 const P = (id, k = "") => `demo/wallpapers/${id}${k}`;
 let rotate = true, cwOn = true, reduceMotion = false;
@@ -910,7 +910,7 @@ function showScene(i) {
   scene = (i + SCENES.length) % SCENES.length;
   $$(".scene").forEach((e, k) => e.classList.toggle("on", k === scene));
   const d = $("#date"); d.classList.add("swap");
-  setTimeout(() => { d.className = "d-" + SCENES[scene].id; d.style.top = Math.max(SCENES[scene].top - 56, 96) + "px"; }, 900);
+  setTimeout(() => { d.className = "d-" + SCENES[scene].id; d.style.top = Math.max(SCENES[scene].top + SCENES[scene].size * .0425 - 63, 72) + "px"; }, 900);
   clearInterval(sceneTimer); if (rotate || saver) sceneTimer = setInterval(() => showScene(scene + 1), saver ? 9000 : 20000);
   if ($("#tvset").classList.contains("on")) renderSettings();
 }

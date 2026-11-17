@@ -10,3 +10,4 @@ tools/make_dark_icons.py
 release/
 app/ui/tvtest/
 launcher/assets/
+app/ui/native/

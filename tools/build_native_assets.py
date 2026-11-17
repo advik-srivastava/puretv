@@ -126,6 +126,12 @@ def main():
     art()
     fonts()
     sounds()
+    # the same files for the browser demo of the native app (app/ui/native.html)
+    mirror = ROOT / "app" / "ui" / "native"
+    if mirror.exists():
+        shutil.rmtree(mirror)
+    for d in ("wall", "art", "sfx"):
+        shutil.copytree(OUT / d, mirror / d)
     size = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
     print(f"built {OUT} ({size // 1024} KB)")
 

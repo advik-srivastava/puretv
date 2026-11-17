@@ -26,7 +26,9 @@ final class Store {
     }
 
     final List<Profile> profiles = new ArrayList<>();
-    int current, scene, dock = 5, city;
+    int current, scene, dock = 5, city, saverAfter = 90;   // seconds on Home before the screen saver; 0 = never
+    boolean dnd;
+    final List<String> recents = new ArrayList<>();          // apps opened from PureTV, newest first
     boolean rotate = true, sounds = true, setupDone, reduceMotion;
     String glass = "liquid", weather = "auto", pin = "1234";
 
@@ -58,12 +60,16 @@ final class Store {
             rotate = o.optBoolean("rotate", true); sounds = o.optBoolean("sounds", true); setupDone = o.optBoolean("setupDone");
             reduceMotion = o.optBoolean("reduceMotion"); glass = o.optString("glass", "liquid"); weather = o.optString("weather", "auto");
             pin = o.optString("pin", "1234");
+            saverAfter = o.optInt("saverAfter", 90); dnd = o.optBoolean("dnd");
+            JSONArray r = o.optJSONArray("recents");
+            recents.clear();
+            for (int k = 0; r != null && k < r.length(); k++) recents.add(r.getString(k));
         } catch (Exception ignored) { }
         if (profiles.isEmpty()) {
             Profile a = new Profile(); profiles.add(a);
             Profile k = new Profile(); k.name = "Kids"; k.emoji = "🐯"; k.bg = "#ff9500"; k.kids = true; profiles.add(k);
         }
-        Ui.soundsOn = sounds;
+        Ui.soundsOn = sounds && !dnd;
     }
 
     void save() {
@@ -78,9 +84,13 @@ final class Store {
             }
             o.put("profiles", ps).put("current", current).put("scene", scene).put("dock", dock).put("city", city)
                     .put("rotate", rotate).put("sounds", sounds).put("setupDone", setupDone).put("reduceMotion", reduceMotion)
-                    .put("glass", glass).put("weather", weather).put("pin", pin);
+                    .put("glass", glass).put("weather", weather).put("pin", pin)
+                    .put("saverAfter", saverAfter).put("dnd", dnd).put("recents", new JSONArray(recents));
             p.edit().putString("state", o.toString()).apply();
         } catch (Exception ignored) { }
-        Ui.soundsOn = sounds;
+        Ui.soundsOn = sounds && !dnd;
     }
+
+    String json() { save(); return p.getString("state", "{}"); }
+    void restore(String json) { p.edit().putString("state", json).apply(); load(); }
 }

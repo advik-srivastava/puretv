@@ -63,7 +63,7 @@ final class Setup {
         go(0);
     }
 
-    private void back() { if (step > 0 && step < 5) go(step - 1); }
+    private void back() { if (step > 0 && step < 6) go(step - 1); }
 
     private void go(int n) {
         step = n;
@@ -74,7 +74,7 @@ final class Setup {
             body.animate().alpha(1).translationY(0).setDuration(420).setInterpolator(Ui.EASE).start();
         }).start();
         dots.removeAllViews();
-        for (int i = 1; i <= 4 && n > 0 && n < 5; i++) {
+        for (int i = 1; i <= 5 && n > 0 && n < 6; i++) {
             View d = new View(a);
             d.setBackground(MainActivity.dot(i == n ? 0xFFFFFFFF : 0x59FFFFFF));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(i == n ? 10 : 8), Ui.px(i == n ? 10 : 8));
@@ -126,14 +126,29 @@ final class Setup {
                 break;
             }
             case 2: {
-                title("Look and Style");
-                line("Choose the glass for menus, panels and Settings.");
+                title("Look & Style");
+                line("Choose the glass for menus, panels and Control Center.");
                 String[][] g = { { "liquid", "Liquid Glass", "Clear glass that shows the wallpaper through" }, { "frosted", "Frosted Glass", "Softer, brighter panels" }, { "dark", "Dark", "Deep, dark panels for a dark room" } };
                 for (String[] x : g) button(new Row.Spec(x[0], x[1]).sub(x[2]).checked(s.glass.equals(x[0])).on(() -> { s.glass = x[0]; Glass.style = x[0]; s.save(); a.buildHome(); go(2); }), 12);
                 button(new Row.Spec("next", "Continue").on(() -> go(3)), 22);
                 break;
             }
             case 3: {
+                title("Weather");
+                line("A small weather reading on the Home screen, with a five-day forecast.");
+                button(new Row.Spec("wa", "Use My Location").sub("Found from your internet connection").checked("auto".equals(s.weather))
+                        .on(() -> { s.weather = "auto"; s.save(); a.weather.refresh(true); go(3); }), 22);
+                button(new Row.Spec("wc", "Choose a City…").sub("city".equals(s.weather) ? Store.CITIES[s.city] + " · press OK for the next city" : "Pick from a list")
+                        .checked("city".equals(s.weather)).on(() -> {
+                            if ("city".equals(s.weather)) s.city = (s.city + 1) % Store.CITIES.length;
+                            s.weather = "city"; s.save(); a.weather.refresh(true); go(3);
+                        }), 12);
+                button(new Row.Spec("wo", "Don't Show Weather").sub("Hide the weather on the Home screen").checked("off".equals(s.weather))
+                        .on(() -> { s.weather = "off"; s.save(); a.updateTime(); go(3); }), 12);
+                button(new Row.Spec("next", "Continue").on(() -> go(4)), 22);
+                break;
+            }
+            case 4: {
                 title("Choose a Wallpaper");
                 line("Your clock sits behind the scenery. Wallpapers change every 20 seconds.");
                 LinearLayout row = new LinearLayout(a);
@@ -161,7 +176,7 @@ final class Setup {
                         iv.setElevation(f ? Ui.fx(20) : 0);
                         name.setTextColor(f ? 0xFFFFFFFF : 0xCCFFFFFF);
                     });
-                    col.setOnClickListener(v -> { Ui.sound("ok"); a.scenes.show(k, false); s.scene = k; s.save(); a.placeDate(); go(4); });
+                    col.setOnClickListener(v -> { Ui.sound("ok"); a.scenes.show(k, false); s.scene = k; s.save(); a.placeDate(); go(5); });
                     LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
                     lp.leftMargin = lp.rightMargin = Ui.px(13);
                     row.addView(col, lp);
@@ -170,8 +185,8 @@ final class Setup {
                 row.post(() -> row.getChildAt(Math.max(0, a.scenes.index)).requestFocus());
                 return;
             }
-            case 4: {
-                title("Home Button");
+            case 5: {
+                title("Home Screen & Remote");
                 boolean home = Tv.isHome(a), helper = HomeHelper.enabled(a);
                 if (home) line("PureTV is this TV's Home screen. Google TV's home is switched off (not deleted), so the TV runs one Home screen and stays fast.");
                 else if (helper) line("The Remote Helper is on: the Home button opens PureTV.");
@@ -180,7 +195,7 @@ final class Setup {
                             + "For the fastest TV, let the PureTV agent on your computer switch Google TV's home off instead.");
                     button(new Row.Spec("helper", "Open Accessibility").on(() -> { HomeHelper.setOverride(a, true); Tv.settings(a, "access"); }), 22);
                 }
-                button(new Row.Spec("next", "Continue").on(() -> go(5)), home || helper ? 26 : 12);
+                button(new Row.Spec("next", "Continue").on(() -> go(6)), home || helper ? 26 : 12);
                 break;
             }
             default: {

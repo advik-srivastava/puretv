@@ -74,6 +74,25 @@ final class Menus {
         return h;
     }
 
+    /** Places a menu card next to what opened it, as in PureTV 2: above an app, under the profile button. */
+    static void anchor(FrameLayout holder, View at, boolean below) {
+        View card = holder.getChildAt(0);
+        int[] p = new int[2], r = new int[2];
+        at.getLocationOnScreen(p);
+        ((View) holder.getParent()).getLocationOnScreen(r);
+        float cx = p[0] - r[0] + at.getWidth() / 2f, top = p[1] - r[1], bottom = top + at.getHeight() * at.getScaleY();
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) card.getLayoutParams();
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        card.setLayoutParams(lp);
+        card.post(() -> {
+            float w = card.getWidth(), h = card.getHeight(), W = holder.getWidth();
+            float x = below ? p[0] - r[0] : Math.max(Ui.fx(40), Math.min(W - w - Ui.fx(40), cx - w / 2));
+            float y = below ? bottom + Ui.fx(18) : Math.max(Ui.fx(30), top - h - Ui.fx(34));
+            card.setX(x); card.setY(y);
+            card.setPivotX(below ? Ui.fx(60) : cx - x); card.setPivotY(below ? 0 : h);
+        });
+    }
+
     static void toast(MainActivity a, String msg) {
         TextView t = Ui.text(a, 24, Ui.semibold, 0xFFFFFFFF);
         t.setText(msg);
@@ -127,8 +146,9 @@ final class Menus {
             a.toast(app.name + " is hidden. Settings › Home Screen brings it back");
         }));
         rows.add(new Row.Spec("info", "App Info").sub("The TV's own page for this app").on(() -> { done.run(); Tv.settings(a, "appinfo:" + pkg); }));
-        h[0] = card(a, app.name, null, rows, 560);
+        h[0] = card(a, app.name, null, rows, 480);
         a.open(h[0], done);
+        anchor(h[0], t, false);
     }
 
     private static void move(Store.Profile me, List<String> top, String pkg, int by) {
@@ -152,7 +172,11 @@ final class Menus {
                         if (was.kids && !p.kids) pin(a, false, go); else go.run();
                     }));
         }
-        h[0] = Menus.show(a, "Who's Watching?", null, rows);
+        h[0] = card(a, "Who's watching?", null, rows, 460);
+        a.open(h[0], null);
+        View chip = a.findViewById(R.id.puretv_chip);
+        if (chip != null && chip.isShown()) anchor(h[0], chip, true);
+        else a.darken(.7f);
     }
 
     static void inputs(MainActivity a) {

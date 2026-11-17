@@ -149,6 +149,13 @@ class DemoTV:
             return "12.0\n" + HOME_COST.get(home, (0, "1.0"))[1]
         if cmd.startswith("input keyevent"):
             return ""
+        m = re.fullmatch(r"dumpsys gfxinfo (\S+)( reset)?", cmd)
+        if m:   # Google TV's home drops frames; PureTV's native home hardly any
+            if m.group(2):
+                return ""
+            frames, janky, p90 = (1180, 401, 48) if "launcherx" in m.group(1) else (1240, 9, 11)
+            return (f"Total frames rendered: {frames}\nJanky frames: {janky} ({100 * janky / frames:.2f}%)\n"
+                    f"50th percentile: 9ms\n90th percentile: {p90}ms\n95th percentile: {p90 + 6}ms")
         if cmd.startswith("settings list"):
             return "\n".join(f"{k}={v}" for k, v in self.settings.items())
         if cmd.startswith("pm install"):

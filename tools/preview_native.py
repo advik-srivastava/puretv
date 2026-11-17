@@ -16,7 +16,7 @@ A = ROOT / "launcher" / "assets"
 OUT = ROOT / "assets" / "preview"
 S = 2                      # drawn at 2x, then scaled down for smooth edges
 W, H = 1920 * S, 1080 * S
-SCENES = {"ossau": (154, 400), "flatirons": (150, 352), "luna": (246, 400), "kathleen": (174, 400), "titicaca": (246, 400), "louise": (114, 400)}
+SCENES = {"ossau": (154, 400), "flatirons": (150, 352), "luna": (246, 400), "kathleen": (174, 400), "titicaca": (246, 400), "louise": (150, 400)}
 EMOJI = "C:/Windows/Fonts/seguiemj.ttf"
 
 
@@ -102,18 +102,18 @@ def scene_layer(scene, time="7:42", darken=0.0):
     f = font("antonio_light", scene.size)
     tm = Image.new("L", (W, H), 0)
     d = ImageDraw.Draw(tm)
-    base = p(scene.top) + int(scene.size * S * .86)
+    base = p(scene.top) + int(scene.size * S * .9175)
     d.text((W // 2, base), time, font=f, fill=255, anchor="ms")
     # shadow under the rim fill
     sh = Image.new("RGBA", (W, H), (0, 26, 45, 0))
-    sh.putalpha(tm.point(lambda v: int(v * .34)))
+    sh.putalpha(tm.point(lambda v: int(v * .5)))
     sh = sh.filter(ImageFilter.GaussianBlur(p(13)))
     img.alpha_composite(sh, (0, p(4)))
-    fill = ImageEnhance.Color(ImageEnhance.Brightness(scene.glass).enhance(1.18)).enhance(1.15).convert("RGBA")
+    fill = ImageEnhance.Color(ImageEnhance.Brightness(scene.glass).enhance(1.3)).enhance(1.15).convert("RGBA")
     fill.putalpha(tm.point(lambda v: int(v * .92)))
     img.alpha_composite(fill)
     white = Image.new("RGBA", (W, H), (255, 255, 255, 0))
-    white.putalpha(tm.point(lambda v: int(v * .34)))
+    white.putalpha(tm.point(lambda v: int(v * .5)))
     img.alpha_composite(white)
     stroke = Image.new("L", (W, H), 0)
     ImageDraw.Draw(stroke).text((W // 2, base), time, font=f, fill=255, anchor="ms", stroke_width=max(2, p(1.25)), stroke_fill=255)
@@ -130,7 +130,7 @@ def scene_layer(scene, time="7:42", darken=0.0):
 def date_block(img, scene, greet="Good evening, Advik", line="Tuesday 17 November   ☁︎ 24° Cloudy"):
     d = ImageDraw.Draw(img)
     g, t = font("inter_semibold", 22), font("inter_semibold", 34)
-    bottom = p(scene.top - 24)
+    bottom = p(scene.top + scene.size * .0425 - 22)
     h = p(22 + 8 + 34)
     top = max(bottom - h, p(64))
     for txt, f, y, a in ((greet, g, top, 217), (line.replace("☁︎", "").replace("  ", " "), t, top + p(30), 255)):
