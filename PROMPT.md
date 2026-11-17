@@ -261,7 +261,7 @@ It should report that the port is closed.
      PT restore
      ```
   4. Everything switched off comes back on, including Google TV's home, the original settings and DNS. PureTV stays installed but no longer opens with Home; they can remove it in Settings › Apps.
-- **"The ads came back after a TV update"**
+- **"Check my TV" / "The ads came back after a TV update"**
   1. Steps 2–4, then ask.
   2. Run:
      ```bash

@@ -1,6 +1,8 @@
 # Install PureTV Home on your TV
 
-Tested for the **Acer V Pro Series 32" QLED HD Ready Google TV** (AR32QDXGU2841AT, Android 14, 1366 × 768). It works the same on other Google TV and Android TV sets.
+> **The best way is with Claude.** Paste `Set up my TV with https://github.com/advik-srivastava/puretv` into Claude Code on a computer on the same Wi-Fi. Claude backs the TV up, switches off tracking and bloat, makes PureTV the only Home screen and restarts the TV. This page is for installing just the Home screen by hand.
+
+Made for the **Acer V Pro Series 32" QLED HD Ready Google TV** (AR32QDXGU2841AT, Android 14, 1366 × 768). It works the same on other Google TV and Android TV sets.
 
 PureTV Home is an app like any other. Installing it doesn't change, clear or sign out of any app, account or setting on the TV. Google TV stays installed.
 
@@ -23,7 +25,7 @@ The file to install is `PureTV-Home-<version>.apk` (about 4 MB) from the [latest
    adb connect 192.168.1.14:5555
    ```
    ```bash
-   adb install -r PureTV-Home-3.0.apk
+   adb install -r PureTV-Home-3.1.apk
    ```
    Allow the prompt that appears on the TV. `192.168.1.14` is your TV's address on your Wi-Fi.
 
@@ -35,10 +37,10 @@ The file to install is `PureTV-Home-<version>.apk` (about 4 MB) from the [latest
 ## 2. Open PureTV
 PureTV Home appears in the TV's **Apps** row. Open it, and setup walks you through:
 - your profile;
-- the glass style;
+- the glass style (Look & Style);
 - the weather;
 - the wallpaper;
-- the Home button.
+- the Home screen and remote.
 
 ## 3. Make the Home button open PureTV
 Google TV doesn't let you pick another Home app in its settings. PureTV gets around this in one of two ways:
@@ -63,11 +65,19 @@ While Google TV's home is still on (Remote Helper setup), **Settings › Google 
 - Your profiles, top row, wallpaper and settings are kept.
 - You can turn automatic checks off in **Settings › Software Updates**.
 
+## Using PureTV
+- **Up** from the apps opens the top bar: your profile, search, the Home / Apps / Live TV tabs, the weather, Control Center and Settings.
+- **Menu** on the remote opens Control Center.
+- **Hold OK** on an app to move or hide it.
+- **Down** from the top row shows all your apps.
+- After 90 seconds on Home, the screensaver starts. You can change that in **Settings › Screen Saver**.
+
 ## Why it's fast
 - PureTV is a native Android app, with no web view.
 - The Liquid Glass is drawn from a pre-blurred copy of the wallpaper, so nothing is blurred live.
 - At rest the Home screen does nothing until the minute changes or a wallpaper fades.
 - Wallpapers are sized for HD panels like the Acer's 1366 × 768. Only the one on screen and the next are kept in memory, and the next is dropped while you're in an app.
-- With Google TV's home switched off, the TV runs one Home screen instead of two.
+- With Google TV's home switched off (Claude does this), the TV runs one Home screen instead of two.
+- Claude's report card shows how many frames are drawn late, before and after, measured on your TV.
 
 Help: crazifiedstudios@gmail.com · crazifiedstudios.com
