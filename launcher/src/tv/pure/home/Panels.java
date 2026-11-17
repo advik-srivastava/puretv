@@ -98,11 +98,14 @@ final class Panels {
         power.addView(pt);
         power.action = () -> { a.closeAll(); if (!HomeHelper.sleep()) a.toast("Press the power button on the remote"); };
 
-        Btn wifi = pill(a, "wifi", "Wi-Fi", Tv.wifiName(a), () -> { a.closeAll(); Tv.settings(a, "network"); });
+        Device.ask(a, a.getSharedPreferences("puretv", Context.MODE_PRIVATE));   // once: lets PureTV show the Wi-Fi name and devices
+        Device.Net net = Device.net(a);
+        Btn wifi = pill(a, net.kind.equals("Ethernet") ? "inputs" : "wifi", net.kind.equals("Offline") ? "Wi-Fi" : net.kind, net.connected ? net.name : "Not connected",
+                () -> { a.closeAll(); wifiCard(a); });
         Btn dnd = pill(a, "moon", "Do Not Disturb", null, null);
         dnd.setOn(s.dnd);
         dnd.action = () -> { s.dnd = !s.dnd; s.save(); dnd.setOn(s.dnd); a.toast(s.dnd ? "Do Not Disturb: no update prompts or sounds" : "Do Not Disturb is off"); };
-        Btn audio = pill(a, "audio", "Audio", "TV Speakers", () -> { a.closeAll(); Tv.settings(a, "sound"); });
+        Btn audio = pill(a, "audio", "Audio", Device.audio(a), () -> { a.closeAll(); Tv.settings(a, "sound"); });
         Btn sleep = pill(a, "sleep", "Sleep Timer", SLEEP[a.sleepIx], null);
         sleep.setOn(a.sleepIx > 0);
         sleep.action = () -> {
@@ -111,7 +114,8 @@ final class Panels {
             sleep.setOn(a.sleepIx > 0);
             ((TextView) ((LinearLayout) sleep.getChildAt(1)).getChildAt(1)).setText(SLEEP[a.sleepIx]);
         };
-        Btn bt = pill(a, "bluetooth", "Bluetooth", "Remotes", () -> { a.closeAll(); Tv.settings(a, "bluetooth"); });
+        Btn bt = pill(a, "bluetooth", "Bluetooth", Device.btLine(a), () -> { a.closeAll(); btCard(a); });
+        bt.setOn(Device.btOn(a));
         int pct = memUsedPct(a);
         Btn mem = pill(a, "memory", "Memory", pct + "% used", () -> { a.closeAll(); recents(a); });
         ((LinearLayout) mem.getChildAt(1)).addView(bar(a, pct, 150), new LinearLayout.LayoutParams(Ui.px(150), Ui.px(8)));
@@ -187,6 +191,38 @@ final class Panels {
         a.open(holder, null);
         a.darken(.25f);
         holder.post(power::requestFocus);
+    }
+
+    /** Wi-Fi: the network you're on, its signal and address, and the TV's own Wi-Fi settings. */
+    static void wifiCard(MainActivity a) {
+        Device.Net n = Device.net(a);
+        List<Row.Spec> rows = new ArrayList<>();
+        if (n.connected) {
+            rows.add(new Row.Spec("net", n.name).icon(n.kind.equals("Ethernet") ? "inputs" : "wifi", 0xFF1C64D6)
+                    .sub(n.kind.equals("Ethernet") ? "Wired connection" : Device.bars(n.bars)).checked(true));
+            if (!n.ip.isEmpty()) rows.add(new Row.Spec("ip", "IP Address").value(n.ip));
+        } else rows.add(new Row.Spec("off", "Not connected").sub("Choose a network in the TV's Wi-Fi settings"));
+        if (n.kind.equals("Wi-Fi") && "Connected".equals(n.name))
+            rows.add(new Row.Spec("why", "Show the Network Name").sub("Needs location access for PureTV, and Location on in the TV's settings")
+                    .on(() -> Tv.start(a, new android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + a.getPackageName())))));
+        rows.add(new Row.Spec("set", "Wi-Fi Settings").go().on(() -> { a.closeAll(); Tv.settings(a, "network"); }));
+        Menus.show(a, n.kind.equals("Ethernet") ? "Network" : "Wi-Fi", null, rows);
+    }
+
+    /** Bluetooth: your paired devices, which are connected, and the TV's own Bluetooth settings. */
+    static void btCard(MainActivity a) {
+        List<Row.Spec> rows = new ArrayList<>();
+        if (!Device.btOn(a)) rows.add(new Row.Spec("off", "Bluetooth is off").sub("Turn it on in the TV's Bluetooth settings"));
+        else if (!Device.canBt(a)) rows.add(new Row.Spec("perm", "Show Your Devices").sub("Allow PureTV to see nearby devices")
+                .on(() -> a.requestPermissions(new String[] { android.Manifest.permission.BLUETOOTH_CONNECT }, 8)));
+        else {
+            List<Device.Bt> list = Device.bt(a);
+            if (list.isEmpty()) rows.add(new Row.Spec("none", "No paired devices"));
+            for (Device.Bt b : list) rows.add(new Row.Spec("d" + rows.size(), b.name).icon("bluetooth", b.connected ? 0xFF1C64D6 : 0xFF5F6571)
+                    .sub(b.kind + (b.connected ? " · Connected" : " · Not connected")));
+        }
+        rows.add(new Row.Spec("pair", "Pair a Remote or Accessory").go().on(() -> { a.closeAll(); Tv.settings(a, "bluetooth"); }));
+        Menus.show(a, "Bluetooth", null, rows);
     }
 
     private static LinearLayout col(MainActivity a) { LinearLayout c = new LinearLayout(a); c.setOrientation(LinearLayout.VERTICAL); c.setClipChildren(false); return c; }

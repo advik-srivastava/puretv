@@ -96,6 +96,7 @@ public class MainActivity extends Activity {
         scenes = new Scenes(this, store.scene);
         weather = new Weather(this, this::updateTime);
         updates = new Updates(this);
+        Device.init(this);
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -556,6 +557,16 @@ public class MainActivity extends Activity {
         ui.removeCallbacks(rotate);
         ui.removeCallbacks(idle);
         super.onPause();
+    }
+
+    /** Once you allow it on the TV, the Wi-Fi name and Bluetooth devices show straight away. */
+    @Override public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(code, perms, results);
+        Device.init(this);
+        if (code == 7 || code == 8) {   // reopen Control Center or the Bluetooth card, now with names
+            closeAll();
+            if (code == 7) Panels.controlCenter(this); else Panels.btCard(this);
+        }   // (9 = from Settings: the page shows the names next time it opens)
     }
 
     @Override public void onTrimMemory(int level) {

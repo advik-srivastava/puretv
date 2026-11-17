@@ -8,6 +8,16 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Recent Apps: "close" stops an app that is in the background. Its data and sign-in are kept. -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- Control Center and Settings show the Wi-Fi network's name, your Bluetooth devices and where the sound goes.
+         Android only reveals a Wi-Fi name to apps with location access; PureTV never reads or stores a location. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
     <!-- Settings › Clean Up lists the apps that are switched off on this TV. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <!-- Online for two things only: PureTV's own updates (api.github.com, github.com) and the weather (open-meteo.com). -->

@@ -489,6 +489,9 @@ def install_launcher(tv, disable_setup=False, log=print, keep_stock=False):
     log("Launcher installed.")
     # lets PureTV hand its own updates to Android's installer later (Settings > Software Updates)
     tv.sh(f"appops set {OUR_PKG} REQUEST_INSTALL_PACKAGES allow")
+    # so Control Center can show the Wi-Fi network's name and your Bluetooth devices (no location is read or kept)
+    for perm in ("ACCESS_FINE_LOCATION", "BLUETOOTH_CONNECT"):
+        tv.sh(f"pm grant {OUR_PKG} android.permission.{perm}")
     start = tv.sh(f"am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n {OUR_HOME}")
     if "Status: ok" not in start or re.search(r"^Error", start, re.M):
         raise TVError("The new launcher did not start, so the stock Home was left enabled.")

@@ -237,15 +237,34 @@ final class Settings {
                 break;
             }
             case "network": {
-                title.setText("Wi-Fi");
-                row(new Row.Spec("wifi", "Wi-Fi").value(Tv.wifiName(a)).go().on(() -> Tv.settings(a, "network")));
+                Device.Net n = Device.net(a);
+                title.setText(n.kind.equals("Ethernet") ? "Network" : "Wi-Fi");
+                if (n.connected) {
+                    row(new Row.Spec("net", n.name).icon(n.kind.equals("Ethernet") ? "inputs" : "wifi", 0xFF1C64D6)
+                            .sub(n.kind.equals("Ethernet") ? "Wired connection" : Device.bars(n.bars)).checked(true).on(() -> Tv.settings(a, "network")));
+                    if (!n.ip.isEmpty()) row(new Row.Spec("ip", "IP Address").value(n.ip));
+                } else row(new Row.Spec("off", "Not connected").on(() -> Tv.settings(a, "network")));
                 row(new Row.Spec("other", "Other Networks…").go().on(() -> Tv.settings(a, "network")));
-                foot("These open the TV's own network settings.");
+                foot(n.kind.equals("Wi-Fi") && "Connected".equals(n.name)
+                        ? "To show the network's name, allow PureTV location access (Settings › Apps › PureTV Home › Permissions) and turn Location on. Nothing about your location is used or stored."
+                        : "Changes open the TV's own network settings.");
                 break;
             }
             case "bluetooth": {
                 title.setText("Bluetooth");
-                row(new Row.Spec("remote", "Remotes and Accessories").sub("Your remote, keyboards, headphones").go().on(() -> Tv.settings(a, "bluetooth")));
+                row(new Row.Spec("bton", "Bluetooth").value(Device.btOn(a) ? "On" : "Off").on(() -> Tv.settings(a, "bluetooth")));
+                if (Device.btOn(a)) {
+                    if (!Device.canBt(a)) row(new Row.Spec("perm", "Show Your Devices").sub("Allow PureTV to see nearby devices")
+                            .on(() -> a.requestPermissions(new String[] { android.Manifest.permission.BLUETOOTH_CONNECT }, 9)));
+                    else {
+                        java.util.List<Device.Bt> list = Device.bt(a);
+                        head(list.isEmpty() ? "No Paired Devices" : "My Devices");
+                        int i = 0;
+                        for (Device.Bt b : list) row(new Row.Spec("d" + i++, b.name).icon("bluetooth", b.connected ? 0xFF1C64D6 : 0xFF5F6571)
+                                .sub(b.kind).value(b.connected ? "Connected" : "Not Connected").on(() -> Tv.settings(a, "bluetooth")));
+                    }
+                }
+                head("");
                 row(new Row.Spec("pair", "Pair a Remote or Accessory").go().on(() -> Tv.settings(a, "bluetooth")));
                 break;
             }
@@ -328,7 +347,19 @@ final class Settings {
                 by.setText("Made with ❤ by Crazified Studios");
                 by.setPadding(Ui.px(14), Ui.px(6), 0, Ui.px(10));
                 page.addView(by);
-                row(new Row.Spec("ver", "Version").value("PureTV " + Updater.installedVersion(a)));
+                head("This TV");
+                row(new Row.Spec("name", "Name").value(Device.name(a)));
+                row(new Row.Spec("model", "Model").value(Device.model()));
+                row(new Row.Spec("os", "Software").value(Device.os()));
+                row(new Row.Spec("screen", "Screen").value(Device.screen(a)));
+                row(new Row.Spec("mem", "Memory").value(Device.memory(a)));
+                row(new Row.Spec("disk", "Storage").value(Device.storage()));
+                Device.Net n = Device.net(a);
+                row(new Row.Spec("net", n.kind.equals("Offline") ? "Network" : n.kind).value(n.connected ? n.name : "Not connected"));
+                if (!n.ip.isEmpty()) row(new Row.Spec("ip", "IP Address").value(n.ip));
+                row(new Row.Spec("off", "Apps Switched Off").value(String.valueOf(disabledApps(a).size())));
+                head("PureTV");
+                row(new Row.Spec("ver", "Version").value("PureTV " + Updater.installedVersion(a)).on(() -> { a.closeAll(); new Settings(a).show("updates"); }));
                 row(new Row.Spec("web", "Website").value("crazifiedstudios.com").on(() -> Tv.start(a, new Intent(Intent.ACTION_VIEW, Uri.parse("https://crazifiedstudios.com")))));
                 row(new Row.Spec("help", "Help").value("crazifiedstudios@gmail.com"));
                 row(new Row.Spec("design", "Design").value("Inspired by Apple tvOS"));
