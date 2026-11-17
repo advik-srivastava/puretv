@@ -26,6 +26,10 @@ import android.view.accessibility.AccessibilityEvent;
 public class HomeHelper extends AccessibilityService {
     private static HomeHelper running;
     private long lastLaunch;
+    private CharSequence front = "";   // the app that last came to the front
+    private final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+    /** Google TV's home can pull itself back to the front once its own start-up finishes; look again. */
+    private final Runnable recheck = () -> { if (override(this) && isGoogleHome(front)) showPureTV(true); };
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("home", Context.MODE_PRIVATE); }
     static boolean override(Context c) { return prefs(c).getBoolean("override", true); }
@@ -54,23 +58,27 @@ public class HomeHelper extends AccessibilityService {
         return false;
     }
 
-    private void showPureTV() {
+    private void showPureTV(boolean force) {
         long now = SystemClock.uptimeMillis();
-        if (now - lastLaunch < 700) return;   // one launch per press
+        if (!force && now - lastLaunch < 700) { h.removeCallbacks(recheck); h.postDelayed(recheck, 800); return; }
         lastLaunch = now;
+        h.removeCallbacks(recheck);
+        h.postDelayed(recheck, 1500);   // after a TV start, Google TV may come back once more
+        h.postDelayed(recheck, 4000);
         Intent i = new Intent(this, MainActivity.class).setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_NO_ANIMATION);
         try { startActivity(i); } catch (Exception ignored) { }
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {
-        if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || !override(this)) return;
-        if (isGoogleHome(e.getPackageName())) showPureTV();
+        if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
+        if (e.getPackageName() != null) front = e.getPackageName();
+        if (override(this) && isGoogleHome(e.getPackageName())) showPureTV(false);
     }
 
     @Override protected boolean onKeyEvent(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.KEYCODE_HOME && override(this)) {
-            if (e.getAction() == KeyEvent.ACTION_UP) showPureTV();
+            if (e.getAction() == KeyEvent.ACTION_UP) showPureTV(false);
             return true;
         }
         return false;

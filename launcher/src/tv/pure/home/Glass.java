@@ -30,6 +30,12 @@ final class Glass extends Drawable {
     private final int[] at = new int[2];
     float extraAlpha = 1f;
     private final Scenes.Listener redraw = this::invalidateSelf;
+    // made once, reused on every frame (allocating while animating makes small TVs stutter)
+    private Bitmap shaderFor0, shaderFor1;
+    private BitmapShader shader0, shader1;
+    private float gw = -1, gh = -1;
+    private String gStyle = "";
+    private LinearGradient sheenG, edgeG;
 
     Glass(View host, Scenes scenes, float radiusDesign) {
         this.host = host; this.scenes = scenes; radius = Ui.fx(radiusDesign);
@@ -49,14 +55,19 @@ final class Glass extends Drawable {
         tint.setColor(dark ? 0xCC0E0E12 : frosted ? 0x61464854 : 0x38181820);
         tint.setAlpha(Math.round(Color.alpha(tint.getColor()) * extraAlpha));
         c.drawRoundRect(r, radius, radius, tint);
+        if (gw != r.width() || gh != r.height() || !gStyle.equals(style)) {
+            gw = r.width(); gh = r.height(); gStyle = style;
+            sheenG = new LinearGradient(r.left, r.top, r.left + r.width() * .4f, r.bottom,
+                    frosted ? 0x57FFFFFF : 0x38FFFFFF, frosted ? 0x2EFFFFFF : 0x0FFFFFFF, Shader.TileMode.CLAMP);
+            edgeG = new LinearGradient(0, r.top, 0, r.bottom, 0x8CFFFFFF, 0x24FFFFFF, Shader.TileMode.CLAMP);
+        }
         if (!dark) {   // light falling across the glass, brighter at the top
-            sheen.setShader(new LinearGradient(r.left, r.top, r.left + r.width() * .4f, r.bottom,
-                    frosted ? 0x57FFFFFF : 0x38FFFFFF, frosted ? 0x2EFFFFFF : 0x0FFFFFFF, Shader.TileMode.CLAMP));
+            sheen.setShader(sheenG);
             sheen.setAlpha(a);
             c.drawRoundRect(r, radius, radius, sheen);
         }
         float s = edge.getStrokeWidth() / 2;
-        edge.setShader(new LinearGradient(0, r.top, 0, r.bottom, 0x8CFFFFFF, 0x24FFFFFF, Shader.TileMode.CLAMP));
+        edge.setShader(edgeG);
         edge.setAlpha(Math.round(a * (dark ? .5f : 1f)));
         c.drawRoundRect(r.left + s, r.top + s, r.right - s, r.bottom - s, radius, radius, edge);
     }
@@ -66,7 +77,13 @@ final class Glass extends Drawable {
         synchronized (s) { g = s.glass; }
         if (g == null || alpha == 0) return;
         View root = host.getRootView();
-        BitmapShader sh = new BitmapShader(g, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        BitmapShader sh;
+        if (g == shaderFor0) sh = shader0;
+        else if (g == shaderFor1) sh = shader1;
+        else {   // two slots: the wallpaper on screen and the one fading out
+            shaderFor1 = shaderFor0; shader1 = shader0;
+            shaderFor0 = g; shader0 = sh = new BitmapShader(g, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        }
         m.setScale(root.getWidth() / (float) g.getWidth(), root.getHeight() / (float) g.getHeight());
         m.postTranslate(-at[0] - host.getScrollX(), -at[1] - host.getScrollY());
         sh.setLocalMatrix(m);

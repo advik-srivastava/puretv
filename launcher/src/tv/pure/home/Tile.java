@@ -29,6 +29,9 @@ final class Tile extends View {
     private final Matrix m = new Matrix();
     private final float radius, faceH;
     boolean held;
+    private BitmapShader artShader;
+    private LinearGradient glossG, sysG;
+    private float madeW = -1;
 
     Tile(Context c, String pkg, String sys, String label, Bitmap art, float w, float h, boolean kidsBadge) {
         super(c);
@@ -48,7 +51,7 @@ final class Tile extends View {
         setContentDescription(label);
     }
 
-    void setArt(Bitmap b) { art = b; invalidate(); }
+    void setArt(Bitmap b) { art = b; artShader = null; invalidate(); }
 
     @Override protected void onSizeChanged(int w, int h, int ow, int oh) { setPivotX(w / 2f); setPivotY(faceH / 2f); }
 
@@ -63,26 +66,33 @@ final class Tile extends View {
     @Override protected void onDraw(Canvas c) {
         float w = getWidth();
         face.set(0, 0, w, faceH);
+        if (madeW != w) {   // shaders are built once per size, not on every frame
+            madeW = w;
+            artShader = null;
+            glossG = new LinearGradient(0, 0, 0, faceH * .6f, 0x33FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP);
+            boolean g0 = "settings".equals(sys), p0 = "parents".equals(sys);
+            sysG = new LinearGradient(0, 0, 0, faceH, g0 ? 0xFFE4E6EA : p0 ? 0xFFFFD36A : 0xFF9AA0AB, g0 ? 0xFFA9ADB5 : p0 ? 0xFFF0A020 : 0xFF5F6571, Shader.TileMode.CLAMP);
+        }
         if (art != null) {
-            BitmapShader sh = new BitmapShader(art, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            float k = Math.max(w / art.getWidth(), faceH / art.getHeight());
-            m.setScale(k, k);
-            m.postTranslate((w - art.getWidth() * k) / 2, (faceH - art.getHeight() * k) / 2);
-            sh.setLocalMatrix(m);
-            pic.setShader(sh);
+            if (artShader == null) {
+                artShader = new BitmapShader(art, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                float k = Math.max(w / art.getWidth(), faceH / art.getHeight());
+                m.setScale(k, k);
+                m.postTranslate((w - art.getWidth() * k) / 2, (faceH - art.getHeight() * k) / 2);
+                artShader.setLocalMatrix(m);
+            }
+            pic.setShader(artShader);
             c.drawRoundRect(face, radius, radius, pic);
         } else {
             boolean gear = "settings".equals(sys);
-            bg.setShader(new LinearGradient(0, 0, 0, faceH,
-                    gear ? 0xFFE4E6EA : "parents".equals(sys) ? 0xFFFFD36A : 0xFF9AA0AB,
-                    gear ? 0xFFA9ADB5 : "parents".equals(sys) ? 0xFFF0A020 : 0xFF5F6571, Shader.TileMode.CLAMP));
+            bg.setShader(sysG);
             c.drawRoundRect(face, radius, radius, bg);
             float s = faceH * .5f;
             if (gear) Icons.gear(c, w / 2, faceH / 2, s * .62f);
             else Icons.draw(c, "parents".equals(sys) ? "lock" : sys, w / 2 - s / 2, faceH / 2 - s / 2, s, 0xFFFFFFFF);
         }
         if (isFocused()) {   // a soft highlight across the top, like light on glass
-            gloss.setShader(new LinearGradient(0, 0, 0, faceH * .6f, 0x33FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP));
+            gloss.setShader(glossG);
             c.drawRoundRect(face, radius, radius, gloss);
         }
         if (held) {

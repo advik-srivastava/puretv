@@ -60,6 +60,8 @@ final class Setup {
 
     void show() {
         a.open(holder, this::back);
+        holder.animate().cancel();   // fully there from the first frame: no glimpse of Home behind it
+        holder.setAlpha(1f); holder.setScaleX(1f); holder.setScaleY(1f);
         go(0);
     }
 

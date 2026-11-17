@@ -434,6 +434,16 @@ def trim_caches(tv, log=print):
     return {"freedMb": gained}
 
 
+def optimize_apps(tv, log=print):
+    """Android's own ahead-of-time compile of installed apps, normally left for when the TV idles overnight.
+    Apps then open faster. Nothing is changed or removed; it can take a few minutes."""
+    log("Speeding up app launches (Android compiles the apps ahead of time; a few minutes)…")
+    out = tv.sh("pm bg-dexopt-job", timeout=900.0)
+    ok = "Failure" not in out and "Error" not in out
+    log("Apps are optimised." if ok else f"! Android didn't finish ({out[:120] or 'no answer'}); it does this by itself overnight.")
+    return {"ok": ok}
+
+
 # ---------------------------------------------------------------- launcher
 
 def stock_launcher(tv, home=None):

@@ -24,7 +24,8 @@ final class SceneView extends View {
     private final Matrix m = new Matrix();
     String time = "";
     float darken;
-    private final Scenes.Listener redraw = this::invalidate;            // 0..1: the grid or Settings is open
+    private final Scenes.Listener redraw = this::invalidate;
+    private final java.util.WeakHashMap<Bitmap, BitmapShader> shaders = new java.util.WeakHashMap<>();            // 0..1: the grid or Settings is open
 
     SceneView(Context c, Scenes s) {
         super(c);
@@ -63,7 +64,8 @@ final class SceneView extends View {
             float size = Ui.fx(s.clockSize), top = Ui.fx(s.clockTop), base = top + size * .9175f, cx = w / 2f;
             for (Paint p : new Paint[] { fill, rim }) { p.setTextSize(size); p.setLetterSpacing(.01f); }
             if (glass != null) {
-                BitmapShader sh = new BitmapShader(glass, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                BitmapShader sh = shaders.get(glass);
+                if (sh == null) { sh = new BitmapShader(glass, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP); shaders.put(glass, sh); }
                 m.setScale(w / (float) glass.getWidth(), getHeight() / (float) glass.getHeight());
                 sh.setLocalMatrix(m);
                 fill.setShader(sh);

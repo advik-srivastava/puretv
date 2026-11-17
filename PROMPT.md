@@ -205,6 +205,22 @@ On yes:
 PT dns on
 ```
 
+## Step 8½: Free space and speed up apps
+
+Do both without asking separately; they're part of the cleanup and change nothing they'd notice except speed:
+
+```bash
+PT trim
+```
+
+This clears apps' temporary caches. App data and sign-ins are untouched.
+
+```bash
+PT optimize
+```
+
+This is Android's own ahead-of-time compile, so apps open faster. It takes a few minutes; tell them it's working and to leave the TV on.
+
 ## Step 9: Restart and show the report card
 
 Ask: **"Restart the TV now?"** This is when it gets fast, because the switched-off apps stop running.

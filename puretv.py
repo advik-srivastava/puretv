@@ -17,6 +17,8 @@
                                                 home is switched off, not uninstalled); --keep-google-home keeps
                                                 it running underneath and uses the Remote Helper instead
     python puretv.py reboot                     restart the TV, wait for it, reconnect and check Home
+    python puretv.py trim                       clear apps' temporary caches (no data or sign-ins touched)
+    python puretv.py optimize                   compile apps ahead of time so they open faster (a few minutes)
     python puretv.py check                      after a TV update: switch off what came back on
     python puretv.py dns on|off                 ad-blocking Private DNS (AdGuard), undone by restore
     python puretv.py smooth before|after        move around Home for 20 s; Android counts the frames drawn late
@@ -344,6 +346,22 @@ def cmd_smooth(args):
         close_tv(tv)
 
 
+def cmd_trim(args):
+    tv = open_tv(args)
+    try:
+        core.trim_caches(tv, log=say)
+    finally:
+        close_tv(tv)
+
+
+def cmd_optimize(args):
+    tv = open_tv(args)
+    try:
+        core.optimize_apps(tv, log=say)
+    finally:
+        close_tv(tv)
+
+
 def cmd_check(args):
     tv = open_tv(args)
     try:
@@ -437,6 +455,8 @@ def main():
     c.add_argument("--keep-google-home", action="store_true", help="keep Google TV's home running underneath (Remote Helper)")
     c.add_argument("--replace-google-home", action="store_true", help="the default: PureTV is the only Home screen")
     sub.add_parser("reboot")
+    sub.add_parser("trim")
+    sub.add_parser("optimize")
     c = sub.add_parser("smooth"); c.add_argument("label", choices=["before", "after"]); c.add_argument("--seconds", type=int, default=20)
     sub.add_parser("check")
     c = sub.add_parser("dns"); c.add_argument("state", choices=["on", "off"])

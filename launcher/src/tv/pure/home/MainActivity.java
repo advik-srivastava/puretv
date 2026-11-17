@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
     private Btn chip, weatherPill;
     private TextView hint;
     private View hintBoxRef;
+    private IntroView intro;
     private FrameLayout launching;
     int sleepIx;
     private boolean saver;
@@ -94,7 +95,7 @@ public class MainActivity extends Activity {
         apps = new Apps(this);
         apps.load();
         scenes = new Scenes(this, store.scene);
-        weather = new Weather(this, this::updateTime);
+        weather = new Weather(this, () -> { updateTime(); if (bar != null && bar.getVisibility() != View.VISIBLE) buildBar(); });
         updates = new Updates(this);
         Device.init(this);
 
@@ -147,7 +148,13 @@ public class MainActivity extends Activity {
         buildHome();
         updateTime();
         placeDate();
-        if (!store.setupDone) ui.post(() -> new Setup(this).show());
+        if (!store.setupDone) new Setup(this).show();   // straight away: no glimpse of Home behind it
+        if (!IntroView.shown && !store.reduceMotion) {   // PureTV's start-up animation, once per TV start
+            IntroView.shown = true;
+            intro = new IntroView(this, () -> intro = null);
+            root.addView(intro, new FrameLayout.LayoutParams(-1, -1));
+            intro.start();
+        }
     }
 
     // ------------------------------------------------------------------ Home layout
@@ -343,36 +350,49 @@ public class MainActivity extends Activity {
         while (store.recents.size() > 8) store.recents.remove(store.recents.size() - 1);
         store.save();
         if (from == null || store.reduceMotion) { if (!apps.launch(pkg, store.me().kids)) toast(a.name + " can't be opened"); return; }
+        // The tile grows into the app (PureTV 2's launch). Only scale and position change, which the graphics
+        // chip does on its own: nothing is laid out again while it moves.
         android.graphics.Bitmap art = apps.art(pkg);
         int bg = art != null ? art.getPixel(2, art.getHeight() / 2) | 0xFF000000 : 0xFF222222;
         int[] at = new int[2], rootAt = new int[2];
         from.getLocationOnScreen(at); root.getLocationOnScreen(rootAt);
-        float fw = from.getWidth() * from.getScaleX(), fh = (from.getHeight() - Ui.fx(60)) * from.getScaleY();
-        float x0 = at[0] - rootAt[0] - (from.getWidth() * (from.getScaleX() - 1)) / 2 + from.getWidth() * (from.getScaleX() - 1) / 2;
-        float y0 = at[1] - rootAt[1];
-        launching = new FrameLayout(this);
-        launching.setBackground(Ui.round(bg, 20));
-        launching.setClipToOutline(true);
+        final float W = root.getWidth(), H = root.getHeight();
+        final float fw = from.getWidth() * from.getScaleX(), fh = (from.getHeight() - Ui.fx(60)) * from.getScaleY();
+        final float x0 = at[0] - rootAt[0], y0 = at[1] - rootAt[1];
+        FrameLayout layer = new FrameLayout(this);
+        View back = new View(this);
+        back.setBackgroundColor(bg);
+        back.setPivotX(0); back.setPivotY(0);
+        back.setScaleX(fw / W); back.setScaleY(fh / H);
+        back.setTranslationX(x0); back.setTranslationY(y0);
+        final float r20 = Ui.fx(20);
+        back.setOutlineProvider(new android.view.ViewOutlineProvider() {   // corners stay 20 px on screen while it grows
+            @Override public void getOutline(View v, android.graphics.Outline o) {
+                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r20 / Math.max(.01f, Math.min(v.getScaleX(), v.getScaleY())));
+            }
+        });
+        back.setClipToOutline(true);
+        layer.addView(back, new FrameLayout.LayoutParams((int) W, (int) H));
         android.widget.ImageView logo = new android.widget.ImageView(this);
         logo.setImageBitmap(art);
         logo.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
-        launching.addView(logo, new FrameLayout.LayoutParams(-1, -1));
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.round(fw), Math.round(fh));
-        root.addView(launching, lp);
-        launching.setTranslationX(x0); launching.setTranslationY(y0);
-        launching.setElevation(Ui.fx(40));
-        final float W = root.getWidth(), H = root.getHeight();
+        logo.setPivotX(0); logo.setPivotY(0);
+        logo.setTranslationX(x0); logo.setTranslationY(y0);
+        layer.addView(logo, new FrameLayout.LayoutParams(Math.round(fw), Math.round(fh)));
+        layer.setElevation(Ui.fx(40));
+        root.addView(layer, new FrameLayout.LayoutParams(-1, -1));
+        launching = layer;
+        final float k = (H * .36f) / fh;   // the artwork ends at about a third of the screen's height, in the middle
         ValueAnimator grow = ValueAnimator.ofFloat(0, 1).setDuration(520);
         grow.setInterpolator(Ui.EASE);
-        final FrameLayout L = launching;
-        grow.addUpdateListener(v -> {   // the frame grows to the screen; the artwork grows less, to sit in the middle
+        grow.addUpdateListener(v -> {
             float t = (float) v.getAnimatedValue();
-            FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) L.getLayoutParams();
-            p.width = Math.round(fw + (W - fw) * t); p.height = Math.round(fh + (H - fh) * t);
-            L.setLayoutParams(p);
-            L.setTranslationX(x0 * (1 - t)); L.setTranslationY(y0 * (1 - t));
-            int lw = Math.round(fw + (W * .36f / .6f * .6f - fw) * t);
-            logo.setLayoutParams(new FrameLayout.LayoutParams(Math.max(lw, Math.round(fw)), Math.round(Math.max(fh, fh + (H * .36f - fh) * t)), Gravity.CENTER));
+            back.setScaleX(fw / W + (1 - fw / W) * t); back.setScaleY(fh / H + (1 - fh / H) * t);
+            back.setTranslationX(x0 * (1 - t)); back.setTranslationY(y0 * (1 - t));
+            back.invalidateOutline();
+            float s1 = 1 + (k - 1) * t;
+            logo.setScaleX(s1); logo.setScaleY(s1);
+            logo.setTranslationX(x0 + ((W - fw * k) / 2 - x0) * t); logo.setTranslationY(y0 + ((H - fh * k) / 2 - y0) * t);
         });
         grow.start();
         ui.postDelayed(() -> { if (!apps.launch(pkg, store.me().kids)) { toast(a.name + " can't be opened"); endLaunch(); } }, 380);
@@ -484,7 +504,6 @@ public class MainActivity extends Activity {
         greet.setText(hello + ", " + store.me().name);
         String d = new SimpleDateFormat("EEEE d MMMM", Locale.getDefault()).format(now);
         String w = weather.line();
-        if (bar.getVisibility() != View.VISIBLE && weatherPill != null) buildBar();   // the weather pill follows the latest reading
         date.setText(w.isEmpty() ? d : d + "   " + w);
     }
 
@@ -585,6 +604,7 @@ public class MainActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (intro != null) { if (e.getAction() == KeyEvent.ACTION_DOWN) intro.skip(); return true; }   // any button skips the intro
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             wake();
             if (saver) { stopSaver(); return true; }
