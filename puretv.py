@@ -231,7 +231,13 @@ def cmd_plan(args):
         say(f"Kept on because they use it: {len(kept)}")
         for r in kept:
             say(f"  keep  {r['name']}  ({r['keep']})")
-    say("Apps they open themselves (YouTube, Netflix, Prime Video…) and everything Android needs stay on.")
+    apps = [r for r in s["packages"] if r["cat"] == "app" and r["state"] == "enabled"]
+    if apps:
+        say(f"\nAPPS ON THE TV ({len(apps)}): never switched off unless the owner picks them. Ask which they never use:")
+        for r in apps:
+            note = (r["note"] or "").strip().replace("\n", " ")
+            say(f"  app   {r['name']}" + (f"  — {note[:60]}" if note else ""))
+    say("\nEverything Android, the remote, Wi-Fi and the Play Store need stays on.")
     say("PLAN: " + " ".join(r["name"] for r in off))
 
 
@@ -248,6 +254,8 @@ def cmd_clean(args):
         if not names:
             raise core.TVError("Nothing to switch off. Pass package names, or --plan --keep …")
         r = core.clean(tv, names, animations=args.faster, log=say, pause=0 if tv.demo else core.PAUSE)
+        if args.privacy:
+            core.privacy(tv, log=say)
         core.remember_disabled(tv, r["disabled"])
     finally:
         close_tv(tv)
@@ -422,6 +430,7 @@ def main():
     c = sub.add_parser("suggest"); c.add_argument("--json", action="store_true")
     c = sub.add_parser("clean"); c.add_argument("packages", nargs="*"); c.add_argument("--faster", action="store_true", help="also set animations to 0.5x")
     c.add_argument("--plan", action="store_true", help="switch off the plan (see plan)"); c.add_argument("--keep", default="", help="features they use, e.g. voice,cast")
+    c.add_argument("--privacy", action="store_true", help="also switch off background Wi-Fi/Bluetooth scanning")
     sub.add_parser("features")
     c = sub.add_parser("plan"); c.add_argument("--keep", default="", help="features they use, e.g. voice,cast")
     c = sub.add_parser("install")

@@ -3,6 +3,7 @@
     python tests/test_core.py
 """
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -165,4 +166,20 @@ assert {k: fake.settings[k] for k in keys} == {k: before[2][k] for k in keys}, f
 assert fake.settings["private_dns_mode"] == "opportunistic", fake.settings
 assert r["homeOk"] and not r["failed"]
 print("\n".join(log[-6:]))
+# A plan never touches updates, accessibility, service tools or an app's helper while the app is on.
+for name in ("com.apps.ota", "com.google.android.tv.dfuservice", "com.google.android.marvin.talkback", "com.realtek.factorytools",
+             "com.realtek.slices", "com.android.providers.contacts", "com.android.pacprocessor"):
+    assert core.ALWAYS_KEEP.search(name), name
+assert core.COMPANIONS["com.netflix.tokenmanager"] == "com.netflix.ninja"
+assert re.search(core.FEATURES["cast"][1], "com.creative.fastscreen.tv") and re.search(core.FEATURES["live"][1], "com.realtek.tv.isdb")
+
+# Privacy switches are written down first and put back by restore.
+fake4 = DemoTV()
+tv4 = core.TV("demo4", fake4, demo=True)
+core.backup(tv4, log=log.append)
+core.privacy(tv4, log=log.append)
+assert fake4.settings["wifi_scan_always_enabled"] == "0" and fake4.settings["ble_scan_always_enabled"] == "0"
+core.restore(tv4, log=log.append)
+assert "wifi_scan_always_enabled" not in fake4.settings, fake4.settings
+
 print("ALL OK")

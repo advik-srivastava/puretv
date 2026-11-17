@@ -623,20 +623,27 @@ def measure(tv):
 FEATURES = {
     "voice": ("Voice assistant and the mic button", r"katniss|googlequicksearchbox|speech|tts|voice|assistant|alexa|\.search$|tv\.search"),
     "phone": ("Using your phone as a remote (Google TV app)", r"tv\.remote\.service|atvremote|remote\.service"),
-    "cast": ("Chromecast built-in (casting from a phone)", r"mediashell|cast|dial|dlna|miracast|screenmirror"),
-    "live": ("Live TV channels and free channels", r"^com\.google\.android\.tv$|^com\.android\.tv$|livetv|channel|freeplay|fast\b|tvplus"),
+    "cast": ("Chromecast built-in and screen mirroring", r"mediashell|cast|dial|dlna|miracast|screenmirror|mirror|fastscreen"),
+    "live": ("Live TV: the tuner, channels and red-button TV", r"^com\.google\.android\.tv$|^com\.android\.tv$|livetv|channel|freeplay|fast\b|tvplus"
+             r"|dtv|dtmb|atsc|isdb|dvb|tuner|hbbtv|seraphic"),
     "games": ("Play Games", r"play\.games|\.games$"),
     "music": ("YouTube Music", r"tvmusic|\.music$"),
     "photos": ("Ambient mode and screensaver photos", r"dreamx|backdrop|ambient|photos|screensaver"),
     "movies": ("Google TV movie store (Play Movies)", r"android\.videos$"),
 }
-ALWAYS_KEEP = re.compile(r"ota|update|fota|upgrade|talkback|accessibility|marvin", re.I)   # updates and accessibility
+# Never switched off by a plan: updates, accessibility, service tools, and small system parts that accounts,
+# networks or settings panels can depend on (switching them off frees almost nothing).
+ALWAYS_KEEP = re.compile(r"ota|update|fota|upgrade|dfu|talkback|accessibility|marvin|factory|slices|providers\.contacts"
+                         r"|localtransport|pacprocessor|statementservice|proxy", re.I)
+# Helpers that must stay while their app is on.
+COMPANIONS = {"com.netflix.tokenmanager": "com.netflix.ninja"}
 
 
 def plan(tv, keep=()):
     """What to switch off: everything recommended or optional, minus the features the owner uses,
     minus updates, never an app they open themselves. Returns (off, kept) as lists of scan rows."""
     s = scan(tv)
+    enabled = set(tv.packages("-e"))
     keep = [k for k in keep if k in FEATURES]
     rx = [re.compile(FEATURES[k][1], re.I) for k in keep]
     off, kept = [], []
@@ -645,12 +652,45 @@ def plan(tv, keep=()):
             continue
         why = next((FEATURES[k][0] for k, x in zip(keep, rx) if x.search(r["name"])), None)
         if why is None and ALWAYS_KEEP.search(r["name"]):
-            why = "Accessibility" if re.search(r"talkback|accessibility|marvin", r["name"], re.I) else "Software updates"
+            why = ("Accessibility" if re.search(r"talkback|accessibility|marvin", r["name"], re.I)
+                   else "Software updates" if re.search(r"ota|update|fota|upgrade|dfu", r["name"], re.I) else "Needed by the system")
+        main = COMPANIONS.get(r["name"])
+        if why is None and main and main in enabled:
+            why = f"Needed by {main}"
         if why:
             kept.append(dict(r, keep=why))
         else:
             off.append(r)
     return s, off, kept
+
+
+# ---------------------------------------------------------------- privacy switches (undone by restore)
+
+PRIVACY = {"wifi_scan_always_enabled": "0", "ble_scan_always_enabled": "0"}   # background Wi-Fi/Bluetooth scanning
+
+
+def privacy(tv, log=print):
+    """Turn off background Wi-Fi and Bluetooth scanning, after writing down how they were."""
+    info = tv.info()
+    record = load_record(info["id"])
+    if not record:
+        raise TVError("Back up first, so these can be put back.")
+    saved = record.setdefault("privacy", {})
+    for k, v in PRIVACY.items():
+        if k not in saved:
+            saved[k] = tv.sh(f"settings get global {k}")
+        tv.sh(f"settings put global {k} {v}")
+    _write(record_path(record["id"]), record)
+    log("Background Wi-Fi and Bluetooth scanning switched off (Wi-Fi and your remote keep working).")
+
+
+def put_privacy_back(tv, record, log=print):
+    for k, v in (record.get("privacy") or {}).items():
+        if k in PRIVACY:
+            if v in ("", "null"):
+                tv.sh(f"settings delete global {k}")
+            elif re.fullmatch(r"-?\d+", v):
+                tv.sh(f"settings put global {k} {v}")
 
 
 # ---------------------------------------------------------------- what the Home screen costs (the report card)
@@ -730,6 +770,7 @@ def restore(tv, log=print):
     if re.fullmatch(r"[\w.]+/[\w.$]+(,[\w.]+/[\w.$]+)*", saver):
         tv.sh(f"settings put secure screensaver_components {saver}")
     put_dns_back(tv, record)
+    put_privacy_back(tv, record, log)
     disable_helper(tv, log)
 
     still = [n for n in back if n in tv.packages("-d")]

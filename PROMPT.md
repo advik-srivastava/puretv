@@ -145,7 +145,11 @@ These map to `voice`, `cast`, `phone`, `live`, `games`, `music`, `photos` and `m
 PT plan --keep voice,cast
 ```
 
-Summarise it in a few lines, grouped like "ads and tracking", "store-demo and partner apps" and "things you don't use", with the number for each. Then ask:
+Summarise it in a few lines, grouped like "ads and tracking", "store-demo and partner apps" and "things you don't use", with the number for each.
+
+The plan also lists **APPS ON THE TV**: apps they could open themselves, such as preloaded games, MX Player, Discovery+ and Netflix. These are never switched off unless they choose. Ask with multiple answers allowed, putting likely preloads first (games, demo apps, duplicate players): **"Any of these came with the TV and you never use?"** Add the ones they pick to the `clean` command by name.
+
+Then ask:
 
 **"Switch these off?"**
 - **Yes, switch them off**
@@ -155,8 +159,12 @@ Summarise it in a few lines, grouped like "ads and tracking", "store-demo and pa
 On yes:
 
 ```bash
-PT clean --plan --keep voice,cast
+PT clean --plan --keep voice,cast --privacy --faster [apps they picked]
 ```
+
+- `--privacy` switches off background Wi-Fi and Bluetooth scanning, a tracking surface that also uses power. Wi-Fi and the remote keep working.
+- `--faster` makes the TV's own menus and app transitions snappier (animations at 0.5×).
+- Both are recorded in the backup and undone by `restore`. Mention them in one line as part of the yes.
 
 It works in small batches and checks the TV after each one. Lines starting `- kept` were protected by a safety guard; that's expected.
 
