@@ -616,6 +616,70 @@ def measure(tv):
             "enabledApps": len(tv.packages("-e")), "disabledApps": len(tv.packages("-d")), "userApps": third}
 
 
+# ---------------------------------------------------------------- everyday features (the "which of these do you use?" question)
+
+# Each feature names the apps behind it. Whatever the owner says they use stays on, even when it is on a
+# recommended list. Updates are always kept: a TV that can't update stops getting security fixes.
+FEATURES = {
+    "voice": ("Voice assistant and the mic button", r"katniss|googlequicksearchbox|speech|tts|voice|assistant|alexa|\.search$|tv\.search"),
+    "phone": ("Using your phone as a remote (Google TV app)", r"tv\.remote\.service|atvremote|remote\.service"),
+    "cast": ("Chromecast built-in (casting from a phone)", r"mediashell|cast|dial|dlna|miracast|screenmirror"),
+    "live": ("Live TV channels and free channels", r"^com\.google\.android\.tv$|^com\.android\.tv$|livetv|channel|freeplay|fast\b|tvplus"),
+    "games": ("Play Games", r"play\.games|\.games$"),
+    "music": ("YouTube Music", r"tvmusic|\.music$"),
+    "photos": ("Ambient mode and screensaver photos", r"dreamx|backdrop|ambient|photos|screensaver"),
+    "movies": ("Google TV movie store (Play Movies)", r"android\.videos$"),
+}
+ALWAYS_KEEP = re.compile(r"ota|update|fota|upgrade|talkback|accessibility|marvin", re.I)   # updates and accessibility
+
+
+def plan(tv, keep=()):
+    """What to switch off: everything recommended or optional, minus the features the owner uses,
+    minus updates, never an app they open themselves. Returns (off, kept) as lists of scan rows."""
+    s = scan(tv)
+    keep = [k for k in keep if k in FEATURES]
+    rx = [re.compile(FEATURES[k][1], re.I) for k in keep]
+    off, kept = [], []
+    for r in s["packages"]:
+        if r["state"] != "enabled" or r["cat"] not in ("recommended", "optional"):
+            continue
+        why = next((FEATURES[k][0] for k, x in zip(keep, rx) if x.search(r["name"])), None)
+        if why is None and ALWAYS_KEEP.search(r["name"]):
+            why = "Accessibility" if re.search(r"talkback|accessibility|marvin", r["name"], re.I) else "Software updates"
+        if why:
+            kept.append(dict(r, keep=why))
+        else:
+            off.append(r)
+    return s, off, kept
+
+
+# ---------------------------------------------------------------- what the Home screen costs (the report card)
+
+def home_cost(tv, settle=6):
+    """Memory (PSS, MB) and CPU (% of one core) of whatever app is the Home screen, measured while Home is
+    on screen and idle, as the TV's own tools report them."""
+    home = tv.home() or ""
+    pkg = home.split("/")[0] if "/" in home else ""
+    if pkg in ("", "android") or not PACKAGE_RE.fullmatch(pkg):
+        return {"homePkg": pkg or None}
+    tv.sh("input keyevent KEYCODE_HOME")
+    if not tv.demo:
+        time.sleep(settle)   # let Home finish drawing before measuring it at rest
+    mem = tv.sh(f"dumpsys meminfo {pkg}")
+    m = re.search(r"TOTAL PSS:\s+(\d+)", mem) or re.search(r"^\s*TOTAL\s+(\d+)", mem, re.M)
+    mb = round(int(m.group(1)) / 1024) if m else None
+    cpu = None
+    pid = (tv.sh(f"pidof {pkg}") or "").split()
+    if pid and pid[0].isdigit():
+        out = tv.sh(f"top -b -q -n 4 -d 1 -p {pid[0]} -o %CPU", timeout=30)
+        vals = [float(x) for x in re.findall(r"^\s*(\d+(?:\.\d+)?)\s*$", out, re.M)]
+        if len(vals) > 1:
+            vals = vals[1:]   # the first sample includes start-up work
+        if vals:
+            cpu = round(sum(vals) / len(vals), 1)
+    return {"homePkg": pkg, "homeMB": mb, "homeCPU": cpu}
+
+
 # ---------------------------------------------------------------- restore
 
 def restore(tv, log=print):

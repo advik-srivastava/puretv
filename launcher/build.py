@@ -65,10 +65,12 @@ def main():
         "--version-code", VERSION_CODE, "--version-name", VERSION_NAME,
         *(["-A", HERE / "assets"] if (HERE / "assets").exists() else []), BUILD / "res.zip")
     sources = [*HERE.glob("src/**/*.java"), *BUILD.glob("gen/**/*.java")]
-    run(jdk / "bin" / f"javac{exe}", "-source", "8", "-target", "8", "-Xlint:-options", "-bootclasspath", jar,
+    run(jdk / "bin" / f"javac{exe}", "-encoding", "UTF-8", "--release", "8", "-Xlint:-options", "-classpath", jar,
         "-d", BUILD / "classes", *sources)
-    run(bt / f"d8{bat}", "--release", "--lib", jar, "--min-api", MIN_SDK, "--output", BUILD / "dex",
-        *BUILD.glob("classes/**/*.class"), env=env)
+    with zipfile.ZipFile(BUILD / "classes.jar", "w") as z:   # one jar: Windows limits how long a command line can be
+        for f in (BUILD / "classes").rglob("*.class"):
+            z.write(f, f.relative_to(BUILD / "classes").as_posix())
+    run(bt / f"d8{bat}", "--release", "--lib", jar, "--min-api", MIN_SDK, "--output", BUILD / "dex", BUILD / "classes.jar", env=env)
     shutil.copy(BUILD / "base.apk", BUILD / "unsigned.apk")
     with zipfile.ZipFile(BUILD / "unsigned.apk", "a", zipfile.ZIP_DEFLATED) as z:
         z.write(BUILD / "dex" / "classes.dex", "classes.dex")

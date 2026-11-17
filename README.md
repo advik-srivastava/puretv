@@ -10,12 +10,14 @@ PureTV replaces the cluttered Google TV home with a quiet, tvOS-inspired one. Yo
 
 Your apps, accounts and sign-ins are never touched. Nothing is uninstalled.
 
+> **AI agents:** to set up, clean or restore a TV with this repository, follow [PROMPT.md](PROMPT.md) step by step.
+
 ## A look around
 
 | | |
 |:---:|:---:|
-| ![Control Center: power, Wi-Fi, audio, sleep timer, memory and weather](assets/shots/control-center.png) | ![All your apps in a grid under the top row](assets/shots/all-apps.png) |
-| **Control Center** | **All your apps** |
+| ![The Home screen: a glass clock behind the mountains, apps in a glass band](assets/shots/home.png) | ![All your apps in a grid under the top row](assets/shots/all-apps.png) |
+| **Home** | **All your apps** |
 | ![Settings with a sidebar and the Appearance page](assets/shots/settings-appearance.png) | ![Choose a wallpaper during setup](assets/shots/choose-wallpaper.png) |
 | **Settings** | **Wallpapers** |
 
@@ -25,26 +27,34 @@ Your apps, accounts and sign-ins are never touched. Nothing is uninstalled.
 - **Liquid Glass.** Clear, Frosted or Dark, with smooth motion and soft sounds.
 - **Profiles.** Each one has its own name, emoji, top row and hidden apps.
 - **A Kids profile.** Approved apps only. YouTube opens YouTube Kids, and Settings stay behind a parent PIN.
-- **Control Center.** Inputs, sound, sleep timer, memory and weather in one place.
-- **Made for modest TVs.** It's tuned for HD Ready sets like the Acer V Pro 32", and switches to lighter effects on slower ones.
+- **Fast, even on a 2 GB TV.** PureTV is a native Android app, and its glass is drawn from pre-blurred images rather than blurred live. At rest it uses a fraction of the memory and almost none of the CPU that Google TV's home does. Claude measures both on your TV and shows you the report card.
 - **Updates that ask first.** When the TV turns on, PureTV looks for a new version and asks you before installing it.
 
 ## Install
 
-### The easy way: let Claude do it
+### The easy way: paste the link into Claude
 
 On a computer on the same Wi-Fi as your TV, open **Claude Code**: the *Code* tab in the [Claude desktop app](https://claude.ai/download), or `claude` in a terminal. Then paste:
 
 ```
-Install PureTV on my TV. Follow https://github.com/advik-srivastava/puretv/blob/main/PROMPT.md
+Set up my TV with https://github.com/advik-srivastava/puretv
 ```
 
-Claude will:
-- tell you how to turn on debugging on the TV, the one thing you do by hand;
-- find the TV, back it up, and ask before switching anything off;
-- install PureTV and show you the before-and-after numbers.
+Claude asks a few tap-to-answer questions:
+- what TV you have;
+- which features you use (voice, Chromecast, Live TV…);
+- whether PureTV should be the only Home screen.
 
-To undo it later, paste: `Restore my TV with PureTV. Follow https://github.com/advik-srivastava/puretv/blob/main/PROMPT.md`
+Then it:
+- backs the TV up;
+- switches off only what you don't use;
+- installs PureTV;
+- restarts the TV;
+- shows a report card of the memory and CPU saved.
+
+The only thing you do by hand is turn on debugging on the TV, and Claude tells you how.
+
+To undo it later, paste: `Restore my TV with https://github.com/advik-srivastava/puretv`
 
 > The claude.ai chat in a browser can't reach your TV. It has to be Claude Code, which runs on your computer.
 
@@ -81,20 +91,20 @@ This also switches off ads, tracking and preloaded apps. You need a computer on 
 
 ```
 app/            the computer app: engine (core.py), local server, demo TV, the TV design (ui/tv.html)
-launcher/       PureTV Home for the TV: Java sources, ui-src (TV bridge), build.py (no Gradle)
-tools/          build_tv_ui.py, render.py (screenshots), make_scene.py (wallpaper cut-outs), make_release.py
+launcher/       PureTV Home for the TV: native Android (Java), build.py (no Gradle)
+tools/          build_native_assets.py (wallpapers, fonts, sounds for the TV), render.py (screenshots), make_scene.py (wallpaper cut-outs), make_release.py
 tests/          end-to-end test against the demo TV
 ```
 
-- Preview the TV design: start PureTV and open <http://127.0.0.1:8765/tv.html>. Use the arrow keys, Enter, Esc, and M for Control Center.
+- The browser design preview (the source of the look) is `app/ui/tv.html`: start PureTV and open <http://127.0.0.1:8765/tv.html>.
 - Build the TV app:
   ```bash
-  python tools/build_tv_ui.py
+  python tools/build_native_assets.py
   ```
   ```bash
-  PURETV_VERSION=2.1 python launcher/build.py
+  PURETV_VERSION=3.0 python launcher/build.py
   ```
-- To release, attach the APK to a GitHub release tagged `v2.1`. TVs find it by themselves. Keep `~/.puretv/puretv.keystore` safe: updates signed with a different key are refused.
+- To release, attach the APK to a GitHub release tagged `v3.0`. TVs find it by themselves. Keep `~/.puretv/puretv.keystore` safe: updates signed with a different key are refused.
 
 </details>
 

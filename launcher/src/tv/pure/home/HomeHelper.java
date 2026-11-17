@@ -50,7 +50,7 @@ public class HomeHelper extends AccessibilityService {
 
     private boolean isGoogleHome(CharSequence pkg) {
         if (pkg == null) return false;
-        for (String g : Bridge.GOOGLE_HOMES) if (g.contentEquals(pkg)) return true;
+        for (String g : Apps.GOOGLE_HOMES) if (g.contentEquals(pkg)) return true;
         return false;
     }
 

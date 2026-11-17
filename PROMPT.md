@@ -1,68 +1,79 @@
 # PureTV: instructions for the AI agent
 
-You are helping someone install **PureTV** on their Android TV or Google TV from their computer. You will:
+Someone gave you this repository (often just its link) and wants their TV set up. You will:
 
 - back the TV up;
-- switch off the ads, tracking and preloaded junk they agree to;
-- install the PureTV Home screen;
-- make the Home button open it;
-- show before-and-after numbers.
+- switch off the ads, tracking and preloaded junk they don't use;
+- make **PureTV** (a fast, tvOS-inspired Home screen) the TV's only Home screen;
+- restart the TV;
+- show a report card of what changed.
 
-Everything is reversible. Talk to them in plain, friendly language: they may not be technical. Keep each message short and tell them what you are doing as you go.
+Everything is reversible, and nothing is ever uninstalled.
 
-You work through one tool: `puretv.py` in this repository. It talks to the TV over the local Wi-Fi with adb.
+## How to talk to them
+
+- **Ask with tap-to-answer questions.** Every decision below is a multiple-choice question. If your harness has a question tool (in Claude Code it's `AskUserQuestion`), use it with the exact options given, the recommended option first. If it doesn't, ask the same question as a short numbered list.
+- **Keep messages short and friendly.** The person may not be technical. Say what you're doing in one line as you go, and never paste raw command output; summarise it.
+- **One tool does all the TV work:** `puretv.py` in this repository. It talks to the TV over Wi-Fi with adb and has the safety guards built in.
 
 ## Rules (always)
 
-1. **Ask before every change to the TV.** Read-only steps need no permission: `find`, `info`, `measure`, `suggest`, `report`. Changing steps need a clear yes from the person first: `clean`, `install`, `dns`, `restore`, `check`, `reboot`.
-2. **Back up first.** Never run `clean` or `install` before `backup` has succeeded.
-3. **Never uninstall anything.** PureTV only switches apps off (`pm disable-user`), and they can always be switched back on. Don't run your own `adb`/`pm`/`settings` commands on the TV. Use only `puretv.py`, which has the safety guards: core Android, Play, the keyboard, network, HDMI inputs and Home are protected.
-4. **Never touch accounts, sign-ins or app data.** No `pm clear`, no `pm uninstall`, nothing in Accounts.
-5. **Switch off only what they agreed to.** Apps they might use (YouTube, Netflix, Prime Video, Hotstar and so on) are never switched off unless they name them.
-6. **If a command prints `ERROR:`, stop.** Explain it in plain words and follow the fix it gives. Don't improvise around a safety guard.
-7. **Keep the TV's data on this computer.** Don't send it anywhere.
+1. **Ask before changing the TV.** Read-only commands need no permission: `find`, `info`, `measure`, `features`, `plan`, `report`, `closed`. A clear yes is needed first for `clean`, `install`, `dns`, `reboot`, `restore` and `check`; the questions below are that yes.
+2. **Back up before any change.** `backup` must succeed before `clean` or `install`.
+3. **Use only `puretv.py` on the TV.** Never uninstall anything. Never run your own `adb`, `pm` or `settings` commands, and never touch accounts, sign-ins or app data.
+4. **If a command prints `ERROR:`, stop.** Explain it in plain words and follow the fix it gives. Never work around a safety guard.
+5. **Keep their data on their computer.** The TV's data never leaves it.
+6. **Be patient with slow commands.** Some wait for the person to press **Allow** on the TV, or pause between batches. Give a command up to 4 minutes (8 minutes for `reboot`) before deciding it's stuck.
 
-Some commands wait while the person presses **Allow** on the TV, and `clean` pauses between batches. Give each command up to 3 minutes before deciding it's stuck.
+## Step 1: Which TV?
 
-## Step 1: Get PureTV and set it up
+Ask: **"What TV do you have?"**
+- **Android TV or Google TV** — Sony, TCL, Hisense, Philips, Xiaomi, Acer, OnePlus, Chromecast with Google TV, Nvidia Shield…
+- **Samsung (Tizen)**
+- **LG, Roku, Fire TV or other**
 
-Clone the repository (or, if there's no git, download `https://github.com/advik-srivastava/puretv/archive/refs/heads/main.zip` and unzip it). Then work inside the folder:
+If it's not Android or Google TV, explain kindly that PureTV needs Android's debugging port, which those TVs don't have, so it can't be installed. Offer three privacy tips for their TV's own settings: turn off ACR or "viewing information", turn off ad personalisation, and turn off auto-play on the home screen. Then stop.
+
+## Step 2: Set up PureTV on this computer
+
+Clone the repository, or download `https://github.com/advik-srivastava/puretv/archive/refs/heads/main.zip` and unzip it, then work inside the folder:
 
 ```bash
 git clone https://github.com/advik-srivastava/puretv.git
 cd puretv
 ```
 
-Make PureTV's own Python environment. Python 3.9 or newer is needed; if it's missing, ask the person to install it from python.org.
+Make its Python environment. It needs Python 3.9 or newer; if Python is missing, ask them to install it from python.org.
 
 - **Windows**
   ```bash
   python -m venv .venv
   .venv\Scripts\python -m pip install -q -r requirements.txt
   ```
-  From here on, `PT` means `.venv\Scripts\python puretv.py`.
+  `PT` below means `.venv\Scripts\python puretv.py`.
 - **macOS / Linux**
   ```bash
   python3 -m venv .venv
   .venv/bin/python -m pip install -q -r requirements.txt
   ```
-  From here on, `PT` means `.venv/bin/python puretv.py`.
+  `PT` below means `.venv/bin/python puretv.py`.
 
-To check the setup without a TV, run `PT --demo find`. It should print a pretend TV.
+## Step 3: Turn on debugging (the one thing they do by hand)
 
-## Step 2: The person turns on debugging on the TV
-
-Send them this, word for word. It's the only thing they do by hand:
+Send this, word for word:
 
 > **On your TV, please:**
 > 1. Open **Settings › System › About**.
 > 2. Scroll to **Android TV OS build** and press **OK** on it **7 times** until it says you are a developer.
 > 3. Go back to **Settings › System › Developer options** and turn on **USB debugging**. If you also see **Network debugging** or **ADB debugging**, turn that on too.
 > 4. Make sure the TV and this computer are on the **same Wi-Fi**.
->
-> Tell me when that's done.
 
-On some Google TVs (Chromecast with Google TV, Google TV Streamer) only **Wireless debugging** appears. In that case ask them to open **Wireless debugging › Pair device with pairing code** and tell you three things:
+Then ask: **"Is debugging on?"**
+- **Yes, it's on**
+- **I only see Wireless debugging**
+- **I'm stuck**
+
+If they only see Wireless debugging (Chromecast with Google TV, Google TV Streamer), ask them to open **Wireless debugging › Pair device with pairing code** and type three things in chat:
 - the IP address and port on the pairing screen;
 - the six-digit code;
 - the IP address and port on the Wireless debugging screen itself.
@@ -73,29 +84,28 @@ Then run:
 PT pair <pairing-IP:port> <code> <IP:port>
 ```
 
-## Step 3: Find and connect
+## Step 4: Find and connect
 
 ```bash
 PT find
 ```
 
-If no TV is found, ask them for the TV's IP address. It's under **Settings › Network & Internet ›** (their Wi-Fi) **› IP address**.
+- **Several TVs found:** ask which is theirs, with one option per TV.
+- **None found:** ask for the TV's IP address (**Settings › Network & Internet ›** their Wi-Fi **› IP address**).
 
-If more than one is found, ask which one is theirs.
-
-Before connecting, tell them:
-
-> The TV will ask **"Allow USB debugging?"**. Please tick **Always allow from this computer** and press **Allow**.
-
-Then run:
+Tell them: *"Your TV will ask **Allow USB debugging?** Tick **Always allow from this computer** and press **Allow**."* Then:
 
 ```bash
 PT connect <IP>
 ```
 
-Then `PT info`. Tell them which TV you're connected to and whether PureTV is already on it.
+```bash
+PT info
+```
 
-## Step 4: Measure and back up (no permission needed: nothing changes)
+Tell them which TV you're connected to.
+
+## Step 5: Measure and back up (nothing changes yet)
 
 ```bash
 PT measure before
@@ -105,102 +115,97 @@ PT measure before
 PT backup
 ```
 
-Tell them the backup is saved on this computer, and that the first backup is kept forever so the TV can always be put back exactly as it was.
+Mention that the first backup is kept forever, so the TV can always be put back exactly as it was.
 
-## Step 5: Choose what to switch off
+## Step 6: What do they use?
 
-```bash
-PT suggest
-```
+Ask both questions in one go, with multiple answers allowed. Tick voice and Chromecast by default. Explain that anything left unticked is switched off (never uninstalled), and that updates and accessibility always stay on.
 
-Summarise it for them in plain language. Don't paste the raw list. Group it like this:
+**"Which of these do you use?"**
+- **Voice assistant / mic** — Google Assistant, voice search, the remote's mic button
+- **Chromecast built-in** — casting from a phone to the TV
+- **Phone as a remote** — the Google TV app on a phone
+- **Live TV channels** — the tuner, Live Channels and free channels
 
-- **Recommended:** ads, tracking, telemetry, store-demo and partner auto-install apps. They were tested on many TVs and are safe to switch off. Name a few with what they do.
-- **Optional:** things some people use, like Chromecast built-in, voice search or the Play Games app. Ask about each kind.
-- **Apps they may use:** leave all of these on unless they ask.
+**"And these?"**
+- **Play Games**
+- **YouTube Music**
+- **Ambient mode photos** — the photo screensaver
+- **Play Movies store** — buying films in Google TV
 
-Ask: *"Shall I switch off the recommended ones? Anything from the optional list you'd like off too, or anything you'd like to keep?"*
-
-After they say yes:
-
-```bash
-PT clean <package> <package> ...
-```
-
-It works in small batches and reads the TV back. Lines starting `- kept` were protected by a safety guard; that's expected, so don't retry them.
-
-If they want menus to feel snappier, ask first, then add `--faster` (animations at 0.5×).
-
-## Step 6: Install the PureTV Home screen
-
-By default, PureTV becomes the TV's **only** Home screen:
-- Google TV's own home is switched off (never uninstalled), and so is Google's setup wizard, which would otherwise grab the Home button.
-- Only one Home screen runs, which is what makes the TV fast. Running PureTV on top of Google TV costs about 200 MB of memory and feels laggy on 2 GB TVs.
-- Restore undoes it completely.
-
-Tell them that in one or two sentences and ask for a yes. Then check one thing:
+These map to `voice`, `cast`, `phone`, `live`, `games`, `music`, `photos` and `movies` (`PT features` lists them). Then preview the plan:
 
 ```bash
-PT info
+PT plan --keep voice,cast
 ```
 
-If it shows **`Wi-Fi saved by Google's setup wizard: YES`**, the setup wizard can't go off yet, or the TV would lose Wi-Fi. Send them this, word for word:
+Summarise it in a few lines, grouped like "ads and tracking", "store-demo and partner apps" and "things you don't use", with the number for each. Then ask:
 
-> One quick thing on the TV first. Google's setup wizard is holding your Wi-Fi, and it has to let go:
-> 1. Open **Settings › Network & Internet**, select your Wi-Fi network, and choose **Forget network**.
-> 2. Select the **same network** again and type its password.
->
-> Tell me when the TV is back on Wi-Fi. It only takes a minute, and none of your apps or sign-ins are affected.
+**"Switch these off?"**
+- **Yes, switch them off**
+- **Show me the list first**
+- **Not now**
 
-Afterwards, run `PT connect <IP>` again (run `PT find` if the address changed). The TV already trusts this computer, so it won't ask again. Then run `PT info` to confirm it now says `no`.
-
-Then install:
+On yes:
 
 ```bash
-PT install
+PT clean --plan --keep voice,cast
 ```
 
-It downloads the newest PureTV Home from GitHub, installs it, switches the two Google homes off, and checks that the Home button lands on PureTV. If it doesn't, it switches them straight back on. It ends with a `RESULT:` line. If you get `ERROR: WIFI_OWNER`, do the Wi-Fi step above.
+It works in small batches and checks the TV after each one. Lines starting `- kept` were protected by a safety guard; that's expected.
 
-**Only if** they want to keep Google TV's home running (for Google TV profiles), or the Wi-Fi step isn't possible (for example, they don't know the Wi-Fi password), use:
+## Step 7: Make PureTV the Home screen
 
-```bash
-PT install --keep-google-home
-```
+Ask: **"How should PureTV run?"**
+- **PureTV only (Recommended)** — Google TV's home is switched off (not deleted), so only one Home screen runs. This is the fast option.
+- **Keep Google TV underneath** — keeps Google TV profiles, but uses about 200 MB more and can feel slow on 2 GB TVs.
 
-PureTV then opens through its Remote Helper, with Google TV underneath. Tell them it uses more memory and can feel slower on small TVs.
+Before installing **PureTV only**, run `PT info`. If it says **`Wi-Fi saved by Google's setup wizard: YES`**, Google's setup wizard is holding the Wi-Fi and must let go first. Send this:
 
-Then ask them to **press Home on the remote**. PureTV's setup should appear: profile, glass style, weather and wallpaper. Ask them to go through it.
+> One quick step on the TV: open **Settings › Network & Internet**, select your Wi-Fi, choose **Forget network**, then select the same network again and type its password. Your apps and sign-ins aren't affected. Tell me when it's back on Wi-Fi.
 
-### Already installed with Google TV underneath?
+Then run `PT connect <IP>` again; the TV already trusts this computer, so there's no prompt. Run `PT info` to confirm it now says `no`. Then:
 
-If `PT info` shows PureTV installed with the `Remote Helper on`, and they want the faster PureTV-only setup:
-1. Do the Wi-Fi step above if `info` asks for it.
-2. Run `PT install`. It switches the helper off by itself.
+- **PureTV only:**
+  ```bash
+  PT install
+  ```
+- **Keep Google TV underneath:**
+  ```bash
+  PT install --keep-google-home
+  ```
 
-## Step 7 (optional): Block ads inside apps
+It downloads the newest PureTV from GitHub, installs it, and checks where the Home button lands; if anything is wrong, it puts Google TV straight back. It ends with a `RESULT:` line. If you get `ERROR: WIFI_OWNER`, do the Wi-Fi step above.
 
-Offer it, then run it only if they say yes:
+**If PureTV is already installed** (they ran this before), the same command switches it to the chosen setup.
+
+## Step 8: Block ads inside apps?
+
+Ask: **"Also block ads inside apps?"**
+- **Yes, block ads (Recommended)** — sets Private DNS to AdGuard, which blocks many ads and trackers in apps. Restore undoes it.
+- **No thanks**
+
+On yes:
 
 ```bash
 PT dns on
 ```
 
-This sets Private DNS to AdGuard, which blocks many ads and trackers in apps. Restore undoes it.
+## Step 9: Restart and show the report card
 
-## Step 8: Restart and show the difference
+Ask: **"Restart the TV now?"** This is when it gets fast, because the switched-off apps stop running.
+- **Restart now (Recommended)**
+- **Later**
 
-A restart lets the switched-off apps really go, which is when the TV gets fast. Ask first, then:
+On yes:
 
 ```bash
 PT reboot
 ```
 
-It restarts the TV, waits for it, reconnects and checks that Home is still PureTV.
-- If debugging doesn't come back after the restart (some TVs turn network debugging off), ask them to turn it on again (Step 2), then run `connect`.
-- If the restart is skipped, say that the numbers will look better after the next restart.
+It waits for the TV and reconnects. If debugging doesn't come back (some TVs turn it off when they restart), ask them to turn it on again (Step 3) and run `connect`.
 
-Give it a minute to settle, then:
+Ask them to press **Home** and go through PureTV's short setup on the TV: profile, glass style and wallpaper. Then:
 
 ```bash
 PT measure after
@@ -210,52 +215,50 @@ PT measure after
 PT report
 ```
 
-Tell them the numbers in a friendly way: memory freed, fewer things running, how many apps were switched off. Mention that:
+Show the **report card**: Home-screen memory before and after, the percentage saved, and Home-screen CPU before and after. If you can show visuals (cards or a widget), show each number big, before → after, with "73% less memory"-style headlines. Otherwise use a small table. Then add, in a line or two:
 
 - **Nothing was uninstalled.** Their apps, sign-ins and watch history are as they were.
-- **Updates come by themselves.** PureTV checks GitHub for updates when the TV turns on, and asks before installing.
-- **Getting Google TV back:** ask you to restore it (Step 2, Step 3, then `PT restore`).
-- **Making PureTV lighter or prettier:** on 2 GB TVs, PureTV starts in **Low-End TV Mode** (lighter glass, smoother motion). They can change it in **Settings › Appearance**.
+- **PureTV updates itself.** It checks GitHub when the TV turns on and asks before installing.
+- **To undo everything,** paste the repo link into Claude Code again and say *"restore my TV"*.
 
-## Step 9: Close debugging
+## Step 10: Close debugging
 
-Ask them to turn **USB debugging** (and Network/Wireless debugging) **off** again in **Developer options**, then restart the TV. Then:
+Ask them to turn **USB debugging** (and Network/Wireless debugging) **off** again in Developer options. Then:
 
 ```bash
 PT closed
 ```
 
-It should say the port refuses connections. If it still answers, ask them to check the debugging switches again.
+It should report that the port is closed.
 
 ## Other requests
 
 - **"Restore my TV" / "undo PureTV"**
-  1. Step 2 (debugging on) and Step 3 (connect), then confirm with them.
-  2. Run:
+  1. Steps 2–4.
+  2. Ask: **"Put everything back as it was?"** (Yes / Not now).
+  3. On yes, run:
      ```bash
      PT restore
      ```
-  3. Everything PureTV switched off comes back on, the original Home app and settings return, and the Remote Helper is switched off. PureTV Home itself stays installed; they can remove it in Settings › Apps if they like.
-- **"My TV updated and the ads are back"**
-  1. Connect, then ask.
+  4. Everything switched off comes back on, including Google TV's home, the original settings and DNS. PureTV stays installed but no longer opens with Home; they can remove it in Settings › Apps.
+- **"The ads came back after a TV update"**
+  1. Steps 2–4, then ask.
   2. Run:
      ```bash
      PT check
      ```
-     It switches off again whatever the update turned back on, with the same guards.
-- **"Is my TV still clean?"** Connect and run `PT info`.
+     It switches off again whatever the update turned back on, including Google TV's home.
+- **"Is my TV still clean?"** Steps 2–4, then `PT info` and `PT report`.
 
 ## Troubleshooting
 
 | What you see | What to do |
 |---|---|
-| `find` finds nothing | Ask for the TV's IP (Step 3). Check they're on the same Wi-Fi, and that USB debugging (and Network debugging, if shown) is on. Some TVs need a restart after turning it on. |
-| `ERROR: The TV refused the connection` | Debugging is off, or this TV only offers Wireless debugging. Use the pairing route in Step 2. |
-| `ERROR: The TV did not allow this computer` | The Allow prompt was missed or declined. Ask them to watch the TV, then run `connect` again. |
-| `ERROR: WIFI_OWNER` | Google's setup wizard holds the Wi-Fi. Do the Forget network / join again step in Step 6, reconnect, then `PT install`. |
-| `ERROR: Home went to …` | PureTV already rolled back, so the TV is as before. Run `PT info` and send the output to the makers. Meanwhile, offer `PT install --keep-google-home`. |
-| Home opens Google TV (with `--keep-google-home`) | Ask them to check **Settings › System › Accessibility › PureTV Remote Helper** is on, then run `PT install --keep-google-home` again. |
-| The TV feels slow | Check `PT info`. If the Remote Helper is on, PureTV is running on top of Google TV: offer the PureTV-only setup (Step 6). Then `PT reboot`. |
-| Anything else with `ERROR:` | Read it to them in plain words and follow its advice. Never work around a guard. |
+| `find` finds nothing | Same Wi-Fi? Debugging on? Some TVs need a restart after turning it on. Or ask for the IP (Step 4). |
+| `ERROR: The TV refused the connection` | Debugging is off, or the TV only offers Wireless debugging (Step 3). |
+| `ERROR: The TV did not allow this computer` | The Allow prompt was missed. Ask them to watch the TV, then `connect` again. |
+| `ERROR: WIFI_OWNER` | Do the Forget network / join again step (Step 7), reconnect, then `install`. |
+| `ERROR: Home went to …` | PureTV already rolled back, so the TV is as before. Send `PT info` output to the makers. Offer `install --keep-google-home` meanwhile. |
+| The TV feels slow | `PT info`. If the Remote Helper is on, Google TV is still running underneath: offer **PureTV only** (Step 7), then `reboot`. |
 
 Help from the makers: crazifiedstudios@gmail.com · crazifiedstudios.com

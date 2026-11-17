@@ -136,6 +136,19 @@ class DemoTV:
                     f"MemAvailable:    {max(150, 1484 - used) * 1024} kB")
         if cmd.startswith("ps -A"):
             return str(60 + len(self.installed - self.disabled))
+        # what the Home screen costs: Google TV's home is heavy, PureTV's native home is light
+        HOME_COST = {"com.google.android.apps.tv.launcherx": (232448, "41.0\n43.0\n42.0"), "tv.pure.home": (62464, "0.7\n0.0\n0.3")}
+        m = re.fullmatch(r"dumpsys meminfo (\S+)", cmd)
+        if m and m.group(1) in HOME_COST:
+            return f"** MEMINFO in pid 4242 [{m.group(1)}] **\n           TOTAL PSS:   {HOME_COST[m.group(1)][0]}   TOTAL RSS:   300000"
+        m = re.fullmatch(r"pidof (\S+)", cmd)
+        if m:
+            return "4242" if m.group(1) in HOME_COST and self._on(m.group(1)) else ""
+        if cmd.startswith("top -b"):
+            home = self._resolve_home().split("/")[0]
+            return "12.0\n" + HOME_COST.get(home, (0, "1.0"))[1]
+        if cmd.startswith("input keyevent"):
+            return ""
         if cmd.startswith("settings list"):
             return "\n".join(f"{k}={v}" for k, v in self.settings.items())
         if cmd.startswith("pm install"):

@@ -6,8 +6,12 @@
     python puretv.py info                       the TV, its Home app, and whether PureTV is on it
     python puretv.py measure [before|after]     memory, processes and apps (kept for the report)
     python puretv.py backup                     record the TV as it is now (first backup is kept forever)
-    python puretv.py suggest                    what can be switched off, with reasons
-    python puretv.py clean PKG [PKG ...]        switch those apps off (never uninstalled, safety guards on)
+    python puretv.py features                   the everyday features to ask about (voice, casting, Live TV…)
+    python puretv.py plan --keep voice,cast     exactly what would be switched off, keeping what they use
+    python puretv.py clean --plan --keep voice,cast
+                                                switch that plan off (never uninstalled, safety guards on)
+    python puretv.py clean PKG [PKG ...]        switch named apps off
+    python puretv.py suggest                    every candidate, grouped by how safe it is
     python puretv.py install [--keep-google-home]
                                                 install PureTV Home as the TV's only Home screen (Google TV's
                                                 home is switched off, not uninstalled); --keep-google-home keeps
@@ -15,7 +19,7 @@
     python puretv.py reboot                     restart the TV, wait for it, reconnect and check Home
     python puretv.py check                      after a TV update: switch off what came back on
     python puretv.py dns on|off                 ad-blocking Private DNS (AdGuard), undone by restore
-    python puretv.py report                     before/after numbers
+    python puretv.py report                     the report card: Home-screen memory and CPU, before and after
     python puretv.py restore                    put everything back from the backup
     python puretv.py closed                     is debugging closed again? (run after turning it off)
 
@@ -75,8 +79,11 @@ def measures_path(tv_id):
 
 
 def show_measure(m):
-    return (f"memory in use {m['memUsedMB']} MB of {m['memTotalMB']} MB · {m['processes']} processes · "
-            f"{m['enabledApps']} apps on, {m['disabledApps']} off")
+    home = ""
+    if m.get("homeMB") is not None:
+        home = f"Home screen ({m['homePkg']}): {m['homeMB']} MB" + (f", CPU {m['homeCPU']}%" if m.get("homeCPU") is not None else "") + "\n"
+    return home + (f"Whole TV: memory in use {m['memUsedMB']} MB of {m['memTotalMB']} MB · {m['processes']} processes · "
+                   f"{m['enabledApps']} apps on, {m['disabledApps']} off")
 
 
 def cmd_find(args):
@@ -144,13 +151,19 @@ def cmd_measure(args):
     try:
         i = tv.info()
         m = core.measure(tv)
+        m.update(core.home_cost(tv))
         say(show_measure(m))
         if args.label:
             p = measures_path(i["id"])
             p.parent.mkdir(parents=True, exist_ok=True)
             data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
             if args.label == "before" and "before" in data:
-                say("(a 'before' measurement already exists for this TV and is kept)")
+                if data["before"].get("homeMB") is None and m.get("homeMB") is not None and m.get("homePkg") != core.OUR_PKG:
+                    data["before"].update({k: m[k] for k in ("homePkg", "homeMB", "homeCPU")})
+                    p.write_text(json.dumps(data, indent=1), encoding="utf-8")
+                    say("(the earlier 'before' is kept; the Home screen's cost was added to it)")
+                else:
+                    say("(a 'before' measurement already exists for this TV and is kept)")
             else:
                 data[args.label] = m
                 p.write_text(json.dumps(data, indent=1), encoding="utf-8")
@@ -192,12 +205,48 @@ def cmd_suggest(args):
         say(json.dumps({c: [r["name"] for r in rows if r["cat"] == c] for c, _ in groups}))
 
 
+def cmd_features(args):
+    say("Ask the owner which of these they use (several can be ticked). What they don't tick is switched off;")
+    say("software updates always stay on. Pass the ticked ones to plan/clean as --keep a,b,c")
+    for k, (label, _) in core.FEATURES.items():
+        say(f"  {k:7} {label}")
+
+
+def keep_list(args):
+    return [k.strip() for k in (args.keep or "").split(",") if k.strip()]
+
+
+def cmd_plan(args):
+    tv = open_tv(args)
+    try:
+        s, off, kept = core.plan(tv, keep_list(args))
+    finally:
+        close_tv(tv)
+    say(f"{s['info']['brand']} {s['info']['model']}: {len(off)} apps would be switched off (never uninstalled).")
+    for r in off:
+        note = (r["note"] or "").strip().replace("\n", " ")
+        say(f"  off   {r['name']}" + (f"  — {note[:100]}" if note else ""))
+    if kept:
+        say(f"Kept on because they use it: {len(kept)}")
+        for r in kept:
+            say(f"  keep  {r['name']}  ({r['keep']})")
+    say("Apps they open themselves (YouTube, Netflix, Prime Video…) and everything Android needs stay on.")
+    say("PLAN: " + " ".join(r["name"] for r in off))
+
+
 def cmd_clean(args):
     tv = open_tv(args)
     try:
         if not core.load_record(tv.info()["id"]):
             core.backup(tv, log=say)
-        r = core.clean(tv, args.packages, animations=args.faster, log=say, pause=0 if tv.demo else core.PAUSE)
+        names = list(args.packages or [])
+        if args.plan:
+            _, off, kept = core.plan(tv, keep_list(args))
+            names += [r["name"] for r in off]
+            say(f"Switching off {len(off)} apps (keeping {len(kept)} for features they use)…")
+        if not names:
+            raise core.TVError("Nothing to switch off. Pass package names, or --plan --keep …")
+        r = core.clean(tv, names, animations=args.faster, log=say, pause=0 if tv.demo else core.PAUSE)
         core.remember_disabled(tv, r["disabled"])
     finally:
         close_tv(tv)
@@ -288,6 +337,18 @@ def cmd_report(args):
         say("Now: " + show_measure(now) + "\n(no 'before' measurement was saved, so there is nothing to compare)")
         return
     d = lambda k: now[k] - before[k]
+    after = json.loads(p.read_text(encoding="utf-8")).get("after") or {}
+    hb, ha = before.get("homeMB"), (after.get("homeMB") if after.get("homePkg") == core.OUR_PKG else None)
+    if hb and ha:
+        say("REPORT CARD")
+        say(f"Home-screen memory: {hb} MB ({before.get('homePkg')}) → {ha} MB (PureTV) · {round(100 * (hb - ha) / hb)}% less")
+        cb, ca = before.get("homeCPU"), after.get("homeCPU")
+        if cb is not None and ca is not None:
+            pct = f"{round(100 * (cb - ca) / cb)}% less" if cb > 0 else ""
+            say(f"Home-screen CPU: {cb:g}% → {'under 1' if ca < 1 else f'{ca:g}'}% · {pct} (share of one core, Home idle on screen)")
+        say("")
+    elif hb:
+        say(f"Home screen before: {hb} MB. Run 'measure after' once PureTV is the Home screen for the comparison.")
     say(f"Memory in use: {before['memUsedMB']} MB → {now['memUsedMB']} MB ({d('memUsedMB'):+d} MB)")
     say(f"Processes running: {before['processes']} → {now['processes']} ({d('processes'):+d})")
     say(f"Apps switched off: {before['disabledApps']} → {now['disabledApps']} ({d('disabledApps'):+d})")
@@ -328,7 +389,10 @@ def main():
     c = sub.add_parser("measure"); c.add_argument("label", nargs="?", choices=["before", "after"])
     sub.add_parser("backup")
     c = sub.add_parser("suggest"); c.add_argument("--json", action="store_true")
-    c = sub.add_parser("clean"); c.add_argument("packages", nargs="+"); c.add_argument("--faster", action="store_true", help="also set animations to 0.5x")
+    c = sub.add_parser("clean"); c.add_argument("packages", nargs="*"); c.add_argument("--faster", action="store_true", help="also set animations to 0.5x")
+    c.add_argument("--plan", action="store_true", help="switch off the plan (see plan)"); c.add_argument("--keep", default="", help="features they use, e.g. voice,cast")
+    sub.add_parser("features")
+    c = sub.add_parser("plan"); c.add_argument("--keep", default="", help="features they use, e.g. voice,cast")
     c = sub.add_parser("install")
     c.add_argument("--keep-google-home", action="store_true", help="keep Google TV's home running underneath (Remote Helper)")
     c.add_argument("--replace-google-home", action="store_true", help="the default: PureTV is the only Home screen")

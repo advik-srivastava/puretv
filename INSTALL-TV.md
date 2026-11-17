@@ -23,7 +23,7 @@ The file to install is `PureTV-Home-<version>.apk` (about 4 MB) from the [latest
    adb connect 192.168.1.14:5555
    ```
    ```bash
-   adb install -r PureTV-Home-2.1.apk
+   adb install -r PureTV-Home-3.0.apk
    ```
    Allow the prompt that appears on the TV. `192.168.1.14` is your TV's address on your Wi-Fi.
 
@@ -51,9 +51,9 @@ Google TV doesn't let you pick another Home app in its settings. PureTV gets aro
     ```bash
     adb shell appops set tv.pure.home ACCESS_RESTRICTED_SETTINGS allow
     ```
-- **With the PureTV agent on the computer.** The agent switches Google TV's home off (it's never uninstalled), and the TV makes PureTV its Home app by itself. To undo it, use **Settings › Google TV › Restore Original TV**, or ask the agent to restore the TV.
+- **With Claude on the computer (fastest).** Paste `Set up my TV with https://github.com/advik-srivastava/puretv` into Claude Code. It switches Google TV's home off (never uninstalled), so PureTV is the only Home screen, and the TV restarts with one Home running. To undo it, paste `Restore my TV with https://github.com/advik-srivastava/puretv`.
 
-To go back to Google TV's home at any time, use **Settings › Google TV › Use Google TV's Home Again**. Nothing is deleted.
+While Google TV's home is still on (Remote Helper setup), **Settings › Google TV › Use Google TV's Home Again** switches back at any time. Nothing is deleted.
 
 ## 4. Updates
 - Whenever the TV is switched on, PureTV looks for a new version on its GitHub page, at most once every three hours.
@@ -63,11 +63,11 @@ To go back to Google TV's home at any time, use **Settings › Google TV › Use
 - Your profiles, top row, wallpaper and settings are kept.
 - You can turn automatic checks off in **Settings › Software Updates**.
 
-## Tuned for this TV
-- The Home screen is drawn at the panel's own 1366 × 768 size.
-- The glass blur is lighter than on 4K sets, with no movement behind it.
-- Wallpapers are resized for HD, and the cut-outs are WebP files.
-- Only the wallpaper on screen and the next one are kept in memory.
-- On TVs with less than about 1.2 GB of RAM, Low-End TV Mode turns on by itself. You can change this in **Settings › Appearance**.
+## Why it's fast
+- PureTV is a native Android app, with no web view.
+- The Liquid Glass is drawn from a pre-blurred copy of the wallpaper, so nothing is blurred live.
+- At rest the Home screen does nothing until the minute changes or a wallpaper fades.
+- Wallpapers are sized for HD panels like the Acer's 1366 × 768. Only the one on screen and the next are kept in memory, and the next is dropped while you're in an app.
+- With Google TV's home switched off, the TV runs one Home screen instead of two.
 
 Help: crazifiedstudios@gmail.com · crazifiedstudios.com
