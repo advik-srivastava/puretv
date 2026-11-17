@@ -292,7 +292,7 @@ public class MainActivity extends Activity {
     void placeDate() {
         Scenes.Scene s = scenes.cur();
         dateBox.measure(View.MeasureSpec.makeMeasureSpec(root.getWidth() > 0 ? root.getWidth() : 1920, View.MeasureSpec.AT_MOST), View.MeasureSpec.UNSPECIFIED);
-        float top = Math.max(Ui.fx(s.clockTop - 10) - dateBox.getMeasuredHeight(), Ui.fx(70));
+        float top = Math.max(Ui.fx(s.clockTop - 24) - dateBox.getMeasuredHeight(), Ui.fx(64));
         dateBox.animate().translationY(top).setDuration(dateBox.getTranslationY() == 0 ? 0 : 900).setInterpolator(Ui.EASE).start();
     }
 
