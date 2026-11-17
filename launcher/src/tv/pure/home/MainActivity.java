@@ -47,7 +47,9 @@ public class MainActivity extends Activity {
     private Btn chip, weatherPill;
     private TextView hint;
     private View hintBoxRef;
-    private IntroView intro;
+    private boolean arriving;   // the Home screen arriving after the TV starts (tvOS-style)
+    private View curtain;
+    static boolean arrived;
     private FrameLayout launching;
     int sleepIx;
     private boolean saver;
@@ -149,19 +151,7 @@ public class MainActivity extends Activity {
         updateTime();
         placeDate();
         if (!store.setupDone) new Setup(this).show();   // straight away: no glimpse of Home behind it
-        if (!IntroView.shown && !store.reduceMotion) {   // PureTV's start-up, once per TV start
-            IntroView.shown = true;
-            content.setAlpha(0f); content.setTranslationY(Ui.fx(70));
-            dateBox.setAlpha(0f);
-            intro = new IntroView(this, () -> {
-                // as the mark fades, Home appears and the apps rise into place
-                content.animate().alpha(1f).translationY(0).setStartDelay(120).setDuration(820).setInterpolator(Ui.EASE)
-                        .setUpdateListener(v -> band.invalidate()).start();
-                dateBox.animate().alpha(1f).setStartDelay(60).setDuration(700).setInterpolator(Ui.EASE).start();
-            }, () -> intro = null);
-            root.addView(intro, new FrameLayout.LayoutParams(-1, -1));
-            intro.start();
-        }
+        if (!arrived && store.setupDone && !store.reduceMotion) { arrived = true; arrive(); }   // once per TV start
     }
 
     // ------------------------------------------------------------------ Home layout
@@ -459,6 +449,47 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    // ------------------------------------------------------------------ arriving, as tvOS does after the TV starts
+
+    /** No logo: Home itself arrives. Black fades into the wallpaper as it settles, the date appears, and
+     *  the apps cascade in left to right. About 1.4 s; only scale and fade, done by the graphics chip. */
+    private void arrive() {
+        arriving = true;
+        curtain = new View(this);
+        curtain.setBackgroundColor(Color.BLACK);
+        curtain.setElevation(Ui.fx(100));
+        root.addView(curtain, new FrameLayout.LayoutParams(-1, -1));
+        scene.setScaleX(1.06f); scene.setScaleY(1.06f);
+        dateBox.setAlpha(0f);
+        band.setAlpha(0f);
+        curtain.animate().alpha(0f).setDuration(700).setInterpolator(Ui.EASE).withEndAction(() -> root.removeView(curtain)).start();
+        scene.animate().scaleX(1f).scaleY(1f).setDuration(1300).setInterpolator(Ui.EASE).start();
+        dateBox.animate().alpha(1f).setStartDelay(350).setDuration(600).setInterpolator(Ui.EASE).start();
+        band.animate().alpha(1f).setStartDelay(420).setDuration(500).setInterpolator(Ui.EASE).start();
+        for (int i = 0; i < row1.getChildCount(); i++) {
+            View v = row1.getChildAt(i);
+            v.setAlpha(0f); v.setScaleX(.86f); v.setScaleY(.86f);
+            final float to = v.isFocused() ? 1.12f : 1f;
+            v.animate().alpha(1f).scaleX(to).scaleY(to).setStartDelay(500 + i * 55L).setDuration(520).setInterpolator(Ui.LIFT).start();
+        }
+        ui.postDelayed(this::finishArrival, 500 + row1.getChildCount() * 55L + 560);
+    }
+
+    private void finishArrival() {
+        if (!arriving) return;
+        arriving = false;
+        for (View v : new View[] { curtain, scene, dateBox, band }) if (v != null) v.animate().cancel();
+        if (curtain != null) { root.removeView(curtain); curtain = null; }
+        scene.setScaleX(1f); scene.setScaleY(1f);
+        dateBox.setAlpha(1f); band.setAlpha(1f);
+        for (int i = 0; i < row1.getChildCount(); i++) {
+            View v = row1.getChildAt(i);
+            v.animate().cancel();
+            float to = v.isFocused() ? 1.12f : 1f;
+            v.setAlpha(1f); v.setScaleX(to); v.setScaleY(to);
+        }
+    }
+
     // ------------------------------------------------------------------ states
 
     private void deep(boolean on) {
@@ -611,7 +642,7 @@ public class MainActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
-        if (intro != null) { if (e.getAction() == KeyEvent.ACTION_DOWN) intro.skip(); return true; }   // any button skips the intro
+        if (arriving) { if (e.getAction() == KeyEvent.ACTION_DOWN) finishArrival(); return true; }   // any button: straight to Home
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             wake();
             if (saver) { stopSaver(); return true; }
